@@ -1,0 +1,27 @@
+name: albatross-env
+channels:
+  - conda-forge
+  - pytorch
+  - defaults
+dependencies:
+  - python=3.11
+  - pip
+  - swig
+  - git
+  - pip:
+    - torch
+    - torchvision
+    - pydantic
+    - lightning
+    - scikit-learn
+    - matplotlib
+    - gym
+    - numpy
+    - scipy
+    - pytest
+    - tqdm
+    - pandas
+    - cmake
+    - wandb
+    - seaborn
+    - rliable
