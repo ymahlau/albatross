@@ -2,7 +2,6 @@ import os
 import sys
 from pathlib import Path
 
-import hydra
 from omegaconf import OmegaConf
 import torch.multiprocessing as mp
 from src.depth.depth_parallel import DepthSearchConfig, depth_search_config_from_structured, \
