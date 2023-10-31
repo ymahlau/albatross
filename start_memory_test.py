@@ -3,19 +3,15 @@ from torch.nn import MSELoss
 from torch.optim import Adam, AdamW
 from tqdm import tqdm
 
-from src.game.bootcamp.test_envs_11x11 import survive_on_11x11, survive_on_11x11_4_player
-from src.game.battlesnake.battlesnake import BattleSnakeGame
-from src.game.bootcamp.test_envs_5x5 import survive_on_5x5_constrictor
-from src.game.bootcamp.test_envs_7x7 import survive_on_7x7_constrictor, survive_on_7x7
+from src.game.battlesnake.bootcamp import survive_on_11x11, survive_on_11x11_4_player
+from src.game.battlesnake.bootcamp import survive_on_5x5_constrictor
+from src.game.battlesnake.bootcamp import survive_on_7x7_constrictor, survive_on_7x7
 from src.game.initialization import get_game_from_config
 from src.game.overcooked.layouts import CrampedRoomOvercookedConfig, AsymmetricAdvantageOvercookedConfig
 from src.network.fcn import MediumHeadConfig
 from src.network.initialization import get_network_from_config
-from src.network.mobilenet_v3 import MobileNetConfig11x11, MobileNetConfig7x7, MobileNetConfig11x11Large, \
-    MobileNetConfig11x11Extrapolated, MobileNetConfig7x7Incumbent, MobileNetConfigOvercookedCramped, \
-    MobileNetConfig5x5Extrapolated, MobileNetConfigOvercookedAsymmetricAdvantage
 from src.network.mobilenet_v3_pad import MobileNetPadConfig7x7Incumbent
-from src.network.resnet import ResNetConfig11x11, ResNetConfig7x7New, ResNetConfig7x7Best
+from src.network.resnet import ResNetConfig11x11, ResNetConfig7x7Best
 from src.network.utils import ActivationType
 from src.network.vision_net import EquivarianceType
 
