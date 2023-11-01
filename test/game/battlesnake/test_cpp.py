@@ -5,7 +5,7 @@ import unittest
 from src.game.battlesnake.battlesnake import BattleSnakeGame, DOWN, LEFT, UP, RIGHT
 from src.game.battlesnake.battlesnake_conf import BattleSnakeConfig
 from src.cpp.lib import CPP_LIB
-from src.game.battlesnake.bootcamp import perform_choke_2_player
+from src.game.battlesnake.bootcamp.test_envs_3x3 import perform_choke_2_player
 from src.game.initialization import get_game_from_config
 
 

@@ -4,7 +4,7 @@ from typing import Optional
 
 import numpy as np
 
-from src.game import Game
+from src.game.game import Game
 from src.misc.utils import random_argmax, multi_dim_choice
 
 

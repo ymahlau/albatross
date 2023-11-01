@@ -4,7 +4,7 @@ from src.game.battlesnake.battlesnake import LEFT, UP, DOWN, RIGHT
 from src.game.battlesnake.battlesnake import BattleSnakeGame
 from src.game.battlesnake.battlesnake_conf import BattleSnakeConfig
 from src.game.battlesnake.battlesnake_enc import BestBattleSnakeEncodingConfig
-from src.game.battlesnake.bootcamp import perform_choke_wrapped
+from src.game.battlesnake.bootcamp.test_envs_3x3 import perform_choke_wrapped
 
 
 class TestWrapped(unittest.TestCase):

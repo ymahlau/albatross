@@ -1,6 +1,5 @@
 from src.game.battlesnake.battlesnake_conf import BattleSnakeConfig
-from src.game.battlesnake.battlesnake_enc import SimpleBattleSnakeEncodingConfig, BestConstrictorEncodingConfig, \
-    SimpleConstrictorEncodingConfig, VanillaBattleSnakeEncodingConfig
+from src.game.battlesnake.battlesnake_enc import SimpleConstrictorEncodingConfig, VanillaBattleSnakeEncodingConfig
 from src.game.battlesnake.battlesnake_rewards import KillBattleSnakeRewardConfig, CooperationBattleSnakeRewardConfig
 
 

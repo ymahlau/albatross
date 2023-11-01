@@ -4,7 +4,7 @@ import random
 
 import numpy as np
 
-from src.game import Game
+from src.game.game import Game
 
 
 def int_to_perm(

@@ -1,6 +1,4 @@
-from dataclasses import dataclass, field
-
-from omegaconf import MISSING
+from dataclasses import dataclass, field, MISSING
 
 
 @dataclass

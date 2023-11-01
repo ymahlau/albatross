@@ -1,9 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Optional
 
-from omegaconf import MISSING
-
-from src.game import GameConfig, GameType
+from src.game.game import GameConfig
 from src.game.battlesnake.battlesnake_enc import BattleSnakeEncodingConfig, SimpleBattleSnakeEncodingConfig, \
     bs_encoding_config_from_structured
 from src.game.battlesnake.battlesnake_rewards import BattleSnakeRewardConfig, StandardBattleSnakeRewardConfig, \
@@ -12,20 +10,19 @@ from src.game.battlesnake.battlesnake_rewards import BattleSnakeRewardConfig, St
 
 @dataclass
 class BattleSnakeConfig(GameConfig):
-    game_type: GameType = field(default=GameType.BATTLESNAKE)
     num_actions: int = field(default=4)
     num_players: int = field(default=2)
     # board
     w: int = 5
     h: int = 5
+    # encoding
+    ec: BattleSnakeEncodingConfig = field(default_factory=SimpleBattleSnakeEncodingConfig)
     # snakes
     all_actions_legal: bool = False
     max_snake_health: Optional[list[int]] = None
     # food
     min_food: int = 1
     food_spawn_chance: int = 15
-    # encoding
-    ec: BattleSnakeEncodingConfig = SimpleBattleSnakeEncodingConfig()
     # game state initialization
     init_turns_played: int = 0
     init_snakes_alive: Optional[list[bool]] = None  # if this is None, all snakes are alive
@@ -34,7 +31,7 @@ class BattleSnakeConfig(GameConfig):
     init_snake_health: Optional[list[int]] = None
     init_snake_len: Optional[list[int]] = None
     # rewards
-    reward_cfg: BattleSnakeRewardConfig = StandardBattleSnakeRewardConfig()
+    reward_cfg: BattleSnakeRewardConfig = field(default_factory=StandardBattleSnakeRewardConfig)
     # special game modes
     wrapped: bool = False
     royale: bool = False
@@ -99,80 +96,3 @@ def validate_battlesnake_cfg(cfg: BattleSnakeConfig):
         assert len(cfg.init_hazards) == 0, "Constrictor does not work with hazards"
         assert not cfg.royale, "Constrictor does not work with royale"
 
-
-def bs_config_from_structured(cfg) -> BattleSnakeConfig:
-    kwargs = dict(cfg)
-    kwargs["ec"] = bs_encoding_config_from_structured(cfg.ec)
-    kwargs["reward_cfg"] = reward_config_from_structured(cfg.reward_cfg)
-    if cfg.init_snakes_alive is not None:
-        kwargs["init_snakes_alive"] = list(cfg.init_snakes_alive)
-    else:
-        kwargs["init_snakes_alive"] = None
-    if cfg.init_snake_pos is not None:
-        sp_dict = {}
-        for k, v in cfg.init_snake_pos.items():
-            sp_dict[k] = [list(c) for c in v]
-        kwargs["init_snake_pos"] = sp_dict
-    else:
-        kwargs["init_snake_pos"] = None
-    if cfg.init_food_pos is not None:
-        kwargs["init_food_pos"] = [list(c) for c in cfg.init_food_pos]
-    else:
-        kwargs["init_food_pos"] = None
-    if cfg.init_snake_health is not None:
-        kwargs["init_snake_health"] = list(cfg.init_snake_health)
-    else:
-        kwargs["init_snake_health"] = None
-    if cfg.init_snake_len is not None:
-        kwargs["init_snake_len"] = list(cfg.init_snake_len)
-    else:
-        kwargs["init_snake_len"] = None
-    if cfg.init_hazards is not None:
-        kwargs["init_hazards"] = [list(c) for c in cfg.init_hazards]
-    else:
-        kwargs["init_hazards"] = None
-    bs_cfg = BattleSnakeConfig(**kwargs)
-    return bs_cfg
-
-
-@dataclass
-class SupervisedBufferConfig(BattleSnakeConfig):
-    w: int = field(default=11)
-    h: int = field(default=11)
-    num_players: int = field(default=2)
-    ec: BattleSnakeEncodingConfig = field(default=BattleSnakeEncodingConfig(
-        include_current_food=True,
-        include_next_food=True,
-        include_board=True,
-        include_number_of_turns=False,
-        compress_enemies=False,
-        include_snake_body_as_one_hot=True,
-        include_snake_body=True,
-        include_snake_head=True,
-        include_snake_tail=True,
-        include_snake_health=True,
-        include_snake_length=True,
-        include_distance_map=True,
-        flatten=False,
-        centered=True,
-        include_area_control=True,
-        include_food_distance=True,
-        include_hazards=False,
-        include_tail_distance=True
-    ))
-
-@dataclass
-class BattleSnakeDuelsConfig(BattleSnakeConfig):
-    w: int = field(default=11)
-    h: int = field(default=11)
-    num_players: int = field(default=2)
-    all_actions_legal: bool = field(default=False)
-    ec: BattleSnakeEncodingConfig = MISSING
-
-@dataclass
-class BattleSnakeStandardConfig(BattleSnakeConfig):
-    w: int = field(default=11)
-    h: int = field(default=11)
-    num_players: int = field(default=4)
-    all_actions_legal: bool = field(default=False)
-    ec: BattleSnakeEncodingConfig = MISSING

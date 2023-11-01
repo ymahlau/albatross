@@ -2,7 +2,7 @@ import unittest
 
 from src.game.battlesnake.battlesnake import BattleSnakeGame, UP
 from src.game.battlesnake.enc_conversion import decode_encoding
-from src.game.battlesnake.bootcamp import perform_choke_2_player
+from src.game.battlesnake.bootcamp.test_envs_3x3 import perform_choke_2_player
 
 
 class TestConversion(unittest.TestCase):

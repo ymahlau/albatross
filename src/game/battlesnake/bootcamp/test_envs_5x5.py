@@ -1,7 +1,7 @@
 from src.game.battlesnake.battlesnake_conf import BattleSnakeConfig
-from src.game.battlesnake.battlesnake_enc import SimpleBattleSnakeEncodingConfig, BestBattleSnakeEncodingConfig, \
-    SimpleConstrictorEncodingConfig, VanillaBattleSnakeEncodingConfig
-from src.game.battlesnake.battlesnake_rewards import CooperationBattleSnakeRewardConfig, KillBattleSnakeRewardConfig
+from src.game.battlesnake.battlesnake_enc import (SimpleBattleSnakeEncodingConfig, SimpleConstrictorEncodingConfig,
+                                                  VanillaBattleSnakeEncodingConfig)
+from src.game.battlesnake.battlesnake_rewards import KillBattleSnakeRewardConfig
 
 
 def perform_choke_5x5(centered: bool) -> BattleSnakeConfig:

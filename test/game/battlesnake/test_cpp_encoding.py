@@ -10,9 +10,9 @@ import numpy as np
 
 from src.game.battlesnake.battlesnake_enc import SimpleBattleSnakeEncodingConfig, num_layers_general, layers_per_player, \
     BestBattleSnakeEncodingConfig
-from src.game.battlesnake.bootcamp import survive_on_11x11_4_player
-from src.game.battlesnake.bootcamp import perform_choke_2_player
-from src.game.battlesnake.bootcamp import perform_choke_5x5_4_player
+from src.game.battlesnake.bootcamp.test_envs_11x11 import survive_on_11x11_4_player
+from src.game.battlesnake.bootcamp.test_envs_3x3 import perform_choke_2_player
+from src.game.battlesnake.bootcamp.test_envs_5x5 import perform_choke_5x5_4_player
 
 
 class TestEncodingCPP(unittest.TestCase):

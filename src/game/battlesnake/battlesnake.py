@@ -6,7 +6,7 @@ import numpy as np
 import torch
 
 from src.cpp.lib import Struct, CPP_LIB
-from src.game import Game
+from src.game.game import Game
 from src.game.battlesnake.battlesnake_conf import BattleSnakeConfig, post_init_battlesnake_cfg, validate_battlesnake_cfg
 from src.game.battlesnake.battlesnake_enc import num_layers_general, layers_per_player, layers_per_enemy
 from src.game.battlesnake.battlesnake_rewards import get_battlesnake_reward_func_from_cfg

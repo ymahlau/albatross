@@ -4,9 +4,9 @@ import random
 import numpy as np
 
 from src.game.battlesnake.battlesnake import UP, DOWN, BattleSnakeGame, LEFT, RIGHT
-from src.game.battlesnake.bootcamp import die_on_a_hill
-from src.game.battlesnake.bootcamp import cooperation_choke_5x5, randomization
-from src.game.battlesnake.bootcamp import cooperation_7x7
+from src.game.battlesnake.bootcamp.test_envs_3x3 import die_on_a_hill
+from src.game.battlesnake.bootcamp.test_envs_5x5 import cooperation_choke_5x5, randomization
+from src.game.battlesnake.bootcamp.test_envs_7x7 import cooperation_7x7
 from src.game.initialization import get_game_from_config
 
 

@@ -3,7 +3,6 @@ from dataclasses import dataclass, field
 from enum import Enum
 
 import numpy as np
-from omegaconf import MISSING
 
 
 class BattleSnakeRewardType(Enum):
@@ -13,7 +12,7 @@ class BattleSnakeRewardType(Enum):
 
 @dataclass
 class BattleSnakeRewardConfig:
-    reward_type: BattleSnakeRewardType = MISSING
+    reward_type: BattleSnakeRewardType
     living_reward: float = 0.0
     terminal_reward: float = 1.0
 

@@ -3,22 +3,30 @@ from enum import Enum
 import numpy as np
 
 
-class ZeroSumNorm(Enum):
+class UtilityNorm(Enum):
     NONE = 'NONE'
-    LINEAR = 'LINEAR'
+    ZERO_SUM = 'ZERO_SUM'
+    FULL_COOP = 'FULL_COOP'
 
-def apply_zero_sum_norm(
-        values: np.ndarray,  # array of shape (2,)
-        zero_sum_norm: ZeroSumNorm,
+
+def apply_utility_norm(
+        values: np.ndarray,
+        norm: UtilityNorm,
 ) -> np.ndarray:
-    if (len(values.shape) != 1 or values.shape[0] != 2) and zero_sum_norm != ZeroSumNorm.NONE \
-            and zero_sum_norm != ZeroSumNorm.NONE.value:
-        raise ValueError(f"Invalid array shape for zero sum norm: {values.shape}")
-    if zero_sum_norm == ZeroSumNorm.NONE or zero_sum_norm == ZeroSumNorm.NONE.value:
+    if norm == UtilityNorm.NONE:
         return values
-    elif zero_sum_norm == ZeroSumNorm.LINEAR or zero_sum_norm == ZeroSumNorm.LINEAR.value:
-        avg = np.average(values)
-        norm = values - avg
+    elif norm == UtilityNorm.ZERO_SUM:
+        if values.shape[-1] != 2:
+            raise ValueError(f"Invalid array shape for zero sum norm: {values.shape}")
+        avg = np.average(values, axis=-1)
+        if len(values.shape) == 1:
+            norm = values - avg
+        elif len(values.shape) == 2:
+            norm = values - avg[:, np.newaxis]
+        else:
+            raise ValueError(f"Invalid array shape for zero sum norm: {values.shape}")
         return norm
+    elif norm == UtilityNorm.FULL_COOP:
+        raise NotImplementedError()
     else:
-        raise ValueError(f"Invalid norm type: {zero_sum_norm}")
+        raise ValueError(f"Invalid norm type: {norm}")

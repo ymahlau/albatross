@@ -4,7 +4,7 @@ from src.game.battlesnake.battlesnake import BattleSnakeGame
 from src.game.battlesnake.battlesnake import UP
 from src.game.battlesnake.battlesnake_conf import BattleSnakeConfig
 from src.game.battlesnake.battlesnake_enc import BestBattleSnakeEncodingConfig
-from src.game.battlesnake.bootcamp import survive_on_7x7_4_player_royale
+from src.game.battlesnake.bootcamp.test_envs_7x7 import survive_on_7x7_4_player_royale
 
 
 class TestHazards(unittest.TestCase):
