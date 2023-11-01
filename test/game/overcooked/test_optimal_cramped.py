@@ -1,7 +1,7 @@
 import unittest
 
 from src.game.initialization import get_game_from_config
-from src.game.overcooked.layouts import CrampedRoomOvercookedConfig
+from src.game.overcooked_slow.layouts import CrampedRoomOvercookedConfig
 
 
 class TestOptimal(unittest.TestCase):

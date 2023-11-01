@@ -1,8 +1,8 @@
 import unittest
 
-from src.game.overcooked.layouts import AsymmetricAdvantageOvercookedConfig
-from src.game.overcooked.overcooked import OvercookedGame
-from src.game.overcooked.state import get_albatross_oa_state
+from src.game.overcooked_slow.layouts import AsymmetricAdvantageOvercookedConfig
+from src.game.overcooked_slow.overcooked import OvercookedGame
+from src.game.overcooked_slow.state import get_albatross_oa_state
 
 
 class TestState(unittest.TestCase):

@@ -7,7 +7,7 @@ from src.game.battlesnake.bootcamp import survive_on_11x11, survive_on_11x11_4_p
 from src.game.battlesnake.bootcamp import survive_on_5x5_constrictor
 from src.game.battlesnake.bootcamp import survive_on_7x7_constrictor, survive_on_7x7
 from src.game.initialization import get_game_from_config
-from src.game.overcooked.layouts import CrampedRoomOvercookedConfig, AsymmetricAdvantageOvercookedConfig
+from src.game.overcooked_slow.layouts import CrampedRoomOvercookedConfig, AsymmetricAdvantageOvercookedConfig
 from src.network.fcn import MediumHeadConfig
 from src.network.initialization import get_network_from_config
 from src.network.mobilenet_v3_pad import MobileNetPadConfig7x7Incumbent

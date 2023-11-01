@@ -1,6 +1,6 @@
 import unittest
 
-from src.game.overcooked.utils import object_from_int
+from src.game.overcooked_slow.utils import object_from_int
 
 
 class TestUtils(unittest.TestCase):

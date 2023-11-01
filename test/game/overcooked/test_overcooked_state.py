@@ -2,10 +2,10 @@ import unittest
 
 from overcooked_ai_py.mdp.overcooked_mdp import SoupState
 
-from src.game.overcooked.layouts import CrampedRoomOvercookedConfig
-from src.game.overcooked.movement import cramped_at_cook_start, cramped_before_cook_soup_ready, \
+from src.game.overcooked_slow.layouts import CrampedRoomOvercookedConfig
+from src.game.overcooked_slow.movement import cramped_at_cook_start, cramped_before_cook_soup_ready, \
     cramped_at_cook_soup_ready
-from src.game.overcooked.overcooked import OvercookedGame
+from src.game.overcooked_slow.overcooked import OvercookedGame
 import overcooked_ai_py
 
 class TestOvercookedState(unittest.TestCase):

@@ -5,7 +5,7 @@ from omegaconf import OmegaConf
 
 from src.game.battlesnake.bootcamp import survive_on_11x11
 from src.game.initialization import get_game_from_config, game_config_from_structured
-from src.game.overcooked.layouts import CrampedRoomOvercookedConfig
+from src.game.overcooked_slow.layouts import CrampedRoomOvercookedConfig
 
 
 class TestEfficiency(unittest.TestCase):
