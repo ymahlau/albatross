@@ -1,4 +1,4 @@
-from dataclasses import field, dataclass
+from dataclasses import field, dataclass, MISSING
 from typing import Optional
 
 import numpy as np
@@ -7,7 +7,7 @@ from overcooked_ai_py.mdp.actions import Action, Direction
 from overcooked_ai_py.mdp.overcooked_env import OvercookedEnv
 from overcooked_ai_py.mdp.overcooked_mdp import OvercookedGridworld, OvercookedState
 
-from src.game import Game, GameConfig, GameType
+from src.game.game import Game, GameConfig
 from src.game.overcooked_slow.obs import get_general_features, get_obs_shape_and_padding, get_player_features, \
     get_pot_features, temperature_features
 from src.game.overcooked_slow.state import SimplifiedOvercookedState, get_pot_state
@@ -16,10 +16,9 @@ from src.game.overcooked_slow.utils import OBJECT_NAMES
 
 @dataclass
 class OvercookedConfig(GameConfig):
-    game_type: GameType = field(default=GameType.OVERCOOKED)
     num_actions: int = field(default=6)
     num_players: int = field(default=2)
-    overcooked_layout: str = MISSING
+    overcooked_layout: str = field(default="cramped_room")
     horizon: int = 100
     temperature_input: bool = False
     single_temperature_input: bool = True

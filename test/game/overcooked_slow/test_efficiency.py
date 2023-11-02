@@ -1,10 +1,8 @@
 import time
 import unittest
 
-from omegaconf import OmegaConf
-
-from src.game.battlesnake.bootcamp import survive_on_11x11
-from src.game.initialization import get_game_from_config, game_config_from_structured
+from src.game.battlesnake.bootcamp.test_envs_11x11 import survive_on_11x11
+from src.game.initialization import get_game_from_config
 from src.game.overcooked_slow.layouts import CrampedRoomOvercookedConfig
 
 
@@ -78,23 +76,3 @@ class TestEfficiency(unittest.TestCase):
             game2.obs_save = None
         duration_battlesnake = time.time() - start_time
         print(f"{duration_battlesnake=}")
-
-    def test_hydra_speed(self):
-        game_cfg = CrampedRoomOvercookedConfig()
-        structured = OmegaConf.structured(game_cfg)
-        new_cfg = game_config_from_structured(structured)
-
-        game = get_game_from_config(game_cfg)
-        new_game = get_game_from_config(new_cfg)
-
-        start_time = time.time()
-        for _ in range(1000):
-            _ = game.get_copy()
-        delta = time.time() - start_time
-        print(f"original: {delta}")
-
-        start_time = time.time()
-        for _ in range(1000):
-            _ = new_game.get_copy()
-        delta = time.time() - start_time
-        print(f"converted: {delta}")
