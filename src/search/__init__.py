@@ -6,7 +6,7 @@ from typing import Optional, Any
 import numpy as np
 import torch
 
-from src.game import Game
+from src.game.game import Game
 from src.game.battlesnake.battlesnake import BattleSnakeGame
 from src.network import Network
 from src.search.backup_func import get_backup_func_from_cfg, ExploitOtherBackupFunc

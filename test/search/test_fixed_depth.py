@@ -1,16 +1,16 @@
 import unittest
 
 from src.game.battlesnake.battlesnake import BattleSnakeGame
-from src.game.bootcamp.test_envs_3x3 import perform_choke_2_player
-from src.game.bootcamp.test_envs_5x5 import survive_on_5x5
+from src.game.battlesnake.bootcamp.test_envs_3x3 import perform_choke_2_player
+from src.game.battlesnake.bootcamp.test_envs_5x5 import survive_on_5x5
 from src.game.initialization import get_game_from_config
-from src.game.values import ZeroSumNorm
+from src.game.values import UtilityNorm
 from src.network.fcn import MediumHeadConfig
 from src.network.resnet import ResNetConfig5x5, ResNetConfig3x3
 from src.network.utils import ActivationType
 from src.network.vision_net import EquivarianceType
 from src.search.backup_func import NashBackupConfig
-from src.search.config import NetworkEvalConfig, SBRBackupConfig
+from src.search.config import NetworkEvalConfig, LogitBackupConfig
 from src.search.eval_func import AreaControlEvalConfig
 from src.search.extraction_func import SpecialExtractConfig
 from src.search.fixed_depth import FixedDepthSearch, FixedDepthConfig
@@ -48,7 +48,7 @@ class TestFixedDepthSearch(unittest.TestCase):
         gc = survive_on_5x5()
         game = BattleSnakeGame(gc)
         net_cfg = ResNetConfig5x5(game_cfg=gc)
-        eval_func_cfg = NetworkEvalConfig(net_cfg=net_cfg, max_batch_size=64, zero_sum_norm=ZeroSumNorm.NONE)
+        eval_func_cfg = NetworkEvalConfig(net_cfg=net_cfg, max_batch_size=64, value_norm_type=UtilityNorm.NONE)
         backup_func_cfg = NashBackupConfig()
         extract_func_cfg = SpecialExtractConfig()
         search_cfg = FixedDepthConfig(
@@ -90,7 +90,7 @@ class TestFixedDepthSearch(unittest.TestCase):
             single_temperature=single_temperature,
             obs_temperature_input=obs_input_temperature,
         )
-        backup_cfg = SBRBackupConfig(
+        backup_cfg = LogitBackupConfig(
             num_iterations=200,
         )
 

@@ -1,11 +1,11 @@
 import unittest
 
 from src.game.battlesnake.battlesnake import BattleSnakeGame
-from src.game.bootcamp.test_envs_3x3 import perform_choke_2_player
-from src.game.values import ZeroSumNorm
+from src.game.battlesnake.bootcamp.test_envs_3x3 import perform_choke_2_player
+from src.game.values import UtilityNorm
 from src.network.resnet import ResNetConfig3x3
 from src.search.config import SampleSelectionConfig, AreaControlEvalConfig, SpecialExtractConfig, MCTSConfig, \
-    SBRBackupConfig, NetworkEvalConfig
+    LogitBackupConfig, NetworkEvalConfig
 from src.search.mcts import MCTS
 
 
@@ -19,7 +19,7 @@ class TestIteratedEquilibriumBackup(unittest.TestCase):
                     env = BattleSnakeGame(gc)
                     sel_func_cfg = SampleSelectionConfig()
                     eval_func_cfg = AreaControlEvalConfig()
-                    backup_func_cfg = SBRBackupConfig(init_temperatures=[5, 5])
+                    backup_func_cfg = LogitBackupConfig(init_temperatures=[5, 5])
                     extract_func_cfg = SpecialExtractConfig()
                     mcts_cfg = MCTSConfig(
                         sel_func_cfg=sel_func_cfg,
@@ -46,8 +46,8 @@ class TestIteratedEquilibriumBackup(unittest.TestCase):
         env = BattleSnakeGame(gc)
         sel_func_cfg = SampleSelectionConfig()
         net_cfg = ResNetConfig3x3(game_cfg=gc, predict_policy=True)
-        eval_func_cfg = NetworkEvalConfig(net_cfg=net_cfg, zero_sum_norm=ZeroSumNorm.LINEAR)
-        backup_func_cfg = SBRBackupConfig(
+        eval_func_cfg = NetworkEvalConfig(net_cfg=net_cfg, value_norm_type=UtilityNorm.ZERO_SUM)
+        backup_func_cfg = LogitBackupConfig(
             num_iterations=1000,
             epsilon=0,
             init_random=False,

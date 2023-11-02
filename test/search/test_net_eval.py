@@ -1,7 +1,7 @@
 import unittest
 
 from src.game.battlesnake.battlesnake import BattleSnakeGame
-from src.game.bootcamp.test_envs_5x5 import perform_choke_5x5_4_player
+from src.game.battlesnake.bootcamp.test_envs_5x5 import perform_choke_5x5_4_player
 from src.network.fcn import MediumHeadConfig
 from src.network.resnet import ResNetConfig5x5
 from src.search.config import AlphaZeroDecoupledSelectionConfig, NetworkEvalConfig, StandardBackupConfig, \

@@ -4,7 +4,7 @@ from typing import Optional, Any
 
 import numpy as np
 
-from src.game import Game
+from src.game.game import Game
 from src.search import Search, SearchInfo
 from src.search.backup_func import StandardBackupFunc, get_backup_func_from_cfg
 from src.search.config import FixedDepthConfig

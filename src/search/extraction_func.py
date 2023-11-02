@@ -2,8 +2,8 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 
-from src.game.values import apply_zero_sum_norm, ZeroSumNorm
-from src.search.config import SpecialExtractConfig, ExtractFuncConfig, StandardExtractConfig, ExtractFuncType, \
+from src.game.values import apply_utility_norm, UtilityNorm
+from src.search.config import SpecialExtractConfig, ExtractFuncConfig, StandardExtractConfig, \
     MeanPolicyExtractConfig, PolicyExtractConfig
 from src.search.node import Node
 
@@ -66,7 +66,7 @@ class SpecialExtractFunc(ExtractFunc):
             raise Exception("Special extraction only works with backup storing action probs")
         values = root.forward_estimate()
         if self.cfg.zero_sum_norm:
-            values = apply_zero_sum_norm(values, ZeroSumNorm.LINEAR)
+            values = apply_utility_norm(values, UtilityNorm.ZERO_SUM)
         action_prob_sum: np.ndarray = root.info["action_probs"]
         action_prob_count: int = root.info["action_probs_count"]
         # sanity checks
@@ -119,34 +119,14 @@ class PolicyExtractFunc(ExtractFunc):
 
 
 def get_extract_func_from_cfg(cfg: ExtractFuncConfig) -> ExtractFunc:
-    if cfg.extract_func_type == ExtractFuncType.STANDARD_EXTRACT \
-            or cfg.extract_func_type == ExtractFuncType.STANDARD_EXTRACT.value:
+    if isinstance(cfg, StandardExtractConfig):
         return StandardExtractFunc(cfg)
-    elif cfg.extract_func_type == ExtractFuncType.SPECIAL_EXTRACT \
-            or cfg.extract_func_type == ExtractFuncType.SPECIAL_EXTRACT.value:
+    elif isinstance(cfg, SpecialExtractConfig):
         return SpecialExtractFunc(cfg)
-    elif cfg.extract_func_type == ExtractFuncType.MEAN_POLICY \
-            or cfg.extract_func_type == ExtractFuncType.MEAN_POLICY.value:
+    elif isinstance(cfg, MeanPolicyExtractConfig):
         return MeanPolicyExtractFunc(cfg)
-    elif cfg.extract_func_type == ExtractFuncType.POLICY \
-            or cfg.extract_func_type == ExtractFuncType.POLICY.value:
+    elif isinstance(cfg, PolicyExtractConfig):
         return PolicyExtractFunc(cfg)
     else:
         raise ValueError(f"Unknown extraction func type: {cfg}")
 
-
-def extract_config_from_structured(cfg) -> ExtractFuncConfig:
-    if cfg.extract_func_type == ExtractFuncType.STANDARD_EXTRACT \
-            or cfg.extract_func_type == ExtractFuncType.STANDARD_EXTRACT.value:
-        return StandardExtractConfig(**cfg)
-    elif cfg.extract_func_type == ExtractFuncType.SPECIAL_EXTRACT \
-            or cfg.extract_func_type == ExtractFuncType.SPECIAL_EXTRACT.value:
-        return SpecialExtractConfig(**cfg)
-    elif cfg.extract_func_type == ExtractFuncType.MEAN_POLICY \
-            or cfg.extract_func_type == ExtractFuncType.MEAN_POLICY.value:
-        return MeanPolicyExtractConfig(**cfg)
-    elif cfg.extract_func_type == ExtractFuncType.POLICY \
-            or cfg.extract_func_type == ExtractFuncType.POLICY.value:
-        return PolicyExtractConfig(**cfg)
-    else:
-        raise ValueError(f"Unknown extraction func type: {cfg}")

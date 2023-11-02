@@ -4,9 +4,9 @@ from typing import Optional, Any
 
 import numpy as np
 
-from src.game import Game
+from src.game.game import Game
 from src.search import Search, SearchInfo
-from src.search.backup_func import StandardBackupFunc, MaxMinBackupFunc, NashBackupFunc, SBRBackupFunc, \
+from src.search.backup_func import StandardBackupFunc, MaxMinBackupFunc, NashBackupFunc, LogitBackupFunc, \
     get_backup_func_from_cfg
 from src.search.config import MCTSConfig
 from src.search.core import update_full_exploration, expand_node_to_depth, backup_depth_dict
@@ -29,7 +29,7 @@ class MCTS(Search):
             assert self.cfg.expansion_depth == 0
             assert isinstance(self.extract_func, StandardExtractFunc)
         if isinstance(self.backup_func, MaxMinBackupFunc) or isinstance(self.backup_func, NashBackupFunc) \
-                or isinstance(self.backup_func, SBRBackupFunc):
+                or isinstance(self.backup_func, LogitBackupFunc):
             assert self.cfg.expansion_depth > 0
             assert isinstance(self.extract_func, SpecialExtractFunc)
         if isinstance(self.sel_func, DecoupledUCTSelectionFunc) \

@@ -1,22 +1,20 @@
 import itertools
 import math
 from abc import ABC, abstractmethod
-from collections import defaultdict
 from typing import Optional, Any
 
 import numpy as np
 import torch.multiprocessing as mp
 
-from src.cpp.lib import CPP_LIB
-from src.equilibria.nash import calculate_nash_equilibrium
 from src.equilibria.logit import compute_logit_equilibrium, SbrMode
+from src.equilibria.nash import calculate_nash_equilibrium
 from src.equilibria.quantal import compute_qne_equilibrium, compute_qse_equilibrium
 from src.equilibria.responses import values_from_policies, best_response_from_q, smooth_best_response_from_q
 from src.game.actions import filter_illegal_and_normalize, q_values_from_individual_actions
 from src.search.config import MaxMinBackupConfig, BackupFuncConfig, StandardBackupConfig, NashBackupConfig, \
-    BackupFuncType, MaxAvgBackupConfig, SBRBackupConfig, RNADBackupConfig, Exp3BackupConfig, \
-    RegretMatchingBackupConfig, UncertaintyBackupConfig, EnemyExploitationBackupConfig, QNEBackupConfig, \
-    QSEBackupConfig, SBRLEBackupConfig, ExploitOtherBackupConfig, NashVsSBRBackupConfig
+    MaxAvgBackupConfig, Exp3BackupConfig, \
+    RegretMatchingBackupConfig, EnemyExploitationBackupConfig, QNEBackupConfig, \
+    QSEBackupConfig, SBRLEBackupConfig, ExploitOtherBackupConfig, NashVsSBRBackupConfig, LogitBackupConfig
 from src.search.node import Node
 from src.search.utils import compute_maxmin, compute_maxavg
 
@@ -216,11 +214,11 @@ class NashBackupFunc(BackupFunc):
                 action_probs[player_idx, action] = policies[player_idx][action_idx]
         return all_values, action_probs, None
 
-class SBRBackupFunc(BackupFunc):
+class LogitBackupFunc(BackupFunc):
     """
     Computes backup action values and probabilities by solving for a Logit Equilibrium.
     """
-    def __init__(self, cfg: SBRBackupConfig):
+    def __init__(self, cfg: LogitBackupConfig):
         super().__init__(cfg)
         self.cfg = cfg
         self.temperatures = cfg.init_temperatures
@@ -266,7 +264,7 @@ class SBRBackupFunc(BackupFunc):
                 cur_policy = cur_policy / np.sum(cur_policy)
                 initial_policies.append(cur_policy)
         # solve for logit equilibrium
-        values, policies = compute_logit_equilibrium(
+        values, policies, _ = compute_logit_equilibrium(
             available_actions=available_actions,
             joint_action_list=joint_action_list,
             joint_action_value_arr=joint_action_value_arr,
@@ -274,70 +272,7 @@ class SBRBackupFunc(BackupFunc):
             epsilon=self.cfg.epsilon,
             temperatures=cur_temperatures,
             initial_policies=initial_policies,
-            moving_average_factor=self.cfg.moving_average_factor,
             sbr_mode=self.cfg.sbr_mode,
-            use_cpp=self.cfg.use_cpp,
-        )
-        # convert result to proper data format
-        all_values = np.zeros(shape=(node.game.num_players,), dtype=float)
-        action_probs = np.zeros(shape=(node.game.num_players_at_turn(), node.game.num_actions))
-        for player_idx, player in enumerate(node.game.players_at_turn()):
-            all_values[player] = values[player_idx]
-            for action_idx, action in enumerate(node.game.available_actions(player)):
-                action_probs[player_idx, action] = policies[player_idx][action_idx]
-        return all_values, action_probs, None
-
-
-class RNADBackupFunc(BackupFunc):
-    """
-    Computes backup action values and probabilities by solving Regularized Nash Dynamics:
-    Paper: https://arxiv.org/abs/2206.15378
-    """
-    def __init__(self, cfg: RNADBackupConfig):
-        super().__init__(cfg)
-        self.cfg = cfg
-
-    def _compute_backup_values(
-            self,
-            node: Node,
-            child: Optional[Node],
-            values: Optional[np.ndarray],
-            options: Optional[dict[str, Any]] = None,
-            backup_values: Optional[dict[str, Any]] = None,
-    ) -> tuple[np.ndarray, Optional[np.ndarray], Optional[dict[str, Any]]]:
-        if "net_action_probs" not in node.info:
-            raise ValueError("R-NAD Backup needs action probabilities of the network for regularization")
-        # initialize solver inputs
-        available_actions: list[list[int]] = []
-        for player in node.game.players_at_turn():
-            available_actions.append(node.game.available_actions(player))
-        shape = (len(node.game.available_joint_actions()), node.game.num_players_at_turn())
-        joint_action_value_arr = np.empty(shape=shape, dtype=float)
-        joint_action_list: list[tuple[int, ...]] = []
-        joint_action_values = node.get_joint_backward_estimate()
-        counter = 0
-        for joint_action, joint_action_v in joint_action_values.items():
-            joint_action_list.append(joint_action)
-            for player_idx, player in enumerate(node.game.players_at_turn()):
-                joint_action_value_arr[counter, player_idx] = joint_action_v[player]
-            counter += 1
-        # policies
-        reg_policy_list: list[np.ndarray] = []
-        for player_idx, player in enumerate(node.game.players_at_turn()):
-            cur_p = np.zeros(shape=(len(node.game.available_actions(player)),), dtype=float)
-            for action_idx, action in enumerate(node.game.available_actions(player)):
-                cur_p[action_idx] = node.info["net_action_probs"][player_idx][action]
-            reg_policy_list.append(cur_p)
-            # reg_policy_list.append(node.info["net_action_probs"][player_idx])
-        # solve r-nad
-        values, policies = CPP_LIB.compute_r_nad(
-            available_actions=available_actions,
-            joint_action_list=joint_action_list,
-            joint_action_value_arr=joint_action_value_arr,
-            reg_policies=reg_policy_list,
-            num_iteration=self.cfg.num_iterations,
-            reg_factor=self.cfg.reg_factor,
-            initial_policies=reg_policy_list,
         )
         # convert result to proper data format
         all_values = np.zeros(shape=(node.game.num_players,), dtype=float)
@@ -436,177 +371,17 @@ class RegretMatchingBackupFunc(BackupFunc):
         return values, None, None
 
 
-class UncertaintyBackupFunc(BackupFunc):
-    def __init__(self, cfg: UncertaintyBackupConfig):
-        super().__init__(cfg)
-        self.cfg = cfg
-
-    def _init_node(self, node: Node):
-        # policy
-        if self.cfg.informed:
-            if "net_action_probs" not in node.info:
-                raise ValueError("Cannot use informed initialization without network probs")
-            probs = node.info["net_action_probs"]
-        else:
-            probs = np.ones(shape=(node.game.num_players_at_turn(), node.game.num_actions), dtype=float)
-            probs = filter_illegal_and_normalize(probs, node.game)
-        node.info["policy"] = probs
-        # certainty
-        if node.is_terminal():
-            node.info["certainty"] = 1
-        else:
-            node.info["certainty"] = 0
-        node.info["init_flag"] = True
-        node.info["q"]: dict[tuple[int, int], float] = defaultdict(lambda: 0)  # key (player, action)
-
-    @staticmethod
-    def _backward_v(node: Node) -> np.ndarray:
-        if "v" in node.info:
-            v = node.info["v"]
-        else:
-            v = node.value_sum  # node is unvisited, no need to create new array
-        values = node.discount * (node.rewards + v)
-        return values
-
-    @staticmethod
-    def _certainty(node: Node) -> float:
-        if node.is_terminal():
-            return 1
-        elif "certainty" in node.info:
-            return node.info["certainty"]
-        else:
-            return 0
-
-    def _compute_backup_values(
-            self,
-            node: Node,
-            child: Optional[Node],
-            values: Optional[np.ndarray],
-            options: Optional[dict[str, Any]] = None,
-            backup_values: Optional[dict[str, Any]] = None,
-    ) -> tuple[np.ndarray, Optional[np.ndarray], Optional[dict[str, Any]]]:
-        if "init_flag" not in node.info:
-            self._init_node(node)
-        for player_idx, player in enumerate(node.game.players_at_turn()):
-            chosen_action = child.last_actions[player_idx]
-            available_actions = node.game.available_actions(player)
-            # update q-values
-            old_q = node.info["q"][player, chosen_action]
-            new_q = (1 - self.cfg.lr) * old_q + self.cfg.lr * values[player]
-            node.info["q"][player, chosen_action] = new_q
-            # update policies
-            q = np.asarray([node.info["q"][player, action] for action in available_actions], dtype=float)
-            exp = np.exp(self.cfg.temperature * q)
-            new_p = exp / np.sum(exp)
-            for action_idx, action in enumerate(available_actions):
-                node.info["policy"][player, action] = new_p[action_idx]
-        # compute joint probs
-        if self.cfg.use_children:
-            # evaluation based on all children, computationally expensive but accurate
-            arr_list = []
-            action_list = []
-            policy = node.info["policy"]
-            for player_idx, player in enumerate(node.game.players_at_turn()):
-                legal_action_probs = []
-                for action in node.game.available_actions(player):
-                    legal_action_probs.append(policy[player_idx, action])
-                # normalization is not necessary here, because we normalized above
-                arr_list.append(legal_action_probs)
-                action_list.append(node.game.available_actions(player))
-            prod_arr = np.asarray(list(itertools.product(*arr_list)))
-            joint_probs = np.prod(prod_arr, axis=-1)
-            joint_actions = list(itertools.product(*action_list))
-            # update value and certainty
-            c_child = 0
-            values = np.zeros(shape=(node.game.num_players,), dtype=float)
-            for ja_idx, ja in enumerate(joint_actions):
-                child = node.children[ja]
-                values += joint_probs[ja_idx] * self._backward_v(child)  # value already contains the confidence
-                c_child += joint_probs[ja_idx] * self._certainty(child)
-            c_own = 1 - (1 / np.sqrt(node.visits))
-            certainty = (c_child + c_own) / 2
-            node.info["v"] = values * certainty
-            node.info["certainty"] = certainty
-        else:
-            values = child.backward_estimate()
-            c_own = 1 - (1 / np.sqrt(node.visits))
-            values *= c_own
-            node.info["certainty"] = c_own
-            if "v" in node.info:
-                node.info["v"] = (1 - self.cfg.lr) * node.info["v"] + self.cfg.lr * values
-            else:
-                node.info["v"] = values
-        return values, None, None
-
-
 class EnemyExploitationBackupFunc(BackupFunc):
     """
     Backup Function that exploits the enemies bounded rationality. It computes a logit equilibrium based
     on all temperatures. This yields the enemies action probabilities, which are used to compute the players q-values.
     The resulting value and action are the smooth best response given these q-values.
+    This is used to train the Response model of Albatross.
     """
     def __init__(self, cfg: EnemyExploitationBackupConfig):
         super().__init__(cfg)
         self.cfg = cfg
         self.temperatures = cfg.init_temperatures
-
-    def _compute_enemy_policies(self, node: Node) -> np.ndarray:
-        """
-        WARNING: This function is largely untested
-        """
-        # initialize solver inputs: available actions
-        cur_temperatures = []
-        for player in node.game.players_at_turn():
-            cur_temperatures.append(self.temperatures[player])
-        available_actions: list[list[int]] = []
-        for player in node.game.players_at_turn():
-            available_actions.append(node.game.available_actions(player))
-        # value estimates for every player based on the children
-        num_p_turn = node.game.num_players_at_turn()
-        shape = (num_p_turn, len(node.game.available_joint_actions()), num_p_turn)
-        joint_action_value_arrays = np.empty(shape=shape, dtype=float)
-        joint_action_list = []
-        ja_counter = 0
-        for ja, child in node.children.items():
-            joint_action_list.append(ja)
-            for enemy_idx, enemy in enumerate(node.game.players_at_turn()):
-                enemy_values = child.info[f"v{enemy}"]
-                for p_idx, p in enumerate(node.game.players_at_turn()):
-                    joint_action_value_arrays[enemy_idx, ja_counter, p_idx] = enemy_values[p]
-        # initial policies
-        if self.cfg.init_random:
-            initial_policies = [None for _ in range(num_p_turn)]
-        else:
-            initial_policies = []
-            for enemy_idx, enemy in enumerate(node.game.players_at_turn()):
-                cur_initial_policies = []
-                for player_idx, player in enumerate(node.game.players_at_turn()):
-                    cur_policy = np.zeros(shape=(len(node.game.available_actions(player)),), dtype=float)
-                    for action_idx, action in enumerate(node.game.available_actions(player)):
-                        # add epsilon for numerical stability
-                        cur_policy[action_idx] = node.info[f"p{enemy}"][player_idx, action] + 1e-5
-                    cur_policy = cur_policy / np.sum(cur_policy)
-                    cur_initial_policies.append(cur_policy)
-                initial_policies.append(cur_initial_policies)
-        # solve enemy equilibria
-        enemy_policies = np.zeros(shape=(num_p_turn, num_p_turn, node.game.num_actions), dtype=float)
-        for enemy_idx, enemy in enumerate(node.game.players_at_turn()):
-            _, cur_policies = compute_logit_equilibrium(
-                available_actions=available_actions,
-                joint_action_list=joint_action_list,
-                joint_action_value_arr=joint_action_value_arrays[enemy_idx],
-                num_iterations=self.cfg.num_iterations,
-                epsilon=self.cfg.epsilon,
-                temperatures=cur_temperatures,
-                initial_policies=initial_policies[enemy_idx],
-                moving_average_factor=self.cfg.moving_average_factor,
-                sbr_mode=self.cfg.sbr_mode,
-                use_cpp=self.cfg.use_cpp,
-            )
-            for player_idx, player in node.game.players_at_turn():
-                for action_idx, action in node.game.available_actions(player):
-                    enemy_policies[enemy_idx, player_idx, action] = cur_policies[player_idx][action_idx]
-        return enemy_policies
 
     def _compute_backup_values(
             self,
@@ -621,11 +396,8 @@ class EnemyExploitationBackupFunc(BackupFunc):
         if len(self.temperatures) != node.game.num_players:
             raise ValueError(f"Need temperature for every player")
         # enemy policies given their bounded rationality. array shape (num_p, num_p, num_a)
-        if self.cfg.recompute_policy:
-            enemy_policies = self._compute_enemy_policies(node)
-        else:
-            policy_list = [node.info[f"p{enemy}"] for enemy in node.game.players_at_turn()]
-            enemy_policies = np.asarray(policy_list, dtype=float)
+        policy_list = [node.info[f"p{enemy}"] for enemy in node.game.players_at_turn()]
+        enemy_policies = np.asarray(policy_list, dtype=float)
         # compute q-values
         num_p = node.game.num_players_at_turn()
         q_values = np.zeros(shape=(num_p, node.game.num_actions), dtype=float)
@@ -804,7 +576,7 @@ class SBRLEBackupFunc(BackupFunc):
                 joint_action_value_arr[counter, player_idx] = joint_action_v[player]
             counter += 1
         # first solve logit equilibrium
-        le_values, le_policies = compute_logit_equilibrium(
+        le_values, le_policies, _ = compute_logit_equilibrium(
             available_actions=available_actions,
             joint_action_list=joint_action_list,
             joint_action_value_arr=joint_action_value_arr,
@@ -812,8 +584,7 @@ class SBRLEBackupFunc(BackupFunc):
             epsilon=0,
             temperatures=[self.temperature for _ in range(node.game.num_players)],
             initial_policies=None,
-            sbr_mode=SbrMode.CUMULATIVE_SUM,
-            use_cpp=True,
+            sbr_mode=SbrMode.MSA,
         )
         # then compute q values for leader
         other_policies = list(le_policies[1:])
@@ -941,7 +712,12 @@ class ExploitOtherBackupFunc(BackupFunc):
         del node.info['action_probs_count']
         return all_values, action_probs, None
 
+
 class NashVsSBRBackupFunc(BackupFunc):
+    """
+    Computes a Backup, where the leader plays a Nash equilibrium and the follower plays a Smooth best Response
+    to the leaders policy
+    """
     def __init__(self, cfg: NashVsSBRBackupConfig):
         super().__init__(cfg)
         self.cfg = cfg
@@ -1015,74 +791,32 @@ class NashVsSBRBackupFunc(BackupFunc):
 
 
 def get_backup_func_from_cfg(cfg: BackupFuncConfig) -> BackupFunc:
-    if cfg.backup_type == BackupFuncType.STANDARD_BACKUP \
-            or cfg.backup_type == BackupFuncType.STANDARD_BACKUP.value:
+    if isinstance(cfg, StandardBackupConfig):
         return StandardBackupFunc(cfg)
-    elif cfg.backup_type == BackupFuncType.MAXMIN_BACKUP or cfg.backup_type == BackupFuncType.MAXMIN_BACKUP.value:
+    elif isinstance(cfg, MaxMinBackupConfig):
         return MaxMinBackupFunc(cfg)
-    elif cfg.backup_type == BackupFuncType.MAXAVG_BACKUP or cfg.backup_type == BackupFuncType.MAXAVG_BACKUP.value:
+    elif isinstance(cfg, MaxAvgBackupConfig):
         return MaxAvgBackupFunc(cfg)
-    elif cfg.backup_type == BackupFuncType.NASH_BACKUP or cfg.backup_type == BackupFuncType.NASH_BACKUP.value:
+    elif isinstance(cfg, NashBackupConfig):
         return NashBackupFunc(cfg)
-    elif cfg.backup_type == BackupFuncType.SBR_BACKUP or cfg.backup_type == BackupFuncType.SBR_BACKUP.value:
-        return SBRBackupFunc(cfg)
-    elif cfg.backup_type == BackupFuncType.RNAD_BACKUP or cfg.backup_type == BackupFuncType.RNAD_BACKUP.value:
-        return RNADBackupFunc(cfg)
-    elif cfg.backup_type == BackupFuncType.EXP3 or cfg.backup_type == BackupFuncType.EXP3.value:
+    elif isinstance(cfg, LogitBackupConfig):
+        return LogitBackupFunc(cfg)
+    elif isinstance(cfg, Exp3BackupConfig):
         return Exp3BackupFunc(cfg)
-    elif cfg.backup_type == BackupFuncType.REGRET_MATCHING or cfg.backup_type == BackupFuncType.REGRET_MATCHING.value:
+    elif isinstance(cfg, RegretMatchingBackupConfig):
         return RegretMatchingBackupFunc(cfg)
-    elif cfg.backup_type == BackupFuncType.UNCERTAINTY or cfg.backup_type == BackupFuncType.UNCERTAINTY.value:
-        return UncertaintyBackupFunc(cfg)
-    elif cfg.backup_type == BackupFuncType.ENEMY_EXPLOIT or cfg.backup_type == BackupFuncType.ENEMY_EXPLOIT.value:
+    elif isinstance(cfg, EnemyExploitationBackupConfig):
         return EnemyExploitationBackupFunc(cfg)
-    elif cfg.backup_type == BackupFuncType.QNE or cfg.backup_type == BackupFuncType.QNE.value:
+    elif isinstance(cfg, QNEBackupConfig):
         return QNEBackupFunc(cfg)
-    elif cfg.backup_type == BackupFuncType.QSE or cfg.backup_type == BackupFuncType.QSE.value:
+    elif isinstance(cfg, QSEBackupConfig):
         return QSEBackupFunc(cfg)
-    elif cfg.backup_type == BackupFuncType.SBRLE or cfg.backup_type == BackupFuncType.SBRLE.value:
+    elif isinstance(cfg, SBRLEBackupConfig):
         return SBRLEBackupFunc(cfg)
-    elif cfg.backup_type == BackupFuncType.NASH_VS_SBR or cfg.backup_type == BackupFuncType.NASH_VS_SBR.value:
+    elif isinstance(cfg, NashVsSBRBackupConfig):
         return NashVsSBRBackupFunc(cfg)
-    elif cfg.backup_type == BackupFuncType.EXPLOIT_OTHER or cfg.backup_type == BackupFuncType.EXPLOIT_OTHER.value:
+    elif isinstance(cfg, ExploitOtherBackupConfig):
         return ExploitOtherBackupFunc(cfg)
     else:
         raise ValueError(f"Unknown backup type: {cfg}")
 
-
-def backup_config_from_structured(cfg) -> BackupFuncConfig:
-    if cfg.backup_type == BackupFuncType.STANDARD_BACKUP \
-            or cfg.backup_type == BackupFuncType.STANDARD_BACKUP.value:
-        return StandardBackupConfig(**cfg)
-    elif cfg.backup_type == BackupFuncType.MAXMIN_BACKUP or cfg.backup_type == BackupFuncType.MAXMIN_BACKUP.value:
-        return MaxMinBackupConfig(**cfg)
-    elif cfg.backup_type == BackupFuncType.MAXAVG_BACKUP or cfg.backup_type == BackupFuncType.MAXAVG_BACKUP.value:
-        return MaxAvgBackupConfig(**cfg)
-    elif cfg.backup_type == BackupFuncType.NASH_BACKUP or cfg.backup_type == BackupFuncType.NASH_BACKUP.value:
-        return NashBackupConfig(**cfg)
-    elif cfg.backup_type == BackupFuncType.SBR_BACKUP or cfg.backup_type == BackupFuncType.SBR_BACKUP.value:
-        return SBRBackupConfig(**cfg)
-    elif cfg.backup_type == BackupFuncType.RNAD_BACKUP or cfg.backup_type == BackupFuncType.RNAD_BACKUP.value:
-        return RNADBackupConfig(**cfg)
-    elif cfg.backup_type == BackupFuncType.EXP3 or cfg.backup_type == BackupFuncType.EXP3.value:
-        return Exp3BackupConfig(**cfg)
-    elif cfg.backup_type == BackupFuncType.REGRET_MATCHING or cfg.backup_type == BackupFuncType.REGRET_MATCHING.value:
-        return RegretMatchingBackupConfig(**cfg)
-    elif cfg.backup_type == BackupFuncType.UNCERTAINTY or cfg.backup_type == BackupFuncType.UNCERTAINTY.value:
-        return UncertaintyBackupConfig(**cfg)
-    elif cfg.backup_type == BackupFuncType.ENEMY_EXPLOIT or cfg.backup_type == BackupFuncType.ENEMY_EXPLOIT.value:
-        return EnemyExploitationBackupConfig(**cfg)
-    elif cfg.backup_type == BackupFuncType.QNE or cfg.backup_type == BackupFuncType.QNE.value:
-        return QNEBackupConfig(**cfg)
-    elif cfg.backup_type == BackupFuncType.QSE or cfg.backup_type == BackupFuncType.QSE.value:
-        return QSEBackupConfig(**cfg)
-    elif cfg.backup_type == BackupFuncType.SBRLE or cfg.backup_type == BackupFuncType.SBRLE.value:
-        return SBRLEBackupConfig(**cfg)
-    elif cfg.backup_type == BackupFuncType.NASH_VS_SBR or cfg.backup_type == BackupFuncType.NASH_VS_SBR.value:
-        return NashVsSBRBackupConfig(**cfg)
-    elif cfg.backup_type == BackupFuncType.EXPLOIT_OTHER or cfg.backup_type == BackupFuncType.EXPLOIT_OTHER.value:
-        kwargs = dict(cfg)
-        kwargs['backup_cfg'] = backup_config_from_structured(cfg.backup_cfg)
-        return ExploitOtherBackupConfig(**kwargs)
-    else:
-        raise ValueError(f"Unknown backup type: {cfg}")

@@ -3,10 +3,10 @@ import time
 import unittest
 
 from src.game.actions import sample_individual_actions
-from src.game.bootcamp.test_envs_11x11 import survive_on_11x11
+from src.game.battlesnake.bootcamp.test_envs_11x11 import survive_on_11x11
 from src.game.initialization import get_game_from_config
-from src.game.overcooked.layouts import CrampedRoomOvercookedConfig
-from src.search.config import MCTSConfig, OvercookedPotentialEvalConfig, DecoupledUCTSelectionConfig, \
+from src.game.overcooked_slow.layouts import CrampedRoomOvercookedConfig
+from src.search.config import MCTSConfig, DecoupledUCTSelectionConfig, \
     StandardBackupConfig, StandardExtractConfig, DummyEvalConfig
 from src.search.initialization import get_search_from_config
 
@@ -18,7 +18,7 @@ class TestOvercookedEval(unittest.TestCase):
         game = get_game_from_config(game_cfg)
 
         search_cfg = MCTSConfig(
-            eval_func_cfg=OvercookedPotentialEvalConfig(overcooked_layout=game_cfg.overcooked_layout),
+            eval_func_cfg=DummyEvalConfig(),
             sel_func_cfg=DecoupledUCTSelectionConfig(),
             backup_func_cfg=StandardBackupConfig(),
             extract_func_cfg=StandardExtractConfig(),

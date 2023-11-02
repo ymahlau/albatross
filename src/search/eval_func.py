@@ -5,20 +5,17 @@ from typing import Optional
 
 import numpy as np
 import torch
-from lightning import Fabric
 from overcooked_ai_py.mdp.overcooked_mdp import OvercookedGridworld
 from overcooked_ai_py.planning.planners import MediumLevelActionManager, NO_COUNTERS_PARAMS
 
 from src.game.actions import apply_permutation, filter_illegal_and_normalize
 from src.game.battlesnake.battlesnake import BattleSnakeGame
-from src.game.oshi_zumo.oshi_zumo import OshiZumoGame
-from src.game.overcooked.overcooked import OvercookedGame
-from src.game.values import apply_zero_sum_norm
+from src.game.overcooked_slow.overcooked import OvercookedGame
+from src.game.values import apply_utility_norm
 from src.network import Network
-from src.network.initialization import get_network_from_config, network_config_from_structured, get_network_from_file
+from src.network.initialization import get_network_from_config, get_network_from_file
 from src.search.config import NetworkEvalConfig, CopyCatEvalConfig, AreaControlEvalConfig, EvalFuncConfig, \
-    EvalFuncType, DummyEvalConfig, OshiZumoEvalConfig, EnemyExploitationEvalConfig, RandomRolloutEvalConfig, \
-    OvercookedPotentialEvalConfig
+    DummyEvalConfig, EnemyExploitationEvalConfig, RandomRolloutEvalConfig
 from src.search.node import Node
 
 
@@ -51,7 +48,7 @@ class EvalFunc(ABC):
     def update_node(self, node: Node, values: np.ndarray):
         node.visits = 1
         # optionally squash values to be zero-sum
-        norm_vals = apply_zero_sum_norm(values, self.cfg.zero_sum_norm)
+        norm_vals = apply_utility_norm(values, self.cfg.value_norm_type)
         node.value_sum = norm_vals
         for player in node.game.players_not_at_turn():
             if node.value_sum[player] != 0:
@@ -201,8 +198,6 @@ class NetworkEvalFunc(EvalFunc):
         self.cfg = cfg
         self.device = torch.device('cpu')
         self.temperatures = self.cfg.init_temperatures
-        precision_type = self.cfg.precision if self.cfg.precision is not None else "32-true"
-        self.fabric = Fabric(precision=precision_type)
 
     def _compute(self, node_list: list[Node]) -> None:
         if self.cfg.no_grad:
@@ -261,32 +256,31 @@ class NetworkEvalFunc(EvalFunc):
             inv_perm_list.append(inv_perm)
             index_list.append(len(encoding_list))
         # forward pass for all encodings, but do not exceed max batch size
-        with self.fabric.autocast():
-            if len(encoding_list) <= self.cfg.max_batch_size:
-                enc_tensor = torch.stack(encoding_list, dim=0).to(self.device)
+        if len(encoding_list) <= self.cfg.max_batch_size:
+            enc_tensor = torch.stack(encoding_list, dim=0).to(self.device)
+            temp_tensor = None
+            if self.cfg.temperature_input and self.net.cfg.film_temperature_input:
+                temp_tensor = torch.stack(temp_in_list, dim=0).to(self.device)
+            out_tensor_with_grad = self.net(enc_tensor, temp_tensor)
+            out_tensor = out_tensor_with_grad.cpu()
+            out_tensor = out_tensor.detach()
+        else:
+            start_idx = 0
+            out_tensor_list = []
+            end_idx_list = list(range(self.cfg.max_batch_size, len(encoding_list), self.cfg.max_batch_size))
+            if end_idx_list[-1] < len(encoding_list):
+                end_idx_list.append(len(encoding_list))
+            for end_idx in end_idx_list:
+                enc_tensor = torch.stack(encoding_list[start_idx:end_idx], dim=0).to(self.device)
                 temp_tensor = None
                 if self.cfg.temperature_input and self.net.cfg.film_temperature_input:
-                    temp_tensor = torch.stack(temp_in_list, dim=0).to(self.device)
-                out_tensor_with_grad = self.net(enc_tensor, temp_tensor)
-                out_tensor = out_tensor_with_grad.cpu()
-                out_tensor = out_tensor.detach()
-            else:
-                start_idx = 0
-                out_tensor_list = []
-                end_idx_list = list(range(self.cfg.max_batch_size, len(encoding_list), self.cfg.max_batch_size))
-                if end_idx_list[-1] < len(encoding_list):
-                    end_idx_list.append(len(encoding_list))
-                for end_idx in end_idx_list:
-                    enc_tensor = torch.stack(encoding_list[start_idx:end_idx], dim=0).to(self.device)
-                    temp_tensor = None
-                    if self.cfg.temperature_input and self.net.cfg.film_temperature_input:
-                        temp_tensor = torch.stack(temp_in_list[start_idx:end_idx], dim=0).to(self.device)
-                    out_tensor_part_with_grad = self.net(enc_tensor, temp_tensor)
-                    out_tensor_part = out_tensor_part_with_grad.cpu()
-                    out_tensor_part = out_tensor_part.detach()
-                    out_tensor_list.append(out_tensor_part)
-                    start_idx = end_idx
-                out_tensor = torch.cat(out_tensor_list, dim=0)
+                    temp_tensor = torch.stack(temp_in_list[start_idx:end_idx], dim=0).to(self.device)
+                out_tensor_part_with_grad = self.net(enc_tensor, temp_tensor)
+                out_tensor_part = out_tensor_part_with_grad.cpu()
+                out_tensor_part = out_tensor_part.detach()
+                out_tensor_list.append(out_tensor_part)
+                start_idx = end_idx
+            out_tensor = torch.cat(out_tensor_list, dim=0)
         out_tensor = out_tensor.float()
         # retrieve values/actions
         values = self.net.retrieve_value(out_tensor).numpy()
@@ -350,7 +344,7 @@ class EnemyExploitationEvalFunc(EvalFunc):
         self.temperatures = cfg.init_temperatures
         # player eval function
         player_eval_cfg = NetworkEvalConfig(
-            zero_sum_norm=self.cfg.zero_sum_norm,
+            value_norm_type=self.cfg.value_norm_type,
             net_cfg=cfg.net_cfg,
             init_temperatures=self.cfg.init_temperatures,
             temperature_input=True,
@@ -358,14 +352,13 @@ class EnemyExploitationEvalFunc(EvalFunc):
             obs_temperature_input=self.cfg.obs_temperature_input,
             max_batch_size=self.cfg.max_batch_size,
             random_symmetry=False,
-            precision=self.cfg.precision,
         )
         self.player_eval_func = NetworkEvalFunc(player_eval_cfg)
         # network eval functions for every enemy
         self.enemy_net = get_network_from_file(Path(self.cfg.enemy_net_path))
         self.enemy_net = self.enemy_net.eval()
         enemy_eval_cfg = NetworkEvalConfig(
-            zero_sum_norm=self.cfg.zero_sum_norm,
+            value_norm_type=self.cfg.value_norm_type,
             net_cfg=self.enemy_net.cfg,
             init_temperatures=self.cfg.init_temperatures,
             temperature_input=True,
@@ -373,7 +366,6 @@ class EnemyExploitationEvalFunc(EvalFunc):
             obs_temperature_input=self.cfg.obs_temperature_input,
             max_batch_size=self.cfg.max_batch_size,
             random_symmetry=False,
-            precision=self.cfg.precision,
         )
         self.enemy_eval_func = NetworkEvalFunc(enemy_eval_cfg)
         self.enemy_eval_func.net = self.enemy_net
@@ -408,35 +400,6 @@ class EnemyExploitationEvalFunc(EvalFunc):
         self.player_eval_func(node_list)
 
 
-class OshiZumoEvalFunc(EvalFunc):
-    """
-    Simple evaluation function for the game of oshi-zumo. For more information, see page 44 of
-    https://linkinghub.elsevier.com/retrieve/pii/S0004370216300285
-    """
-
-    def __init__(self, cfg: OshiZumoEvalConfig):
-        super().__init__(cfg)
-        self.cfg = cfg
-
-    def _compute(self, node_list: list[Node]) -> None:
-        for node in node_list:
-            if not isinstance(node.game, OshiZumoGame):
-                raise ValueError(f"OshiZumo eval function only works for the game of oshi zumo")
-            b = 0
-            if node.game.p0_coins > node.game.p1_coins and node.game.zumo_pos >= node.game.cfg.board_size \
-                    or node.game.p0_coins >= node.game.p1_coins and node.game.zumo_pos > node.game.cfg.board_size:
-                b = 1
-            elif node.game.p0_coins < node.game.p1_coins and node.game.zumo_pos <= node.game.cfg.board_size \
-                    or node.game.p0_coins <= node.game.p1_coins and node.game.zumo_pos < node.game.cfg.board_size:
-                b = -1
-            divisor = node.game.cfg.min_bid if node.game.cfg.min_bid > 0 else 1
-            term1 = (node.game.p0_coins - node.game.p1_coins) / divisor
-            term2 = node.game.zumo_pos - node.game.cfg.board_size
-            val0 = np.tanh(b / 2 + 1 / 3 * (term1 + term2))
-            values = np.asarray([val0, -val0], dtype=float)
-            self.update_node(node, values)
-
-
 class RandomRolloutEvalFunc(EvalFunc):
     def __init__(self, cfg: RandomRolloutEvalConfig):
         super().__init__(cfg)
@@ -454,79 +417,20 @@ class RandomRolloutEvalFunc(EvalFunc):
             values = value_sum / self.cfg.num_rollouts
             self.update_node(node, values)
 
-class OvercookedPotentialEvalFunc(EvalFunc):
-    """
-    GameState evaluation function, which does an area control evaluation. Area control is weighted by health.
-    """
-
-    def __init__(self, cfg: OvercookedPotentialEvalConfig):
-        super().__init__(cfg)
-        self.cfg = cfg
-        self.gridworld = OvercookedGridworld.from_layout_name(cfg.overcooked_layout)
-        self.action_manager = MediumLevelActionManager(
-            mdp=self.gridworld,
-            mlam_params=NO_COUNTERS_PARAMS
-        )
-
-    def _compute(self, node_list: list[Node]) -> None:
-        for node in node_list:
-            if not isinstance(node.game, OvercookedGame):
-                raise Exception("Can only use Potential eval with Overcooked game")
-            game: OvercookedGame = node.game
-            potential_unscaled = self.gridworld.potential_function(
-                state=game.env.state,
-                mp=self.action_manager.motion_planner,
-                gamma=node.discount
-            )
-            potential_scaled = potential_unscaled / game.cfg.horizon
-            result = np.asarray([potential_scaled, potential_scaled], dtype=float)
-            self.update_node(node, result)
 
 def get_eval_func_from_cfg(cfg: EvalFuncConfig) -> EvalFunc:
-    if cfg.eval_func_type == EvalFuncType.AREA_CONTROL_EVAL \
-            or cfg.eval_func_type == EvalFuncType.AREA_CONTROL_EVAL.value:
+    if isinstance(cfg, AreaControlEvalConfig):
         return AreaControlEvalFunc(cfg)
-    elif cfg.eval_func_type == EvalFuncType.COPY_CAT_EVAL or cfg.eval_func_type == EvalFuncType.COPY_CAT_EVAL.value:
+    elif isinstance(cfg, CopyCatEvalConfig):
         return CopyCatEvalFunc(cfg)
-    elif cfg.eval_func_type == EvalFuncType.NETWORK_EVAL or cfg.eval_func_type == EvalFuncType.NETWORK_EVAL.value:
+    elif isinstance(cfg, NetworkEvalConfig):
         return NetworkEvalFunc(cfg)
-    elif cfg.eval_func_type == EvalFuncType.DUMMY or cfg.eval_func_type == EvalFuncType.DUMMY.value:
+    elif isinstance(cfg, DummyEvalConfig):
         return DummyEvalFunc(cfg)
-    elif cfg.eval_func_type == EvalFuncType.OSHI_ZUMO or cfg.eval_func_type == EvalFuncType.OSHI_ZUMO.value:
-        return OshiZumoEvalFunc(cfg)
-    elif cfg.eval_func_type == EvalFuncType.ENEMY_EXPLOIT or cfg.eval_func_type == EvalFuncType.ENEMY_EXPLOIT.value:
+    elif isinstance(cfg, EnemyExploitationEvalConfig):
         return EnemyExploitationEvalFunc(cfg)
-    elif cfg.eval_func_type == EvalFuncType.ROLLOUT or cfg.eval_func_type == EvalFuncType.ROLLOUT.value:
+    elif isinstance(cfg, RandomRolloutEvalConfig):
         return RandomRolloutEvalFunc(cfg)
-    elif cfg.eval_func_type == EvalFuncType.POTENTIAL or cfg.eval_func_type == EvalFuncType.POTENTIAL.value:
-        return OvercookedPotentialEvalFunc(cfg)
     else:
         raise ValueError(f"Unknown eval function config: {cfg}")
 
-
-def eval_config_from_structured(cfg) -> EvalFuncConfig:
-    if cfg.eval_func_type == EvalFuncType.AREA_CONTROL_EVAL \
-            or cfg.eval_func_type == EvalFuncType.AREA_CONTROL_EVAL.value:
-        return AreaControlEvalConfig(**cfg)
-    elif cfg.eval_func_type == EvalFuncType.COPY_CAT_EVAL or cfg.eval_func_type == EvalFuncType.COPY_CAT_EVAL.value:
-        return CopyCatEvalConfig(**cfg)
-    elif cfg.eval_func_type == EvalFuncType.NETWORK_EVAL or cfg.eval_func_type == EvalFuncType.NETWORK_EVAL.value:
-        net_cfg = network_config_from_structured(cfg.net_cfg)
-        kwargs = dict(cfg)
-        kwargs.pop("net_cfg")
-        return NetworkEvalConfig(net_cfg=net_cfg, **kwargs)
-    elif cfg.eval_func_type == EvalFuncType.DUMMY or cfg.eval_func_type == EvalFuncType.DUMMY.value:
-        return DummyEvalConfig()
-    elif cfg.eval_func_type == EvalFuncType.OSHI_ZUMO or cfg.eval_func_type == EvalFuncType.OSHI_ZUMO.value:
-        return OshiZumoEvalConfig(**cfg)
-    elif cfg.eval_func_type == EvalFuncType.ENEMY_EXPLOIT or cfg.eval_func_type == EvalFuncType.ENEMY_EXPLOIT.value:
-        net_cfg = network_config_from_structured(cfg.net_cfg)
-        kwargs = dict(cfg)
-        kwargs.pop("net_cfg")
-        return EnemyExploitationEvalConfig(net_cfg=net_cfg, **kwargs)
-    elif cfg.eval_func_type == EvalFuncType.ROLLOUT or cfg.eval_func_type == EvalFuncType.ROLLOUT.value:
-        return RandomRolloutEvalConfig(**cfg)
-    elif cfg.eval_func_type == EvalFuncType.POTENTIAL or cfg.eval_func_type == EvalFuncType.POTENTIAL.value:
-        return OvercookedPotentialEvalConfig(**cfg)
-    else:
-        raise ValueError(f"Unknown eval function config: {cfg}")

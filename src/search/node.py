@@ -3,7 +3,7 @@ from typing import Optional, Any
 
 import numpy as np
 
-from src.game import Game
+from src.game.game import Game
 
 
 class Node:

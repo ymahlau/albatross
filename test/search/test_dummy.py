@@ -1,6 +1,6 @@
 import unittest
 
-from src.game.bootcamp.test_envs_3x3 import perform_choke_2_player
+from src.game.battlesnake.bootcamp.test_envs_3x3 import perform_choke_2_player
 from src.game.initialization import get_game_from_config
 from src.search.config import StandardBackupConfig, DummyEvalConfig, DecoupledUCTSelectionConfig, \
     StandardExtractConfig, MCTSConfig

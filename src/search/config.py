@@ -1,95 +1,60 @@
 import math
+from abc import ABC
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Optional
 
 from src.equilibria.logit import SbrMode
-from src.game.values import ZeroSumNorm
+from src.game.values import UtilityNorm
 from src.network import NetworkConfig
 
 
 # Backup Functions
 ###############################################################
-class BackupFuncType(Enum):
-    STANDARD_BACKUP = 'STANDARD_BACKUP'
-    MAXMIN_BACKUP = 'MAXMIN_BACKUP'
-    MAXAVG_BACKUP = 'MAXAVG_BACKUP'
-    NASH_BACKUP = 'NASH_BACKUP'
-    SBR_BACKUP = 'SBR_BACKUP'
-    RNAD_BACKUP = 'RNAD_BACKUP'
-    EXP3 = 'EXP3'
-    REGRET_MATCHING = 'REGRET_MATCHING'
-    UNCERTAINTY = 'UNCERTAINTY'
-    ENEMY_EXPLOIT = 'ENEMY_EXPLOIT'
-    QSE = 'QSE'
-    QNE = 'QNE'
-    SBRLE = 'SBRLE'
-    EXPLOIT_OTHER = 'EXPLOIT_OTHER'
-    NASH_VS_SBR = 'NASH_VS_SBR'
 
 @dataclass
-class BackupFuncConfig:
-    backup_type: BackupFuncType = MISSING
+class BackupFuncConfig(ABC):
+    pass
 
 @dataclass
 class StandardBackupConfig(BackupFuncConfig):
-    backup_type: BackupFuncType = field(default=BackupFuncType.STANDARD_BACKUP)
+    pass
 
 @dataclass
 class MaxMinBackupConfig(BackupFuncConfig):
-    backup_type: BackupFuncType = field(default=BackupFuncType.MAXMIN_BACKUP)
     factor: float = 4.0
 
 @dataclass
 class MaxAvgBackupConfig(BackupFuncConfig):
-    backup_type: BackupFuncType = field(default=BackupFuncType.MAXAVG_BACKUP)
     factor: float = 4.0
 
 @dataclass
 class NashBackupConfig(BackupFuncConfig):
-    backup_type: BackupFuncType = field(default=BackupFuncType.NASH_BACKUP)
     use_cpp: bool = True
 
 @dataclass
-class SBRBackupConfig(BackupFuncConfig):
-    backup_type: BackupFuncType = field(default=BackupFuncType.SBR_BACKUP)
+class LogitBackupConfig(BackupFuncConfig):
     num_iterations: int = 300
     epsilon: float = 0
-    moving_average_factor: float = 0.9
-    sbr_mode: SbrMode = SbrMode.CUMULATIVE_SUM
+    hp_0: Optional[float] = None  # hyperparameters for logit equilibrium computation. Meaning depends on sbr mode
+    hp_1: Optional[float] = None
+    sbr_mode: SbrMode = SbrMode.MSA
     use_cpp: bool = True
     init_random: bool = True
     init_temperatures: Optional[list[float]] = None  # one temperature for every player
 
 @dataclass
-class RNADBackupConfig(BackupFuncConfig):
-    backup_type: BackupFuncType = field(default=BackupFuncType.RNAD_BACKUP)
-    num_iterations: int = 1000
-    reg_factor: float = 0.2
-
-@dataclass
 class Exp3BackupConfig(BackupFuncConfig):
-    backup_type: BackupFuncType = field(default=BackupFuncType.EXP3)
     avg_backup: bool = False
 
 @dataclass
 class RegretMatchingBackupConfig(BackupFuncConfig):
-    backup_type: BackupFuncType = field(default=BackupFuncType.REGRET_MATCHING)
     avg_backup: bool = False
 
-@dataclass
-class UncertaintyBackupConfig(BackupFuncConfig):
-    backup_type: BackupFuncType = field(default=BackupFuncType.UNCERTAINTY)
-    lr: float = 0.1
-    temperature: float = 2
-    informed: bool = False
-    use_children: bool = True
-
-@dataclass
+@dataclass(kw_only=True)
 class EnemyExploitationBackupConfig(BackupFuncConfig):
-    backup_type: BackupFuncType = field(default=BackupFuncType.ENEMY_EXPLOIT)
+    enemy_net_path: str
     init_temperatures: Optional[list[float]] = None  # length num_player
-    enemy_net_path: str = MISSING
     recompute_policy: bool = False
     exploit_temperature: float = 10
     average_eval: bool = False
@@ -97,20 +62,18 @@ class EnemyExploitationBackupConfig(BackupFuncConfig):
     num_iterations: int = 300
     epsilon: float = 0
     moving_average_factor: float = 0.9
-    sbr_mode: SbrMode = SbrMode.CUMULATIVE_SUM
+    sbr_mode: SbrMode = SbrMode.MSA
     use_cpp: bool = True
     init_random: bool = True
 
 @dataclass
 class QNEBackupConfig(BackupFuncConfig):
-    backup_type: BackupFuncType = field(default=BackupFuncType.QNE)
     leader: int = 0
     num_iterations: int = 1000
     init_temperature: Optional[float] = None
 
 @dataclass
 class QSEBackupConfig(BackupFuncConfig):
-    backup_type: BackupFuncType = field(default=BackupFuncType.QSE)
     leader: int = 0
     num_iterations: int = 9
     grid_size: int = 200
@@ -118,51 +81,36 @@ class QSEBackupConfig(BackupFuncConfig):
 
 @dataclass
 class SBRLEBackupConfig(BackupFuncConfig):
-    backup_type: BackupFuncType = field(default=BackupFuncType.SBRLE)
+    response_temperature: float
     init_temperature: Optional[float] = None
-    response_temperature: float = MISSING
     leader: int = 0
 
 @dataclass
 class ExploitOtherBackupConfig(BackupFuncConfig):
-    backup_type: BackupFuncType = field(default=BackupFuncType.EXPLOIT_OTHER)
-    backup_cfg: BackupFuncConfig = MISSING
+    backup_cfg: BackupFuncConfig
+    worst_case: bool
     leader: int = 0
-    worst_case: bool = MISSING
 
 @dataclass
 class NashVsSBRBackupConfig(BackupFuncConfig):
-    backup_type: BackupFuncType = field(default=BackupFuncType.NASH_VS_SBR)
     init_temperature: Optional[float] = None
     leader: int = 0
 
 
 # Eval Function
 ##################################################
-class EvalFuncType(Enum):
-    AREA_CONTROL_EVAL = 'AREA_CONTROL_EVAL'
-    COPY_CAT_EVAL = 'COPY_CAT_EVAL'
-    NETWORK_EVAL = 'NETWORK_EVAL'
-    DUMMY = 'DUMMY'
-    OSHI_ZUMO = 'OSHI_ZUMO'
-    ENEMY_EXPLOIT = 'ENEMY_EXPLOIT'
-    ROLLOUT = 'ROLLOUT'
-    POTENTIAL = 'POTENTIAL'
 
 @dataclass
-class EvalFuncConfig:
-    zero_sum_norm: ZeroSumNorm = ZeroSumNorm.NONE
-    eval_func_type: EvalFuncType = MISSING
+class EvalFuncConfig(ABC):
+    value_norm_type: UtilityNorm = UtilityNorm.NONE
 
 @dataclass
 class AreaControlEvalConfig(EvalFuncConfig):
-    zero_sum_norm: ZeroSumNorm = field(default=ZeroSumNorm.NONE)
-    eval_func_type: EvalFuncType = field(default=EvalFuncType.AREA_CONTROL_EVAL)
+    value_norm_type: UtilityNorm = field(default=UtilityNorm.NONE)
     health_threshold: float = 1.0
 
 @dataclass
 class CopyCatEvalConfig(EvalFuncConfig):
-    eval_func_type: EvalFuncType = field(default=EvalFuncType.COPY_CAT_EVAL)
     health_threshold: float = 1.0
     hazard_weight: float = 1.0
     tile_weight: float = 1.0
@@ -173,7 +121,6 @@ class CopyCatEvalConfig(EvalFuncConfig):
 
 @dataclass
 class NetworkEvalConfig(EvalFuncConfig):
-    eval_func_type: EvalFuncType = field(default=EvalFuncType.NETWORK_EVAL)
     net_cfg: Optional[NetworkConfig] = None
     init_temperatures: Optional[list[float]] = None
     temperature_input: bool = False
@@ -181,158 +128,114 @@ class NetworkEvalConfig(EvalFuncConfig):
     obs_temperature_input: bool = False
     max_batch_size: int = 128
     random_symmetry: bool = False
-    precision: Optional[str] = None
     no_grad: bool = True
     min_clip_value: float = -1
     max_clip_value: float = 20
 
 @dataclass
 class DummyEvalConfig(EvalFuncConfig):
-    eval_func_type: EvalFuncType = field(default=EvalFuncType.DUMMY)
+    pass
 
-@dataclass
+@dataclass(kw_only=True)
 class EnemyExploitationEvalConfig(EvalFuncConfig):
-    eval_func_type: EvalFuncType = field(default=EvalFuncType.ENEMY_EXPLOIT)
+    enemy_net_path: str
     init_temperatures: Optional[list[float]] = None
     net_cfg: Optional[NetworkConfig] = None
     max_batch_size: int = 128
-    enemy_net_path: str = MISSING
     obs_temperature_input: bool = False
     precision: Optional[str] = None
 
 @dataclass
-class OshiZumoEvalConfig(EvalFuncConfig):
-    eval_func_type: EvalFuncType = field(default=EvalFuncType.OSHI_ZUMO)
-
-@dataclass
 class RandomRolloutEvalConfig(EvalFuncConfig):
-    eval_func_type: EvalFuncType = field(default=EvalFuncType.ROLLOUT)
     num_rollouts: int = 1
 
-@dataclass
-class OvercookedPotentialEvalConfig(EvalFuncConfig):
-    eval_func_type: EvalFuncType = field(default=EvalFuncType.POTENTIAL)
-    overcooked_layout: str = MISSING
 
 # Extraction Function
 ########################################################
-class ExtractFuncType(Enum):
-    STANDARD_EXTRACT = 'STANDARD_EXTRACT'
-    SPECIAL_EXTRACT = 'SPECIAL_EXTRACT'
-    MEAN_POLICY = 'MEAN_POLICY'
-    POLICY = 'POLICY'
-
 @dataclass
-class ExtractFuncConfig:
-    extract_func_type: ExtractFuncType = MISSING
+class ExtractFuncConfig(ABC):
+    pass
 
 @dataclass
 class StandardExtractConfig(ExtractFuncConfig):
-    extract_func_type: ExtractFuncType = field(default=ExtractFuncType.STANDARD_EXTRACT)
+    pass
 
 @dataclass
 class SpecialExtractConfig(ExtractFuncConfig):
-    extract_func_type: ExtractFuncType = field(default=ExtractFuncType.SPECIAL_EXTRACT)
+    pass
     zero_sum_norm: bool = False
 
 @dataclass
 class MeanPolicyExtractConfig(ExtractFuncConfig):
-    extract_func_type: ExtractFuncType = field(default=ExtractFuncType.MEAN_POLICY)
+    pass
 
 @dataclass
 class PolicyExtractConfig(ExtractFuncConfig):
-    extract_func_type: ExtractFuncType = field(default=ExtractFuncType.POLICY)
+    pass
+
 
 # Selection Function
 #########################################################
-class SelectionFuncType(Enum):
-    DECOUPLED_UCT = 'DECOUPLED_UCT'
-    AZ_DECOUPLED = 'AZ_DECOUPLED'
-    SAMPLE = 'SAMPLE'
-    EXP3 = 'EXP3'
-    REGRET_MATCHING = 'REGRET_MATCHING'
-    UNCERTAINTY = 'UNCERTAINTY'
-
 @dataclass
-class SelectionFuncConfig:
-    sel_func_type: SelectionFuncType = MISSING
+class SelectionFuncConfig(ABC):
+    pass
 
 @dataclass
 class DecoupledUCTSelectionConfig(SelectionFuncConfig):
-    sel_func_type: SelectionFuncType = field(default=SelectionFuncType.DECOUPLED_UCT)
     exp_bonus: float = 1.414
 
 @dataclass
 class AlphaZeroDecoupledSelectionConfig(SelectionFuncConfig):
-    sel_func_type: SelectionFuncType = field(default=SelectionFuncType.AZ_DECOUPLED)
     dirichlet_alpha: float = 1.0
     dirichlet_eps: float = 0.25
     exp_bonus: float = 2.0
 
 @dataclass
 class SampleSelectionConfig(SelectionFuncConfig):
-    sel_func_type: SelectionFuncType = field(default=SelectionFuncType.SAMPLE)
     dirichlet_alpha: float = math.inf
     dirichlet_eps: float = 0.25
     temperature: float = 1.0
 
 @dataclass
 class Exp3SelectionConfig(SelectionFuncConfig):
-    sel_func_type: SelectionFuncType = field(default=SelectionFuncType.EXP3)
     altered: bool = False
     random_prob: float = 0.1
 
 @dataclass
 class RegretMatchingSelectionConfig(SelectionFuncConfig):
-    sel_func_type: SelectionFuncType = field(default=SelectionFuncType.REGRET_MATCHING)
     random_prob: float = 0.1
     informed_exp: bool = False
-
-@dataclass
-class UncertaintySelectionConfig(SelectionFuncConfig):
-    sel_func_type: SelectionFuncType = field(default=SelectionFuncType.UNCERTAINTY)
-    informed: bool = False
 
 
 # Search
 #########################################################
-class SearchType(Enum):
-    MCTS = 'MCTS'
-    ITERATIVE_DEEPENING = 'ITERATIVE_DEEPENING'
-    FIXED_DEPTH = 'FIXED_DEPTH'
-    SMOOS = 'SMOOS'
 
 @dataclass
-class SearchConfig:
-    search_type: SearchType = MISSING
-    eval_func_cfg: EvalFuncConfig = MISSING
-    extract_func_cfg: ExtractFuncConfig = MISSING
+class SearchConfig(ABC):
+    eval_func_cfg: EvalFuncConfig
+    extract_func_cfg: ExtractFuncConfig
     discount: float = 0.99
 
-@dataclass
+@dataclass(kw_only=True)
 class MCTSConfig(SearchConfig):
-    search_type: SearchType = field(default=SearchType.MCTS)
-    sel_func_cfg: SelectionFuncConfig = MISSING
-    backup_func_cfg: BackupFuncConfig = MISSING
+    sel_func_cfg: SelectionFuncConfig
+    backup_func_cfg: BackupFuncConfig
     expansion_depth: int = 0  # leaf node is expanded by BFS of this depth (starting at leaf node)
     use_hot_start: bool = True
     optimize_fully_explored: bool = False  # compute statistics if a subtree is fully explored
 
-@dataclass
+@dataclass(kw_only=True)
 class FixedDepthConfig(SearchConfig):
-    search_type: SearchType = field(default=SearchType.FIXED_DEPTH)
+    backup_func_cfg: BackupFuncConfig
     average_eval: bool = False  # value of every node is average of backup and heuristic eval
-    backup_func_cfg: BackupFuncConfig = MISSING
 
-@dataclass
+@dataclass(kw_only=True)
 class IterativeDeepeningConfig(FixedDepthConfig):
-    search_type: SearchType = field(default=SearchType.ITERATIVE_DEEPENING)
-    backup_func_cfg: BackupFuncConfig = MISSING
+    backup_func_cfg: BackupFuncConfig
 
-@dataclass
+@dataclass(kw_only=True)
 class SMOOSConfig(SearchConfig):
-    search_type: SearchType = field(default=SearchType.SMOOS)
-    eval_func_cfg: EvalFuncConfig = MISSING
+    eval_func_cfg: EvalFuncConfig
     extract_func_cfg: ExtractFuncConfig = field(default_factory=lambda: MeanPolicyExtractConfig())
     use_hot_start: bool = True
     exp_factor: float = 0.2

@@ -30,7 +30,7 @@ def compute_logit_equilibrium(
         hp_0: Optional[float] = None,
         hp_1: Optional[float] = None,
         sbr_mode: SbrMode = SbrMode.MSA,
-) -> tuple[list[float], list[np.ndarray], float]:
+) -> tuple[list[float], list[np.ndarray], float]:  # values, policies, policy_error
     num_player = joint_action_value_arr.shape[1]
     # sanity checks
     if len(joint_action_value_arr.shape) != 2:

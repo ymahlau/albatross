@@ -5,7 +5,7 @@ from typing import Optional, Any
 
 import numpy as np
 
-from src.game import Game
+from src.game.game import Game
 from src.search import Search, SearchInfo, Node
 from src.search.config import SMOOSConfig
 from src.search.core import cleanup, expand_node_to_depth

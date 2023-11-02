@@ -2,8 +2,8 @@ import math
 import unittest
 
 from src.game.battlesnake.battlesnake import BattleSnakeGame, DOWN, LEFT, UP
-from src.game.bootcamp.test_envs_7x7 import survive_on_7x7_constrictor_4_player
-from src.game.values import ZeroSumNorm
+from src.game.battlesnake.bootcamp.test_envs_7x7 import survive_on_7x7_constrictor_4_player
+from src.game.values import UtilityNorm
 from src.network.resnet import ResNetConfig7x7
 from src.search.config import NetworkEvalConfig, SampleSelectionConfig, NashBackupConfig, SpecialExtractConfig, \
     MCTSConfig, AlphaZeroDecoupledSelectionConfig, StandardBackupConfig, StandardExtractConfig
@@ -20,7 +20,7 @@ class TestMultiplayer(unittest.TestCase):
         # network
         net_cfg = ResNetConfig7x7(game_cfg=game_cfg)
         # search
-        eval_func_cfg = NetworkEvalConfig(net_cfg=net_cfg, zero_sum_norm=ZeroSumNorm.NONE)
+        eval_func_cfg = NetworkEvalConfig(net_cfg=net_cfg, value_norm_type=UtilityNorm.NONE)
         sel_func_cfg = SampleSelectionConfig(dirichlet_alpha=math.inf, dirichlet_eps=0.25, temperature=1.0)
         backup_func_cfg = NashBackupConfig()
         extraction_func_cfg = SpecialExtractConfig()
@@ -53,7 +53,7 @@ class TestMultiplayer(unittest.TestCase):
         # network
         net_cfg = ResNetConfig7x7(game_cfg=game_cfg, predict_policy=True)
         # search
-        eval_func_cfg = NetworkEvalConfig(net_cfg=net_cfg, zero_sum_norm=ZeroSumNorm.NONE)
+        eval_func_cfg = NetworkEvalConfig(net_cfg=net_cfg, value_norm_type=UtilityNorm.NONE)
         sel_func_cfg = AlphaZeroDecoupledSelectionConfig()
         backup_func_cfg = StandardBackupConfig()
         extraction_func_cfg = StandardExtractConfig()

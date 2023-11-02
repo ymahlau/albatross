@@ -6,9 +6,8 @@ from collections import defaultdict
 import numpy as np
 
 from src.game.actions import add_dirichlet_noise, compute_joint_probs, sample_joint_action
-from src.search.config import SampleSelectionConfig, AlphaZeroDecoupledSelectionConfig, DecoupledUCTSelectionConfig, \
-    SelectionFuncConfig, SelectionFuncType, Exp3SelectionConfig, RegretMatchingSelectionConfig, \
-    UncertaintySelectionConfig
+from src.search.config import AlphaZeroDecoupledSelectionConfig, DecoupledUCTSelectionConfig, \
+    SelectionFuncConfig, Exp3SelectionConfig, RegretMatchingSelectionConfig, SampleSelectionConfig
 from src.search.node import Node
 from src.search.utils import filter_fully_explored
 
@@ -245,67 +244,17 @@ class RegretMatchingSelectionFunc(SelectionFunc):
         return tuple(action_list)
 
 
-class UncertaintySelectionFunc(SelectionFunc):
-    def __init__(self, cfg: UncertaintySelectionConfig):
-        super().__init__(cfg)
-        self.cfg = cfg
-
-    def _select_actions(self, node: Node) -> tuple[int, ...]:
-        action_list = []
-        for player_idx, player in enumerate(node.game.players_at_turn()):
-            available_actions = node.game.available_actions(player)
-            if "policy" in node.info:
-                probs = [node.info["policy"][player_idx, action] for action in available_actions]
-            elif self.cfg.informed:
-                if "net_action_probs" not in node.info:
-                    raise ValueError(f"Cannot use informed selection without network probs")
-                probs = [node.info["net_action_probs"][player_idx, action] for action in available_actions]
-            else:
-                probs = [1 / len(available_actions) for _ in available_actions]
-            probs = np.asarray(probs, dtype=float)
-            probs /= np.sum(probs)  # numerical instabilities
-            a = np.random.choice(available_actions, p=probs)
-            action_list.append(a)
-        return tuple(action_list)
-
-
 def get_sel_func_from_cfg(cfg: SelectionFuncConfig) -> SelectionFunc:
-    if cfg.sel_func_type == SelectionFuncType.DECOUPLED_UCT \
-            or cfg.sel_func_type == SelectionFuncType.DECOUPLED_UCT.value:
+    if isinstance(cfg, DecoupledUCTSelectionConfig):
         return DecoupledUCTSelectionFunc(cfg)
-    elif cfg.sel_func_type == SelectionFuncType.AZ_DECOUPLED \
-            or cfg.sel_func_type == SelectionFuncType.AZ_DECOUPLED.value:
+    elif isinstance(cfg, AlphaZeroDecoupledSelectionConfig):
         return AlphaZeroDecoupledSelectionFunc(cfg)
-    elif cfg.sel_func_type == SelectionFuncType.SAMPLE or cfg.sel_func_type == SelectionFuncType.SAMPLE.value:
-        return SampleSelectionFunc(cfg)
-    elif cfg.sel_func_type == SelectionFuncType.EXP3 or cfg.sel_func_type == SelectionFuncType.EXP3.value:
+    elif isinstance(cfg, Exp3SelectionConfig):
         return Exp3SelectionFunc(cfg)
-    elif cfg.sel_func_type == SelectionFuncType.REGRET_MATCHING \
-            or cfg.sel_func_type == SelectionFuncType.REGRET_MATCHING.value:
+    elif isinstance(cfg, RegretMatchingSelectionConfig):
         return RegretMatchingSelectionFunc(cfg)
-    elif cfg.sel_func_type == SelectionFuncType.UNCERTAINTY \
-            or cfg.sel_func_type == SelectionFuncType.UNCERTAINTY.value:
-        return UncertaintySelectionFunc(cfg)
+    elif isinstance(cfg, SampleSelectionConfig):
+        return SampleSelectionFunc(cfg)
     else:
         raise ValueError(f"Unknown selection config type: {cfg}")
 
-
-def selection_config_from_structured(cfg) -> SelectionFuncConfig:
-    if cfg.sel_func_type == SelectionFuncType.DECOUPLED_UCT \
-            or cfg.sel_func_type == SelectionFuncType.DECOUPLED_UCT.value:
-        return DecoupledUCTSelectionConfig(**cfg)
-    elif cfg.sel_func_type == SelectionFuncType.AZ_DECOUPLED \
-            or cfg.sel_func_type == SelectionFuncType.AZ_DECOUPLED.value:
-        return AlphaZeroDecoupledSelectionConfig(**cfg)
-    elif cfg.sel_func_type == SelectionFuncType.SAMPLE or cfg.sel_func_type == SelectionFuncType.SAMPLE.value:
-        return SampleSelectionConfig(**cfg)
-    elif cfg.sel_func_type == SelectionFuncType.EXP3 or cfg.sel_func_type == SelectionFuncType.EXP3.value:
-        return Exp3SelectionConfig(**cfg)
-    elif cfg.sel_func_type == SelectionFuncType.REGRET_MATCHING \
-            or cfg.sel_func_type == SelectionFuncType.REGRET_MATCHING.value:
-        return RegretMatchingSelectionConfig(**cfg)
-    elif cfg.sel_func_type == SelectionFuncType.UNCERTAINTY \
-            or cfg.sel_func_type == SelectionFuncType.UNCERTAINTY.value:
-        return UncertaintySelectionConfig(**cfg)
-    else:
-        raise ValueError(f"Unknown selection config type: {cfg}")

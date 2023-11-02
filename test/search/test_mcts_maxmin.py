@@ -2,15 +2,15 @@ import unittest
 
 from src.game.actions import sample_individual_actions
 from src.game.battlesnake.battlesnake import BattleSnakeGame
-from src.game.bootcamp.test_envs_3x3 import perform_choke_2_player
-from src.game.bootcamp.test_envs_5x5 import perform_choke_5x5_4_player
-from src.game.values import ZeroSumNorm
+from src.game.battlesnake.bootcamp.test_envs_3x3 import perform_choke_2_player
+from src.game.battlesnake.bootcamp.test_envs_5x5 import perform_choke_5x5_4_player
+from src.game.values import UtilityNorm
 from src.network.resnet import ResNetConfig3x3, ResNetConfig5x5
 from src.search.backup_func import MaxMinBackupConfig
+from src.search.config import SampleSelectionConfig
 from src.search.eval_func import AreaControlEvalConfig, NetworkEvalConfig
 from src.search.extraction_func import SpecialExtractConfig
 from src.search.mcts import MCTS, MCTSConfig
-from src.search.sel_func import SampleSelectionConfig
 
 
 class TestMaxMin(unittest.TestCase):
@@ -83,7 +83,7 @@ class TestMaxMin(unittest.TestCase):
             env = BattleSnakeGame(gc)
             sel_func_cfg = SampleSelectionConfig()
             net_config = ResNetConfig3x3(game_cfg=gc)
-            eval_func_cfg = NetworkEvalConfig(net_cfg=net_config, zero_sum_norm=ZeroSumNorm.LINEAR)
+            eval_func_cfg = NetworkEvalConfig(net_cfg=net_config, value_norm_type=UtilityNorm.ZERO_SUM)
             backup_func_cfg = MaxMinBackupConfig()
             extract_func_cfg = SpecialExtractConfig()
             mcts_cfg = MCTSConfig(
@@ -114,7 +114,7 @@ class TestMaxMin(unittest.TestCase):
             env = BattleSnakeGame(gc)
             sel_func_cfg = SampleSelectionConfig()
             net_config = ResNetConfig5x5(game_cfg=gc)
-            eval_func_cfg = NetworkEvalConfig(net_cfg=net_config, zero_sum_norm=ZeroSumNorm.NONE)
+            eval_func_cfg = NetworkEvalConfig(net_cfg=net_config, value_norm_type=UtilityNorm.NONE)
             backup_func_cfg = MaxMinBackupConfig()
             extract_func_cfg = SpecialExtractConfig()
             mcts_cfg = MCTSConfig(

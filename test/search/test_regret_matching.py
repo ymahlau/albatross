@@ -1,7 +1,7 @@
 import unittest
 
 from src.game.battlesnake.battlesnake import BattleSnakeGame
-from src.game.bootcamp.test_envs_3x3 import perform_choke_2_player
+from src.game.battlesnake.bootcamp.test_envs_3x3 import perform_choke_2_player
 from src.network.resnet import ResNetConfig3x3
 from src.search.config import AreaControlEvalConfig, MCTSConfig, MeanPolicyExtractConfig, \
     RegretMatchingSelectionConfig, RegretMatchingBackupConfig, NetworkEvalConfig
@@ -179,4 +179,3 @@ class TestRegretMatching(unittest.TestCase):
             print(f"{values=}")
             print(f"{action_probs=}")
             self.assertFalse(info.fully_explored)
-

@@ -1,7 +1,7 @@
 import unittest
 
 from src.game.battlesnake.battlesnake import BattleSnakeGame
-from src.game.bootcamp.test_envs_3x3 import perform_choke_2_player
+from src.game.battlesnake.bootcamp.test_envs_3x3 import perform_choke_2_player
 from src.search.config import AreaControlEvalConfig, FixedDepthConfig, SpecialExtractConfig, QNEBackupConfig
 from src.search.initialization import get_search_from_config
 
