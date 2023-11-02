@@ -30,7 +30,7 @@ class TestRegretMatching(unittest.TestCase):
         mcts = MCTS(mcts_cfg)
         for _ in range(3):
             env.render()
-            values, action_probs, info = mcts(env, iterations=200)
+            values, action_probs, info = mcts(env, iterations=500)
             print(f"{values=}")
             print(f"{action_probs=}")
             self.assertFalse(info.fully_explored)
