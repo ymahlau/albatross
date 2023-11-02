@@ -29,4 +29,4 @@ jobs:
       - name: Compile C++ Library
         run: cd "src/cpp/alglib"; sh linux_compile.sh; cd ".."; sh linux_compile.sh; cd "../.."
       - name: Run pytest
-        run: export PYTHONPATH="/home/runner/work/battlesnake_rl/battlesnake_rl"; $CONDA/bin/pytest test
+        run: export PYTHONPATH="/home/runner/work/albatross/albatross"; $CONDA/bin/pytest test
