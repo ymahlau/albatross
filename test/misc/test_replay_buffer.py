@@ -2,7 +2,7 @@ import dataclasses
 import unittest
 from pathlib import Path
 
-import torch
+import numpy as np
 
 from src.misc.replay_buffer import ReplayBufferConfig, ReplayBuffer, BufferInputSample
 
@@ -21,14 +21,14 @@ class TestReplayBuffer(unittest.TestCase):
 
         data1_size = 6
         data1 = BufferInputSample(
-            obs=torch.ones(size=(data1_size, 5, 3), dtype=torch.float32),
-            policies=torch.ones(size=(data1_size, 2), dtype=torch.float32),
-            values=torch.ones(size=(data1_size, 1), dtype=torch.float32),
-            game_lengths=torch.ones(size=(data1_size, 1), dtype=torch.float32),
-            turns=torch.ones(size=(data1_size, 1), dtype=torch.float32),
-            player=torch.ones(size=(data1_size, 1), dtype=torch.float32),
-            symmetry=torch.ones(size=(data1_size, 1), dtype=torch.float32),
-            temperature=torch.ones(size=(data1_size, 1), dtype=torch.float32),
+            obs=np.ones(shape=(data1_size, 5, 3), dtype=float),
+            policies=np.ones(shape=(data1_size, 2), dtype=float),
+            values=np.ones(shape=(data1_size, 1), dtype=float),
+            game_lengths=np.ones(shape=(data1_size, 1), dtype=float),
+            turns=np.ones(shape=(data1_size, 1), dtype=float),
+            player=np.ones(shape=(data1_size, 1), dtype=float),
+            symmetry=np.ones(shape=(data1_size, 1), dtype=float),
+            temperature=np.ones(shape=(data1_size, 1), dtype=float),
         )
         buffer.put(data1)
         self.assertFalse(buffer.full())
@@ -46,14 +46,14 @@ class TestReplayBuffer(unittest.TestCase):
 
         data2_size = 4
         data2 = BufferInputSample(
-            obs=torch.ones(size=(data2_size, 5, 3), dtype=torch.float32),
-            policies=torch.ones(size=(data2_size, 2), dtype=torch.float32),
-            values=torch.ones(size=(data2_size, 1), dtype=torch.float32),
-            game_lengths=torch.ones(size=(data2_size, 1), dtype=torch.float32),
-            turns=torch.ones(size=(data2_size, 1), dtype=torch.float32),
-            player=torch.ones(size=(data2_size, 1), dtype=torch.float32),
-            symmetry=torch.ones(size=(data2_size, 1), dtype=torch.float32),
-            temperature=torch.ones(size=(data2_size, 1), dtype=torch.float32),
+            obs=np.ones(shape=(data2_size, 5, 3), dtype=float),
+            policies=np.ones(shape=(data2_size, 2), dtype=float),
+            values=np.ones(shape=(data2_size, 1), dtype=float),
+            game_lengths=np.ones(shape=(data2_size, 1), dtype=float),
+            turns=np.ones(shape=(data2_size, 1), dtype=float),
+            player=np.ones(shape=(data2_size, 1), dtype=float),
+            symmetry=np.ones(shape=(data2_size, 1), dtype=float),
+            temperature=np.ones(shape=(data2_size, 1), dtype=float),
         )
         buffer.put(data2)
         self.assertTrue(buffer.full())
@@ -76,14 +76,14 @@ class TestReplayBuffer(unittest.TestCase):
 
         data1_size = 10
         data1 = BufferInputSample(
-            obs=torch.ones(size=(data1_size, 5, 3), dtype=torch.float32),
-            policies=torch.ones(size=(data1_size, 2), dtype=torch.float32),
-            values=torch.ones(size=(data1_size, 1), dtype=torch.float32),
-            game_lengths=torch.ones(size=(data1_size, 1), dtype=torch.float32),
-            turns=torch.ones(size=(data1_size, 1), dtype=torch.float32),
-            player=torch.ones(size=(data1_size, 1), dtype=torch.float32),
-            symmetry=torch.ones(size=(data1_size, 1), dtype=torch.float32),
-            temperature=torch.ones(size=(data1_size, 1), dtype=torch.float32),
+            obs=np.ones(shape=(data1_size, 5, 3), dtype=float),
+            policies=np.ones(shape=(data1_size, 2), dtype=float),
+            values=np.ones(shape=(data1_size, 1), dtype=float),
+            game_lengths=np.ones(shape=(data1_size, 1), dtype=float),
+            turns=np.ones(shape=(data1_size, 1), dtype=float),
+            player=np.ones(shape=(data1_size, 1), dtype=float),
+            symmetry=np.ones(shape=(data1_size, 1), dtype=float),
+            temperature=np.ones(shape=(data1_size, 1), dtype=float),
         )
         buffer.put(data1)
         self.assertTrue(buffer.full())
@@ -108,14 +108,14 @@ class TestReplayBuffer(unittest.TestCase):
 
         data1_size = 6
         data1 = BufferInputSample(
-            obs=torch.ones(size=(data1_size, 5, 3), dtype=torch.float32),
-            policies=torch.ones(size=(data1_size, 2), dtype=torch.float32),
-            values=torch.ones(size=(data1_size, 1), dtype=torch.float32),
-            game_lengths=torch.ones(size=(data1_size, 1), dtype=torch.float32),
-            turns=torch.ones(size=(data1_size, 1), dtype=torch.float32),
-            player=torch.ones(size=(data1_size, 1), dtype=torch.float32),
-            symmetry=torch.ones(size=(data1_size, 1), dtype=torch.float32),
-            temperature=torch.ones(size=(data1_size, 1), dtype=torch.float32),
+            obs=np.ones(shape=(data1_size, 5, 3), dtype=float),
+            policies=np.ones(shape=(data1_size, 2), dtype=float),
+            values=np.ones(shape=(data1_size, 1), dtype=float),
+            game_lengths=np.ones(shape=(data1_size, 1), dtype=float),
+            turns=np.ones(shape=(data1_size, 1), dtype=float),
+            player=np.ones(shape=(data1_size, 1), dtype=float),
+            symmetry=np.ones(shape=(data1_size, 1), dtype=float),
+            temperature=np.ones(shape=(data1_size, 1), dtype=float),
         )
         buffer.put(data1)
         self.assertFalse(buffer.full())
@@ -142,14 +142,14 @@ class TestReplayBuffer(unittest.TestCase):
 
         data1_size = 4
         data1 = BufferInputSample(
-            obs=torch.ones(size=(data1_size, 5, 3), dtype=torch.float32),
-            policies=torch.ones(size=(data1_size, 2), dtype=torch.float32),
-            values=torch.ones(size=(data1_size, 1), dtype=torch.float32),
-            game_lengths=torch.ones(size=(data1_size, 1), dtype=torch.float32),
-            turns=torch.ones(size=(data1_size, 1), dtype=torch.float32),
-            player=torch.ones(size=(data1_size, 1), dtype=torch.float32),
-            symmetry=torch.ones(size=(data1_size, 1), dtype=torch.float32),
-            temperature=torch.ones(size=(data1_size, 1), dtype=torch.float32),
+            obs=np.ones(shape=(data1_size, 5, 3), dtype=float),
+            policies=np.ones(shape=(data1_size, 2), dtype=float),
+            values=np.ones(shape=(data1_size, 1), dtype=float),
+            game_lengths=np.ones(shape=(data1_size, 1), dtype=float),
+            turns=np.ones(shape=(data1_size, 1), dtype=float),
+            player=np.ones(shape=(data1_size, 1), dtype=float),
+            symmetry=np.ones(shape=(data1_size, 1), dtype=float),
+            temperature=np.ones(shape=(data1_size, 1), dtype=float),
         )
 
         buffer.put(data1)
@@ -157,7 +157,7 @@ class TestReplayBuffer(unittest.TestCase):
         buffer2 = ReplayBuffer.from_saved_file(save_path)
         b_dict = dataclasses.asdict(buffer.content)
         for k, v in dataclasses.asdict(buffer2.content).items():
-            if not isinstance(v, torch.Tensor):
+            if not isinstance(v, np.ndarray):
                 continue
             self.assertTrue((v == b_dict[k]).all().item())
 
@@ -168,25 +168,25 @@ class TestReplayBuffer(unittest.TestCase):
 
         data1_size = 4
         data1 = BufferInputSample(
-            obs=torch.ones(size=(data1_size, 5, 3), dtype=torch.float32),
-            policies=torch.ones(size=(data1_size, 2), dtype=torch.float32),
-            values=torch.ones(size=(data1_size, 1), dtype=torch.float32),
-            game_lengths=torch.ones(size=(data1_size, 1), dtype=torch.float32),
-            turns=torch.ones(size=(data1_size, 1), dtype=torch.float32),
-            player=torch.ones(size=(data1_size, 1), dtype=torch.float32),
-            symmetry=torch.ones(size=(data1_size, 1), dtype=torch.float32),
-            temperature=torch.ones(size=(data1_size, 2), dtype=torch.float32),
+            obs=np.ones(shape=(data1_size, 5, 3), dtype=float),
+            policies=np.ones(shape=(data1_size, 2), dtype=float),
+            values=np.ones(shape=(data1_size, 1), dtype=float),
+            game_lengths=np.ones(shape=(data1_size, 1), dtype=float),
+            turns=np.ones(shape=(data1_size, 1), dtype=float),
+            player=np.ones(shape=(data1_size, 1), dtype=float),
+            symmetry=np.ones(shape=(data1_size, 1), dtype=float),
+            temperature=np.ones(shape=(data1_size, 2), dtype=float),
         )
         data2_size = 4
         data2 = BufferInputSample(
-            obs=torch.ones(size=(data2_size, 5, 3), dtype=torch.float32) + 1,
-            policies=torch.ones(size=(data2_size, 2), dtype=torch.float32) + 1,
-            values=torch.ones(size=(data2_size, 1), dtype=torch.float32) + 1,
-            game_lengths=torch.ones(size=(data2_size, 1), dtype=torch.float32) + 1,
-            turns=torch.ones(size=(data2_size, 1), dtype=torch.float32) + 1,
-            player=torch.ones(size=(data2_size, 1), dtype=torch.float32) + 1,
-            symmetry=torch.ones(size=(data2_size, 1), dtype=torch.float32) + 1,
-            temperature=torch.ones(size=(data2_size, 2), dtype=torch.float32) + 1,
+            obs=np.ones(shape=(data2_size, 5, 3), dtype=float) + 1,
+            policies=np.ones(shape=(data2_size, 2), dtype=float) + 1,
+            values=np.ones(shape=(data2_size, 1), dtype=float) + 1,
+            game_lengths=np.ones(shape=(data2_size, 1), dtype=float) + 1,
+            turns=np.ones(shape=(data2_size, 1), dtype=float) + 1,
+            player=np.ones(shape=(data2_size, 1), dtype=float) + 1,
+            symmetry=np.ones(shape=(data2_size, 1), dtype=float) + 1,
+            temperature=np.ones(shape=(data2_size, 2), dtype=float) + 1,
         )
         buffer.put(data1)
         buffer.put(data2)
@@ -200,25 +200,25 @@ class TestReplayBuffer(unittest.TestCase):
         buffer = ReplayBuffer(buffer_cfg)
         data1_size = 4
         data1 = BufferInputSample(
-            obs=torch.ones(size=(data1_size, 5, 3), dtype=torch.float32),
-            policies=torch.ones(size=(data1_size, 2), dtype=torch.float32),
-            values=torch.ones(size=(data1_size, 1), dtype=torch.float32),
-            game_lengths=torch.ones(size=(data1_size, 1), dtype=torch.float32),
-            turns=torch.ones(size=(data1_size, 1), dtype=torch.float32),
-            player=torch.ones(size=(data1_size, 1), dtype=torch.float32),
-            symmetry=torch.ones(size=(data1_size, 1), dtype=torch.float32),
-            temperature=torch.ones(size=(data1_size, 1), dtype=torch.float32),
+            obs=np.ones(shape=(data1_size, 5, 3), dtype=float),
+            policies=np.ones(shape=(data1_size, 2), dtype=float),
+            values=np.ones(shape=(data1_size, 1), dtype=float),
+            game_lengths=np.ones(shape=(data1_size, 1), dtype=float),
+            turns=np.ones(shape=(data1_size, 1), dtype=float),
+            player=np.ones(shape=(data1_size, 1), dtype=float),
+            symmetry=np.ones(shape=(data1_size, 1), dtype=float),
+            temperature=np.ones(shape=(data1_size, 1), dtype=float),
         )
         data2_size = 4
         data2 = BufferInputSample(
-            obs=torch.ones(size=(data2_size, 5, 3), dtype=torch.float32) + 1,
-            policies=torch.ones(size=(data2_size, 2), dtype=torch.float32) + 1,
-            values=torch.ones(size=(data2_size, 1), dtype=torch.float32) + 1,
-            game_lengths=torch.ones(size=(data2_size, 1), dtype=torch.float32) + 1,
-            turns=torch.ones(size=(data2_size, 1), dtype=torch.float32) + 1,
-            player=torch.ones(size=(data2_size, 1), dtype=torch.float32) + 1,
-            symmetry=torch.ones(size=(data2_size, 1), dtype=torch.float32) + 1,
-            temperature=torch.ones(size=(data2_size, 1), dtype=torch.float32) + 1,
+            obs=np.ones(shape=(data2_size, 5, 3), dtype=float) + 1,
+            policies=np.ones(shape=(data2_size, 2), dtype=float) + 1,
+            values=np.ones(shape=(data2_size, 1), dtype=float) + 1,
+            game_lengths=np.ones(shape=(data2_size, 1), dtype=float) + 1,
+            turns=np.ones(shape=(data2_size, 1), dtype=float) + 1,
+            player=np.ones(shape=(data2_size, 1), dtype=float) + 1,
+            symmetry=np.ones(shape=(data2_size, 1), dtype=float) + 1,
+            temperature=np.ones(shape=(data2_size, 1), dtype=float) + 1,
         )
         buffer.put(data1)
         buffer.put(data2)
@@ -232,25 +232,25 @@ class TestReplayBuffer(unittest.TestCase):
         buffer = ReplayBuffer(buffer_cfg)
         data1_size = 4
         data1 = BufferInputSample(
-            obs=torch.ones(size=(data1_size, 5, 3), dtype=torch.float32),
-            policies=torch.ones(size=(data1_size, 2), dtype=torch.float32),
-            values=torch.ones(size=(data1_size, 1), dtype=torch.float32),
-            game_lengths=torch.ones(size=(data1_size, 1), dtype=torch.float32),
-            turns=torch.ones(size=(data1_size, 1), dtype=torch.float32),
-            player=torch.ones(size=(data1_size, 1), dtype=torch.float32),
-            symmetry=torch.ones(size=(data1_size, 1), dtype=torch.float32),
-            temperature=torch.ones(size=(data1_size, 1), dtype=torch.float32),
+            obs=np.ones(shape=(data1_size, 5, 3), dtype=float),
+            policies=np.ones(shape=(data1_size, 2), dtype=float),
+            values=np.ones(shape=(data1_size, 1), dtype=float),
+            game_lengths=np.ones(shape=(data1_size, 1), dtype=float),
+            turns=np.ones(shape=(data1_size, 1), dtype=float),
+            player=np.ones(shape=(data1_size, 1), dtype=float),
+            symmetry=np.ones(shape=(data1_size, 1), dtype=float),
+            temperature=np.ones(shape=(data1_size, 1), dtype=float),
         )
         data2_size = 4
         data2 = BufferInputSample(
-            obs=torch.ones(size=(data2_size, 5, 3), dtype=torch.float32) + 1,
-            policies=torch.ones(size=(data2_size, 2), dtype=torch.float32) + 1,
-            values=torch.ones(size=(data2_size, 1), dtype=torch.float32) + 1,
-            game_lengths=torch.ones(size=(data2_size, 1), dtype=torch.float32) + 1,
-            turns=torch.ones(size=(data2_size, 1), dtype=torch.float32) + 1,
-            player=torch.ones(size=(data2_size, 1), dtype=torch.float32) + 1,
-            symmetry=torch.ones(size=(data2_size, 1), dtype=torch.float32) + 1,
-            temperature=torch.ones(size=(data2_size, 1), dtype=torch.float32) + 1,
+            obs=np.ones(shape=(data2_size, 5, 3), dtype=float) + 1,
+            policies=np.ones(shape=(data2_size, 2), dtype=float) + 1,
+            values=np.ones(shape=(data2_size, 1), dtype=float) + 1,
+            game_lengths=np.ones(shape=(data2_size, 1), dtype=float) + 1,
+            turns=np.ones(shape=(data2_size, 1), dtype=float) + 1,
+            player=np.ones(shape=(data2_size, 1), dtype=float) + 1,
+            symmetry=np.ones(shape=(data2_size, 1), dtype=float) + 1,
+            temperature=np.ones(shape=(data2_size, 1), dtype=float) + 1,
         )
         buffer.put(data1)
         buffer.put(data2)
@@ -265,25 +265,25 @@ class TestReplayBuffer(unittest.TestCase):
         buffer = ReplayBuffer(buffer_cfg)
         data1_size = 4
         data1 = BufferInputSample(
-            obs=torch.ones(size=(data1_size, 5, 3), dtype=torch.float32),
-            policies=torch.ones(size=(data1_size, 2), dtype=torch.float32),
-            values=torch.ones(size=(data1_size, 1), dtype=torch.float32),
-            game_lengths=torch.ones(size=(data1_size, 1), dtype=torch.float32),
-            turns=torch.ones(size=(data1_size, 1), dtype=torch.float32),
-            player=torch.ones(size=(data1_size, 1), dtype=torch.float32),
-            symmetry=torch.ones(size=(data1_size, 1), dtype=torch.float32),
-            temperature=torch.ones(size=(data1_size, 2), dtype=torch.float32),
+            obs=np.ones(shape=(data1_size, 5, 3), dtype=float),
+            policies=np.ones(shape=(data1_size, 2), dtype=float),
+            values=np.ones(shape=(data1_size, 1), dtype=float),
+            game_lengths=np.ones(shape=(data1_size, 1), dtype=float),
+            turns=np.ones(shape=(data1_size, 1), dtype=float),
+            player=np.ones(shape=(data1_size, 1), dtype=float),
+            symmetry=np.ones(shape=(data1_size, 1), dtype=float),
+            temperature=np.ones(shape=(data1_size, 2), dtype=float),
         )
         data2_size = 4
         data2 = BufferInputSample(
-            obs=torch.ones(size=(data2_size, 5, 3), dtype=torch.float32) + 1,
-            policies=torch.ones(size=(data2_size, 2), dtype=torch.float32) + 1,
-            values=torch.ones(size=(data2_size, 1), dtype=torch.float32) + 1,
-            game_lengths=torch.ones(size=(data2_size, 1), dtype=torch.float32) + 1,
-            turns=torch.ones(size=(data2_size, 1), dtype=torch.float32) + 1,
-            player=torch.ones(size=(data2_size, 1), dtype=torch.float32) + 1,
-            symmetry=torch.ones(size=(data2_size, 1), dtype=torch.float32) + 1,
-            temperature=torch.ones(size=(data2_size, 2), dtype=torch.float32) + 1,
+            obs=np.ones(shape=(data2_size, 5, 3), dtype=float) + 1,
+            policies=np.ones(shape=(data2_size, 2), dtype=float) + 1,
+            values=np.ones(shape=(data2_size, 1), dtype=float) + 1,
+            game_lengths=np.ones(shape=(data2_size, 1), dtype=float) + 1,
+            turns=np.ones(shape=(data2_size, 1), dtype=float) + 1,
+            player=np.ones(shape=(data2_size, 1), dtype=float) + 1,
+            symmetry=np.ones(shape=(data2_size, 1), dtype=float) + 1,
+            temperature=np.ones(shape=(data2_size, 2), dtype=float) + 1,
         )
         buffer.put(data1)
         buffer.put(data2)

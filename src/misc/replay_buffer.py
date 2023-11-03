@@ -1,13 +1,12 @@
 import copy
 import dataclasses
 import math
+import pickle
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Optional
 
 import numpy as np
-import torch
-from torch.utils.data import Dataset
 
 
 @dataclass
@@ -25,39 +24,39 @@ class BufferOutputSample:  # data structure used when sampling from buffer
     """
     shape is (n, *channel_shape)
     """
-    obs: torch.Tensor
-    values: torch.Tensor
-    policies: torch.Tensor
-    game_lengths: torch.Tensor
-    temperature: Optional[torch.Tensor]
+    obs: np.ndarray
+    values: np.ndarray
+    policies: np.ndarray
+    game_lengths: np.ndarray
+    temperature: Optional[np.ndarray]
 
 
 @dataclass
 class BufferInputSample:  # data structure used for inserting new data into buffer
     # shape: (n, channel_shape)
-    obs: torch.Tensor  # channels shape: obs_shape
-    values: torch.Tensor  # channels shape: 1
-    policies: torch.Tensor  # channels shape: num_actions
-    game_lengths: torch.Tensor  # channels shape: 1
-    turns: torch.Tensor  # channels shape: 1
-    player: torch.Tensor  # channels shape: 1
-    symmetry: torch.Tensor  # channels shape: 1
-    temperature: Optional[torch.Tensor]  # channel shape: 1 or num_player-1
+    obs: np.ndarray  # channels shape: obs_shape
+    values: np.ndarray  # channels shape: 1
+    policies: np.ndarray  # channels shape: num_actions
+    game_lengths: np.ndarray  # channels shape: 1
+    turns: np.ndarray  # channels shape: 1
+    player: np.ndarray  # channels shape: 1
+    symmetry: np.ndarray  # channels shape: 1
+    temperature: Optional[np.ndarray]  # channel shape: 1 or num_player-1
 
 
 @dataclass
 class ReplayBufferContent:
     # data channels: observation, value, policy, game length, sbr-temperature
-    dc_obs: torch.Tensor
-    dc_val: torch.Tensor
-    dc_pol: torch.Tensor
-    dc_len: torch.Tensor
-    dc_temp: torch.Tensor
+    dc_obs: np.ndarray
+    dc_val: np.ndarray
+    dc_pol: np.ndarray
+    dc_len: np.ndarray
+    dc_temp: np.ndarray
     # metadata channels: game_id, turns_played, player, symmetry
-    mc_ids: torch.Tensor
-    mc_turns: torch.Tensor
-    mc_player: torch.Tensor
-    mc_symmetry: torch.Tensor
+    mc_ids: np.ndarray
+    mc_turns: np.ndarray
+    mc_player: np.ndarray
+    mc_symmetry: np.ndarray
     # control channels: start indices, offsets
     capacity_reached: bool
     idx: int
@@ -74,22 +73,22 @@ class ReplayBufferContent:
         obs_channel_shape = tuple([capacity] + list(obs_shape))
         temp_channel_size = 1 if single_temperature else num_players - 1
         return cls(
-            dc_obs=torch.zeros(size=obs_channel_shape, dtype=torch.float32, requires_grad=False),
-            dc_val=torch.zeros(size=(capacity, 1), dtype=torch.float32, requires_grad=False),
-            dc_pol=torch.zeros(size=(capacity, num_actions), dtype=torch.float32, requires_grad=False),
-            dc_len=torch.zeros(size=(capacity, 1), dtype=torch.float32, requires_grad=False),
-            mc_ids=torch.zeros(size=(capacity, 1), dtype=torch.float32, requires_grad=False),
-            mc_turns=torch.zeros(size=(capacity, 1), dtype=torch.float32, requires_grad=False),
-            mc_player=torch.zeros(size=(capacity, 1), dtype=torch.float32, requires_grad=False),
-            mc_symmetry=torch.zeros(size=(capacity, 1), dtype=torch.float32, requires_grad=False),
+            dc_obs=np.zeros(shape=obs_channel_shape, dtype=float),
+            dc_val=np.zeros(shape=(capacity, 1), dtype=float),
+            dc_pol=np.zeros(shape=(capacity, num_actions), dtype=float),
+            dc_len=np.zeros(shape=(capacity, 1), dtype=float),
+            mc_ids=np.zeros(shape=(capacity, 1), dtype=float),
+            mc_turns=np.zeros(shape=(capacity, 1), dtype=float),
+            mc_player=np.zeros(shape=(capacity, 1), dtype=float),
+            mc_symmetry=np.zeros(shape=(capacity, 1), dtype=float),
             capacity_reached=False,
             idx=0,
             game_idx=0,
-            dc_temp=torch.zeros(size=(capacity, temp_channel_size), dtype=torch.float32, requires_grad=False),
+            dc_temp=np.zeros(shape=(capacity, temp_channel_size), dtype=float),
         )
 
 
-class ReplayBuffer(Dataset):
+class ReplayBuffer:
     """
     Replay buffer for experience replay.
     """
@@ -121,11 +120,11 @@ class ReplayBuffer(Dataset):
     def __len__(self):
         return self.cfg.capacity if self.content.capacity_reached else self.content.idx
 
-    def __getitem__(self, index: int) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    def __getitem__(self, index: int) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         obs = self.content.dc_obs[index]
-        values=self.content.dc_val[index]
-        policies=self.content.dc_pol[index]
-        game_lengths=self.content.dc_len[index]
+        values = self.content.dc_val[index]
+        policies = self.content.dc_pol[index]
+        game_lengths = self.content.dc_len[index]
         return values, policies, obs, game_lengths
 
     def get_grouped(self, index: int) -> BufferOutputSample:
@@ -149,18 +148,18 @@ class ReplayBuffer(Dataset):
             if sample_size % 2 != 0:
                 raise ValueError(f"sample size needs to be even for grouped sampling")
             sampled_idx = np.random.choice(math.floor(len(self) / 2), size=math.floor(sample_size / 2), replace=False)
-            obs = torch.stack([self.content.dc_obs[2 * sampled_idx], self.content.dc_obs[2 * sampled_idx + 1]])
-            obs = torch.reshape(obs, [2 * obs.shape[1], *self.cfg.obs_shape])
-            values = torch.stack([self.content.dc_val[2 * sampled_idx], self.content.dc_val[2 * sampled_idx + 1]])
-            values = torch.reshape(values, [2 * values.shape[1], 1])
-            policies = torch.stack([self.content.dc_pol[2 * sampled_idx], self.content.dc_pol[2 * sampled_idx + 1]])
-            policies = torch.reshape(policies, [2 * policies.shape[1], self.cfg.num_actions])
-            lengths = torch.stack([self.content.dc_len[2 * sampled_idx], self.content.dc_len[2 * sampled_idx + 1]])
-            lengths = torch.reshape(lengths, [2 * lengths.shape[1], 1])
+            obs = np.stack([self.content.dc_obs[2 * sampled_idx], self.content.dc_obs[2 * sampled_idx + 1]])
+            obs = np.reshape(obs, [2 * obs.shape[1], *self.cfg.obs_shape])
+            values = np.stack([self.content.dc_val[2 * sampled_idx], self.content.dc_val[2 * sampled_idx + 1]])
+            values = np.reshape(values, [2 * values.shape[1], 1])
+            policies = np.stack([self.content.dc_pol[2 * sampled_idx], self.content.dc_pol[2 * sampled_idx + 1]])
+            policies = np.reshape(policies, [2 * policies.shape[1], self.cfg.num_actions])
+            lengths = np.stack([self.content.dc_len[2 * sampled_idx], self.content.dc_len[2 * sampled_idx + 1]])
+            lengths = np.reshape(lengths, [2 * lengths.shape[1], 1])
             temps = None
             if temperature:
-                temps = torch.stack([self.content.dc_temp[2 * sampled_idx], self.content.dc_temp[2 * sampled_idx + 1]])
-                temps = torch.reshape(temps, [2 * temps.shape[1], self.temp_channel_size])
+                temps = np.stack([self.content.dc_temp[2 * sampled_idx], self.content.dc_temp[2 * sampled_idx + 1]])
+                temps = np.reshape(temps, [2 * temps.shape[1], self.temp_channel_size])
             sample = BufferOutputSample(
                 obs=obs,
                 values=values,
@@ -236,14 +235,16 @@ class ReplayBuffer(Dataset):
         content_dict['cfg'] = self.cfg
         if self.game_cfg is not None:
             content_dict['game_cfg'] = self.game_cfg
-        torch.save(content_dict, path)
+        with open(path, 'wb') as f:
+            pickle.dump(content_dict, f)
 
     @classmethod
     def from_saved_file(
             cls,
             file_path: Path,
     ):
-        saved_dict = torch.load(file_path)
+        with open(file_path, 'rb') as f:
+            saved_dict = pickle.load(f)
         game_cfg = None
         if "game_cfg" in saved_dict:
             game_cfg = saved_dict["game_cfg"]
@@ -276,15 +277,15 @@ class ReplayBuffer(Dataset):
             indices = full_indices.reshape(-1)
         else:
             indices = np.random.choice(len(self), size=new_capacity, replace=False)
-        self.content.dc_obs = self.content.dc_obs[indices].clone()
-        self.content.dc_val = self.content.dc_val[indices].clone()
-        self.content.dc_pol = self.content.dc_pol[indices].clone()
-        self.content.dc_len = self.content.dc_len[indices].clone()
-        self.content.mc_ids = self.content.mc_ids[indices].clone()
-        self.content.mc_turns = self.content.mc_turns[indices].clone()
-        self.content.mc_player = self.content.mc_player[indices].clone()
-        self.content.mc_symmetry = self.content.mc_symmetry[indices].clone()
-        self.content.dc_temp = self.content.dc_temp[indices].clone()
+        self.content.dc_obs = self.content.dc_obs[indices]
+        self.content.dc_val = self.content.dc_val[indices]
+        self.content.dc_pol = self.content.dc_pol[indices]
+        self.content.dc_len = self.content.dc_len[indices]
+        self.content.mc_ids = self.content.mc_ids[indices]
+        self.content.mc_turns = self.content.mc_turns[indices]
+        self.content.mc_player = self.content.mc_player[indices]
+        self.content.mc_symmetry = self.content.mc_symmetry[indices]
+        self.content.dc_temp = self.content.dc_temp[indices]
         self.content.capacity_reached = True
         self.content.idx = 0
         self.cfg.capacity = new_capacity
