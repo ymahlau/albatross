@@ -1,6 +1,7 @@
 from src.game.battlesnake.battlesnake import BattleSnakeGame
 from src.game.battlesnake.battlesnake_conf import BattleSnakeConfig
 from src.game.game import GameConfig, Game
+from src.game.normal_form.normal_form import NormalFormGame, NormalFormConfig
 from src.game.overcooked.config import OvercookedGameConfig
 from src.game.overcooked.overcooked import OvercookedGame
 from src.game.overcooked_slow.overcooked import OvercookedSlowConfig
@@ -15,6 +16,8 @@ def get_game_from_config(game_cfg: GameConfig) -> Game:
         return OvercookedGameSlow(game_cfg)
     elif isinstance(game_cfg, OvercookedGameConfig):
         return OvercookedGame(game_cfg)
+    elif isinstance(game_cfg, NormalFormConfig):
+        return NormalFormGame(game_cfg)
     else:
         raise ValueError(f"Unknown game type: {game_cfg}")
 

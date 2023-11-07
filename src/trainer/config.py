@@ -34,7 +34,7 @@ class LoggerConfig:
     worker_episode_bucket_size: int = 100
     wandb_mode: str = 'online'
 
-@dataclass
+@dataclass(kw_only=True)
 class UpdaterConfig:
     # optimizer
     optim_cfg: OptimizerConfig

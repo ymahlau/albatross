@@ -38,7 +38,7 @@ class WorkerStatistics:
     step_time_sum: float = 0
     search_counter: int = 0
     episode_len_list: list[int] = field(default_factory=lambda: [])
-    search_info_sum: SearchInfo = SearchInfo()
+    search_info_sum: SearchInfo = field(default_factory=lambda: SearchInfo())
     search_info_counter: int = 0
     last_info_time: float = time.time()
     process_start_time: float = time.time()
