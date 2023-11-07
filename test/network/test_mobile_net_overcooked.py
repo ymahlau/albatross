@@ -1,8 +1,8 @@
 import unittest
 
 from src.game.initialization import get_game_from_config
-from src.game.overcooked_slow.layouts import CrampedRoomOvercookedConfig, AsymmetricAdvantageOvercookedConfig, \
-    CoordinationRingOvercookedConfig, ForcedCoordinationOvercookedConfig, CounterCircuitOvercookedConfig
+from src.game.overcooked_slow.layouts import CrampedRoomOvercookedSlowConfig, AsymmetricAdvantageOvercookedSlowConfig, \
+    CoordinationRingOvercookedSlowConfig, ForcedCoordinationOvercookedSlowConfig, CounterCircuitOvercookedSlowConfig
 from src.network.initialization import get_network_from_config
 from src.network.mobilenet_v3 import MobileNetConfigOvercookedCramped, MobileNetConfigOvercookedAsymmetricAdvantage, \
     MobileNetConfigOvercookedCoordinationRing, MobileNetConfigOvercookedForcedCoordination, \
@@ -11,7 +11,7 @@ from src.network.mobilenet_v3 import MobileNetConfigOvercookedCramped, MobileNet
 
 class TestMobileNetOvercooked(unittest.TestCase):
     def test_cramped_room(self):
-        game_cfg = CrampedRoomOvercookedConfig()
+        game_cfg = CrampedRoomOvercookedSlowConfig()
         game = get_game_from_config(game_cfg)
 
         net_cfg = MobileNetConfigOvercookedCramped(game_cfg=game_cfg)
@@ -22,7 +22,7 @@ class TestMobileNetOvercooked(unittest.TestCase):
         self.assertEqual(2, obs.shape[0])
 
     def test_asymmetric_adv(self):
-        game_cfg = AsymmetricAdvantageOvercookedConfig()
+        game_cfg = AsymmetricAdvantageOvercookedSlowConfig()
         game = get_game_from_config(game_cfg)
         game.render()
         print(f"{game.get_obs_shape()=}")
@@ -36,7 +36,7 @@ class TestMobileNetOvercooked(unittest.TestCase):
         self.assertEqual(2, obs.shape[0])
 
     def test_coord_ring(self):
-        game_cfg = CoordinationRingOvercookedConfig()
+        game_cfg = CoordinationRingOvercookedSlowConfig()
         game = get_game_from_config(game_cfg)
         game.render()
         print(f"{game.get_obs_shape()=}")
@@ -50,7 +50,7 @@ class TestMobileNetOvercooked(unittest.TestCase):
         self.assertEqual(2, obs.shape[0])
 
     def test_forced_coord(self):
-        game_cfg = ForcedCoordinationOvercookedConfig()
+        game_cfg = ForcedCoordinationOvercookedSlowConfig()
         game = get_game_from_config(game_cfg)
         game.render()
         print(f"{game.get_obs_shape()=}")
@@ -64,7 +64,7 @@ class TestMobileNetOvercooked(unittest.TestCase):
         self.assertEqual(2, obs.shape[0])
 
     def test_counter_circuit(self):
-        game_cfg = CounterCircuitOvercookedConfig()
+        game_cfg = CounterCircuitOvercookedSlowConfig()
         game = get_game_from_config(game_cfg)
         game.render()
         print(f"{game.get_obs_shape()=}")

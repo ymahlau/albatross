@@ -6,12 +6,12 @@ from src.agent.initialization import get_agent_from_config
 from src.agent.overcooked import GreedyHumanOvercookedAgentConfig
 from src.game.actions import sample_individual_actions
 from src.game.initialization import get_game_from_config
-from src.game.overcooked_slow.layouts import CrampedRoomOvercookedConfig
+from src.game.overcooked_slow.layouts import CrampedRoomOvercookedSlowConfig
 
 
 class TestOvercooked(unittest.TestCase):
     def test_human_greedy(self):
-        game_cfg = CrampedRoomOvercookedConfig()
+        game_cfg = CrampedRoomOvercookedSlowConfig()
         game = get_game_from_config(game_cfg)
         game.render()
         agent_cfg = GreedyHumanOvercookedAgentConfig(

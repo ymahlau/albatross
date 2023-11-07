@@ -15,7 +15,7 @@ from src.game.overcooked_slow.utils import OBJECT_NAMES
 
 
 @dataclass
-class OvercookedConfig(GameConfig):
+class OvercookedSlowConfig(GameConfig):
     num_actions: int = field(default=6)
     num_players: int = field(default=2)
     overcooked_layout: str = field(default="cramped_room")
@@ -34,7 +34,7 @@ class OvercookedGame(Game):
     """
     def __init__(
             self,
-            cfg: OvercookedConfig,
+            cfg: OvercookedSlowConfig,
             gridworld: Optional[OvercookedGridworld] = None,
             env: Optional[OvercookedEnv] = None
     ):

@@ -2,13 +2,13 @@ import random
 import unittest
 
 from src.game.initialization import get_game_from_config
-from src.game.overcooked_slow.layouts import CrampedRoomOvercookedConfig, AsymmetricAdvantageOvercookedConfig, \
-    CoordinationRingOvercookedConfig, ForcedCoordinationOvercookedConfig, CounterCircuitOvercookedConfig
+from src.game.overcooked_slow.layouts import CrampedRoomOvercookedSlowConfig, AsymmetricAdvantageOvercookedSlowConfig, \
+    CoordinationRingOvercookedSlowConfig, ForcedCoordinationOvercookedSlowConfig, CounterCircuitOvercookedSlowConfig
 
 
 class TestOvercookedGame(unittest.TestCase):
     def test_overcooked_cramped(self):
-        game_cfg = CrampedRoomOvercookedConfig()
+        game_cfg = CrampedRoomOvercookedSlowConfig()
         game_cfg.horizon = 5
         game = get_game_from_config(game_cfg)
         game.render()
@@ -29,7 +29,7 @@ class TestOvercookedGame(unittest.TestCase):
         self.assertEqual(0, game.num_players_alive())
 
     def test_asymmetric_advantage(self):
-        game_cfg = AsymmetricAdvantageOvercookedConfig()
+        game_cfg = AsymmetricAdvantageOvercookedSlowConfig()
         game_cfg.horizon = 5
         game = get_game_from_config(game_cfg)
         game.render()
@@ -50,7 +50,7 @@ class TestOvercookedGame(unittest.TestCase):
         self.assertEqual(0, game.num_players_alive())
 
     def test_coordination_ring(self):
-        game_cfg = CoordinationRingOvercookedConfig()
+        game_cfg = CoordinationRingOvercookedSlowConfig()
         game_cfg.horizon = 5
         game = get_game_from_config(game_cfg)
         game.render()
@@ -71,7 +71,7 @@ class TestOvercookedGame(unittest.TestCase):
         self.assertEqual(0, game.num_players_alive())
 
     def test_forced_coordination(self):
-        game_cfg = ForcedCoordinationOvercookedConfig()
+        game_cfg = ForcedCoordinationOvercookedSlowConfig()
         game_cfg.horizon = 5
         game = get_game_from_config(game_cfg)
         game.render()
@@ -92,7 +92,7 @@ class TestOvercookedGame(unittest.TestCase):
         self.assertEqual(0, game.num_players_alive())
 
     def test_counter_circuit(self):
-        game_cfg = CounterCircuitOvercookedConfig()
+        game_cfg = CounterCircuitOvercookedSlowConfig()
         game_cfg.horizon = 5
         game = get_game_from_config(game_cfg)
         game.render()
@@ -113,7 +113,7 @@ class TestOvercookedGame(unittest.TestCase):
         self.assertEqual(0, game.num_players_alive())
 
     def test_orientation_mechanic(self):
-        game_cfg = CrampedRoomOvercookedConfig()
+        game_cfg = CrampedRoomOvercookedSlowConfig()
         game = get_game_from_config(game_cfg)
         game.render()
 
@@ -128,11 +128,11 @@ class TestOvercookedGame(unittest.TestCase):
 
     def test_hardcoded_start_state(self):
         game_cfgs = [
-            CrampedRoomOvercookedConfig(),
-            AsymmetricAdvantageOvercookedConfig(),
-            CoordinationRingOvercookedConfig(),
-            ForcedCoordinationOvercookedConfig(),
-            CounterCircuitOvercookedConfig()
+            CrampedRoomOvercookedSlowConfig(),
+            AsymmetricAdvantageOvercookedSlowConfig(),
+            CoordinationRingOvercookedSlowConfig(),
+            ForcedCoordinationOvercookedSlowConfig(),
+            CounterCircuitOvercookedSlowConfig()
         ]
         for game_cfg in game_cfgs:
             game = get_game_from_config(game_cfg)
@@ -143,7 +143,7 @@ class TestOvercookedGame(unittest.TestCase):
                 self.assertEqual(game, game2)
 
     def test_reward(self):
-        game_cfg = CrampedRoomOvercookedConfig(mep_reproduction_setting=True)
+        game_cfg = CrampedRoomOvercookedSlowConfig(mep_reproduction_setting=True)
         game = get_game_from_config(game_cfg)
         game.render()
 
@@ -253,7 +253,7 @@ class TestOvercookedGame(unittest.TestCase):
         print(f"{game.turns_played=}")
 
     def test_cook_single_onion(self):
-        game_cfg = CrampedRoomOvercookedConfig()
+        game_cfg = CrampedRoomOvercookedSlowConfig()
         game = get_game_from_config(game_cfg)
         game.render()
 
@@ -288,7 +288,7 @@ class TestOvercookedGame(unittest.TestCase):
         self.assertEqual(5, len(game.available_actions(0)))
 
     def test_horizon(self):
-        game_cfg = CrampedRoomOvercookedConfig()
+        game_cfg = CrampedRoomOvercookedSlowConfig()
         game = get_game_from_config(game_cfg)
 
         while not game.is_terminal():

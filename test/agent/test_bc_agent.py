@@ -7,7 +7,7 @@ from src.agent.initialization import get_agent_from_config
 from src.agent.one_shot import BCNetworkAgentConfig
 from src.game.actions import sample_individual_actions
 from src.game.initialization import get_game_from_config
-from src.game.overcooked_slow.layouts import CrampedRoomOvercookedConfig
+from src.game.overcooked_slow.layouts import CrampedRoomOvercookedSlowConfig
 from src.network.initialization import get_network_from_file
 
 

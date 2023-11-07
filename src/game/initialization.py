@@ -1,14 +1,19 @@
 from src.game.battlesnake.battlesnake import BattleSnakeGame
 from src.game.battlesnake.battlesnake_conf import BattleSnakeConfig
 from src.game.game import GameConfig, Game
-from src.game.overcooked_slow.overcooked import OvercookedConfig, OvercookedGame
+from src.game.overcooked.config import OvercookedGameConfig
+from src.game.overcooked.overcooked import OvercookedGame
+from src.game.overcooked_slow.overcooked import OvercookedSlowConfig
+from src.game.overcooked_slow.overcooked import OvercookedGame as OvercookedGameSlow
 from src.misc.replay_buffer import ReplayBufferConfig
 
 
 def get_game_from_config(game_cfg: GameConfig) -> Game:
     if isinstance(game_cfg, BattleSnakeConfig):
         return BattleSnakeGame(game_cfg)
-    elif isinstance(game_cfg, OvercookedConfig):
+    elif isinstance(game_cfg, OvercookedSlowConfig):
+        return OvercookedGameSlow(game_cfg)
+    elif isinstance(game_cfg, OvercookedGameConfig):
         return OvercookedGame(game_cfg)
     else:
         raise ValueError(f"Unknown game type: {game_cfg}")

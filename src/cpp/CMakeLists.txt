@@ -29,4 +29,4 @@ add_executable(BattleSnakeCpp main.cpp
         alglib/solvers.cpp
         alglib/solvers.h
         header/mle.h source/mle.cpp header/quantal.h source/quantal.cpp
-        source/logit.cpp)
+        source/logit.cpp header/overcooked.h source/overcooked.cpp)

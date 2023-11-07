@@ -1,12 +1,12 @@
 import unittest
 
 from src.game.initialization import get_game_from_config
-from src.game.overcooked_slow.layouts import CounterCircuitOvercookedConfig
+from src.game.overcooked_slow.layouts import CounterCircuitOvercookedSlowConfig
 
 
 class TestOptimal(unittest.TestCase):
     def test_optimal_cramped(self):
-        game_cfg = CounterCircuitOvercookedConfig()
+        game_cfg = CounterCircuitOvercookedSlowConfig()
         game = get_game_from_config(game_cfg)
         game.render()
 

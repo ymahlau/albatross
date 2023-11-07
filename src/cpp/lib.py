@@ -218,6 +218,26 @@ class CPPLibrary:
             ct.POINTER(Struct),
             ct.POINTER(ct.c_int8),
         ]
+        self.lib.init_overcooked_cpp.argtypes = [
+            ct.c_int,
+            ct.c_int,
+            ct.POINTER(ct.c_int),
+            ct.POINTER(ct.c_int),
+            ct.c_int,
+            ct.c_int,
+            ct.c_double,
+            ct.c_double,
+            ct.c_double,
+            ct.c_double,
+            ct.c_double,
+        ]
+        self.lib.init_overcooked_cpp.restype = ct.POINTER(Struct)
+        self.lib.clone_overcooked_cpp.argtypes = [ct.POINTER(Struct)]
+        self.lib.clone_overcooked_cpp.restype = ct.POINTER(Struct)
+        self.lib.close_overcooked_cpp.argtypes = [ct.POINTER(Struct)]
+        self.lib.step_overcooked_cpp.argtypes = [ct.POINTER(Struct), ct.POINTER(ct.c_int)]
+        self.lib.step_overcooked_cpp.restype = ct.c_double
+        self.lib.char_overcooked_matrix_cpp.argtypes = [ct.POINTER(Struct), ct.c_char_p]
 
     def get_area_control(
             self,

@@ -9,6 +9,7 @@
 #include "header/nash.h"
 #include "header/mle.h"
 #include "header/quantal.h"
+#include "header/overcooked.h"
 
 //g++ -c -fPIC link.cpp -o link.o
 //g++ -shared -Wl,-soname,-liblink.so -o liblink.so link.o
@@ -371,6 +372,52 @@ extern "C" {
     ){
        char_game_matrix(state, matrix);
     }
-    
+
+    OvercookedGameState* init_overcooked_cpp(
+            int w,
+            int h,
+            int* board,
+            int* start_pos,
+            int horizon,
+            int cooking_time,
+            double placement_in_pot_reward,
+            double dish_pickup_reward,
+            double soup_pickup_reward,
+            double soup_delivery_reward,
+            double soup_cooking_reward
+    ){
+        return init_overcooked(
+                w,
+                h,
+                board,
+                start_pos,
+                horizon,
+                cooking_time,
+                placement_in_pot_reward,
+                dish_pickup_reward,
+                soup_pickup_reward,
+                soup_delivery_reward,
+                soup_cooking_reward
+        );
+    }
+
+    OvercookedGameState* clone_overcooked_cpp(OvercookedGameState* state){
+        return clone_overcooked(state);
+    }
+
+    void close_overcooked_cpp(OvercookedGameState* state){
+        close_overcooked(state);
+    }
+
+    double step_overcooked_cpp(OvercookedGameState* state, int* actions){
+        return step_overcooked(state, actions);
+    }
+
+    void char_overcooked_matrix_cpp(
+            OvercookedGameState* state,
+            char* matrix
+    ){
+        char_overcooked_matrix(state, matrix);
+    }
 }
 

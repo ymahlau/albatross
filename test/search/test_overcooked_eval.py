@@ -5,7 +5,7 @@ import unittest
 from src.game.actions import sample_individual_actions
 from src.game.battlesnake.bootcamp.test_envs_11x11 import survive_on_11x11
 from src.game.initialization import get_game_from_config
-from src.game.overcooked_slow.layouts import CrampedRoomOvercookedConfig
+from src.game.overcooked_slow.layouts import CrampedRoomOvercookedSlowConfig
 from src.search.config import MCTSConfig, DecoupledUCTSelectionConfig, \
     StandardBackupConfig, StandardExtractConfig, DummyEvalConfig
 from src.search.initialization import get_search_from_config
@@ -13,7 +13,7 @@ from src.search.initialization import get_search_from_config
 
 class TestOvercookedEval(unittest.TestCase):
     def test_overcooked_eval_cramped(self):
-        game_cfg = CrampedRoomOvercookedConfig()
+        game_cfg = CrampedRoomOvercookedSlowConfig()
         game_cfg.horizon = 30
         game = get_game_from_config(game_cfg)
 
@@ -36,7 +36,7 @@ class TestOvercookedEval(unittest.TestCase):
             game.render()
 
     def test_overcooked_dummy_eval(self):
-        game_cfg = CrampedRoomOvercookedConfig()
+        game_cfg = CrampedRoomOvercookedSlowConfig()
         game = get_game_from_config(game_cfg)
         game_cfg2 = survive_on_11x11()
         game2 = get_game_from_config(game_cfg2)
@@ -74,7 +74,7 @@ class TestOvercookedEval(unittest.TestCase):
         print(f"{battlesnake_duration=}")
 
     def test_overcooked_search_iterations(self):
-        game_cfg = CrampedRoomOvercookedConfig()
+        game_cfg = CrampedRoomOvercookedSlowConfig()
         game = get_game_from_config(game_cfg)
 
         reward, _, _ = game.step((0, 2))

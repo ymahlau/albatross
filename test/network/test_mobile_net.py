@@ -7,7 +7,7 @@ from src.game.battlesnake.bootcamp.test_envs_3x3 import perform_choke_2_player
 from src.game.battlesnake.bootcamp.test_envs_5x5 import perform_choke_5x5_4_player, survive_on_5x5_constrictor
 from src.game.battlesnake.bootcamp.test_envs_7x7 import survive_on_7x7
 from src.game.initialization import get_game_from_config
-from src.game.overcooked_slow.layouts import CrampedRoomOvercookedConfig, AsymmetricAdvantageOvercookedConfig
+from src.game.overcooked_slow.layouts import CrampedRoomOvercookedSlowConfig, AsymmetricAdvantageOvercookedSlowConfig
 from src.network.initialization import get_network_from_config
 from src.network.mobilenet_v3 import MobileNetConfig3x3, MobileNetConfig7x7, MobileNetConfig5x5, \
     MobileNetConfig5x5Large, MobileNetConfig11x11, MobileNetConfig11x11Extrapolated, MobileNetConfig5x5Extrapolated, \
@@ -170,7 +170,7 @@ class TestMobileNet(unittest.TestCase):
         self.assertEqual(5, out.shape[1])
 
     def test_mobile_overcooked_cramped(self):
-        game_cfg = CrampedRoomOvercookedConfig()
+        game_cfg = CrampedRoomOvercookedSlowConfig()
         game = get_game_from_config(game_cfg)
         game.render()
         net_conf = MobileNetConfigOvercookedCramped(game_cfg=game_cfg)
@@ -181,7 +181,7 @@ class TestMobileNet(unittest.TestCase):
         print(f"{out=}")
 
     def test_mobile_overcooked_asym(self):
-        game_cfg = AsymmetricAdvantageOvercookedConfig()
+        game_cfg = AsymmetricAdvantageOvercookedSlowConfig()
         game = get_game_from_config(game_cfg)
         game.render()
         net_conf = MobileNetConfigOvercookedAsymmetricAdvantage(game_cfg=game_cfg)

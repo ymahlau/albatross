@@ -2,7 +2,7 @@ import unittest
 
 from overcooked_ai_py.mdp.overcooked_mdp import SoupState
 
-from src.game.overcooked_slow.layouts import CrampedRoomOvercookedConfig
+from src.game.overcooked_slow.layouts import CrampedRoomOvercookedSlowConfig
 from src.game.overcooked_slow.movement import cramped_at_cook_start, cramped_before_cook_soup_ready, \
     cramped_at_cook_soup_ready
 from src.game.overcooked_slow.overcooked import OvercookedGame
@@ -10,7 +10,7 @@ import overcooked_ai_py
 
 class TestOvercookedState(unittest.TestCase):
     def test_player_position(self):
-        game_cfg = CrampedRoomOvercookedConfig()
+        game_cfg = CrampedRoomOvercookedSlowConfig()
         game = OvercookedGame(game_cfg)
         game.render()
 
@@ -26,7 +26,7 @@ class TestOvercookedState(unittest.TestCase):
         print(game.get_player_positions())
 
     def test_player_orientation(self):
-        game_cfg = CrampedRoomOvercookedConfig()
+        game_cfg = CrampedRoomOvercookedSlowConfig()
         game = OvercookedGame(game_cfg)
         game.render()
 
@@ -52,7 +52,7 @@ class TestOvercookedState(unittest.TestCase):
         print(game.get_player_orientations())
 
     def test_player_held_item(self):
-        game_cfg = CrampedRoomOvercookedConfig()
+        game_cfg = CrampedRoomOvercookedSlowConfig()
         game = OvercookedGame(game_cfg)
         game.step((0, 0))
         game.step((3, 3))
@@ -63,7 +63,7 @@ class TestOvercookedState(unittest.TestCase):
         print(start_items)
 
     def test_pot_state_start(self):
-        game_cfg = CrampedRoomOvercookedConfig()
+        game_cfg = CrampedRoomOvercookedSlowConfig()
         game = OvercookedGame(game_cfg)
         game.render()
 
@@ -97,7 +97,7 @@ class TestOvercookedState(unittest.TestCase):
         self.assertEqual(4, pot_state[0])
 
     def test_start_counter_states(self):
-        game_cfg = CrampedRoomOvercookedConfig()
+        game_cfg = CrampedRoomOvercookedSlowConfig()
         game = OvercookedGame(game_cfg)
         game.render()
 
@@ -133,7 +133,7 @@ class TestOvercookedState(unittest.TestCase):
         print(game.get_counter_states())
 
     def test_state(self):
-        game_cfg = CrampedRoomOvercookedConfig()
+        game_cfg = CrampedRoomOvercookedSlowConfig()
         game = OvercookedGame(game_cfg)
         game.render()
         print(game.get_state())

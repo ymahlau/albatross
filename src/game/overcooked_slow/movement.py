@@ -1,9 +1,9 @@
-from src.game.overcooked_slow.layouts import CrampedRoomOvercookedConfig
+from src.game.overcooked_slow.layouts import CrampedRoomOvercookedSlowConfig
 from src.game.overcooked_slow.overcooked import OvercookedGame
 
 
 def cramped_at_cook_start() -> OvercookedGame:
-    game_cfg = CrampedRoomOvercookedConfig()
+    game_cfg = CrampedRoomOvercookedSlowConfig()
     game = OvercookedGame(game_cfg)
 
     game.step((0, 2))
@@ -22,7 +22,7 @@ def cramped_at_cook_start() -> OvercookedGame:
 
 
 def cramped_before_cook_soup_ready() -> OvercookedGame:
-    game_cfg = CrampedRoomOvercookedConfig()
+    game_cfg = CrampedRoomOvercookedSlowConfig()
     game = OvercookedGame(game_cfg)
 
     game.step((0, 2))

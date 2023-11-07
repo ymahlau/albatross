@@ -8,12 +8,23 @@
 #include "header/utils.h"
 #include "header/mle.h"
 #include "header/quantal.h"
+#include "header/overcooked.h"
 
 using namespace std;
 using namespace alglib;
 
 
 int main() {
+    int board[20] = {1, 1, 4, 1, 1, 3, 0, 0, 0, 3, 1, 0, 0, 0, 1, 1, 2, 1, 5, 1};
+    int start_pos[6] = {3, 1, 0, 1, 2, 0};
+    OvercookedGameState* state_p = init_overcooked(5, 4, board, start_pos, 400, 20, 3, 5, 3, 20, 0);
+    int actions[2] = {2, 0};
+    double reward = step_overcooked(state_p, actions);
+    int actions2[2] = {5, 3};
+    reward = step_overcooked(state_p, actions2);
+    int a = 1;
+
+
 //    int aa[] = {2, 3, 2, 3};
 //    double utils[] = {
 //        1.0, 0.5,
@@ -288,23 +299,23 @@ int main() {
 //        result_policies // shape (sum(num_available_actions))
 //    );
 
-    compute_logit_cpp(
-            num_player,
-            num_available_actions,
-            available_actions,
-            joint_actions,
-            joint_action_values,
-            num_iterations,
-            epsilon,
-            temperatures,
-            initial_uniform,
-            compute_mode,  // mode
-            0.5, // hp0
-            1.5, // hp1
-            initial_policies,
-            result_values,
-            result_policies
-    );
+//    compute_logit_cpp(
+//            num_player,
+//            num_available_actions,
+//            available_actions,
+//            joint_actions,
+//            joint_action_values,
+//            num_iterations,
+//            epsilon,
+//            temperatures,
+//            initial_uniform,
+//            compute_mode,  // mode
+//            0.5, // hp0
+//            1.5, // hp1
+//            initial_policies,
+//            result_values,
+//            result_policies
+//    );
 
 //    compute_2p_nash(num_available_actions, available_actions, joint_actions, joint_action_values, result_values,
 //                    result_policies);

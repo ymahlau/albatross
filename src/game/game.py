@@ -53,21 +53,6 @@ class Game(ABC):
     def close(self):
         raise NotImplementedError()
 
-    @abstractmethod
-    def get_state(self) -> Any:
-        # should return a full description of the current game state
-        raise NotImplementedError()
-
-    def set_state(self, state: Any):
-        self._cum_rewards = np.zeros(shape=(self.cfg.num_players,), dtype=float)
-        self._last_actions = None
-        self._set_state(state)
-
-    @abstractmethod
-    def _set_state(self, state: Any):
-        # should update the game to the given game state
-        raise NotImplementedError()
-
     def reset(self):
         self._cum_rewards = np.zeros(shape=(self.num_players,), dtype=float)
         self._last_actions = None

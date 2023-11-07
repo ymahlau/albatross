@@ -1,12 +1,12 @@
 import unittest
 
 from src.game.initialization import get_game_from_config
-from src.game.overcooked_slow.layouts import CrampedRoomOvercookedConfig
+from src.game.overcooked_slow.layouts import CrampedRoomOvercookedSlowConfig
 
 
 class TestObservationSpace(unittest.TestCase):
     def test_obs_input(self):
-        game_cfg = CrampedRoomOvercookedConfig()
+        game_cfg = CrampedRoomOvercookedSlowConfig()
         game_cfg.temperature_input = True
         game_cfg.single_temperature_input = True
         game = get_game_from_config(game_cfg)
@@ -16,7 +16,7 @@ class TestObservationSpace(unittest.TestCase):
         self.assertEqual(24, obs.shape[3])
 
     def test_obs_multiple_input(self):
-        game_cfg = CrampedRoomOvercookedConfig()
+        game_cfg = CrampedRoomOvercookedSlowConfig()
         game_cfg.temperature_input = True
         game_cfg.single_temperature_input = False
         game = get_game_from_config(game_cfg)
@@ -26,7 +26,7 @@ class TestObservationSpace(unittest.TestCase):
         self.assertEqual(24, obs.shape[3])
 
     def test_obs_multiple_input_argument(self):
-        game_cfg = CrampedRoomOvercookedConfig()
+        game_cfg = CrampedRoomOvercookedSlowConfig()
         game_cfg.temperature_input = True
         game_cfg.single_temperature_input = True
         game = get_game_from_config(game_cfg)
@@ -36,7 +36,7 @@ class TestObservationSpace(unittest.TestCase):
         self.assertEqual(24, obs.shape[3])
 
     def test_flat_obs(self):
-        game_cfg = CrampedRoomOvercookedConfig()
+        game_cfg = CrampedRoomOvercookedSlowConfig()
         game_cfg.flat_obs = True
         game = get_game_from_config(game_cfg)
         obs_shape = game.get_obs_shape()
