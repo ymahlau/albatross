@@ -364,10 +364,18 @@ int arr_idx(
     return (x + x_off) * y_dim * z_dim + (y + y_off) * z_dim + z;
 }
 
+void fill_layer_overcooked(float* arr, float value, int layer_id, int x_dim, int y_dim, int z_dim){
+    for(int x = 0; x < x_dim; x++) {
+        for (int y = 0; y < y_dim; y++) {
+            arr[arr_idx(x, y, layer_id, y_dim, z_dim, 0, 0)] = value;
+        }
+    }
+}
+
 void construct_overcooked_encoding(OvercookedGameState* state, float* arr){
     int x_dim = state->w;
     int y_dim = state->h;
-    int z_dim = 26; // TODO: do
+    int z_dim = 16;
     int x_pad = 0;
     int y_pad = 0;
     if (x_dim != y_dim){
@@ -396,15 +404,119 @@ void construct_overcooked_encoding(OvercookedGameState* state, float* arr){
             arr[arr_idx(p.position.first - 1, p.position.second, layer_id, y_dim, z_dim, x_off, y_off)] = 1;
         }
         layer_id += 1;
-    }
-    // base map encodings
-    for (int x = 0; x < state->w; x++){
-        for (int y = 0; y < state->h; y++){
-
+        // held item features
+        if (p.held_item == SOUP_ITEM){
+            // soup position: layer 11
+            int cur_idx = arr_idx(p.position.first, p.position.second, 11, y_dim, z_dim, x_off, y_off);
+            arr[cur_idx] = 1;
+        } else if (p.held_item == DISH_ITEM){
+            // dish position: layer 12
+            int cur_idx = arr_idx(p.position.first, p.position.second, 12, y_dim, z_dim, x_off, y_off);
+            arr[cur_idx] = 1;
+        } else if (p.held_item == ONION_ITEM){
+            // onion position: layer 13
+            int cur_idx = arr_idx(p.position.first, p.position.second, 13, y_dim, z_dim, x_off, y_off);
+            arr[cur_idx] = 1;
         }
     }
+    // base map + variable map encodings
+    for (int x = 0; x < state->w; x++){
+        for (int y = 0; y < state->h; y++){
+            int tile_idx = x + state->w * y;
+            int tile_type = state->board[tile_idx];
+            int tile_state = state->tile_states[tile_idx];
+            int cur_idx;
+            if (tile_type == POT_TILE){
+                // pot-location layer 4
+                cur_idx = arr_idx(x, y, 4, y_dim, z_dim, x_off, y_off);
+                arr[cur_idx] = 1;
+                // pot state (only by position if multiple pots)
+                if (state->pot_positions.size() > 1){
+                    // number of onions in the pot: layer 9
+                    cur_idx = arr_idx(x, y, 9, y_dim, z_dim, x_off, y_off);
+                    arr[cur_idx] = (float) (min(3, tile_state) / 3.0);
+                    // soup cook time remaining: layer 10
+                    float time_remaining = 1.0;
+                    if (tile_state > 3) time_remaining = (float) (tile_state - 4.0) / (float) state->cooking_time;
+                    cur_idx = arr_idx(x, y, 10, y_dim, z_dim, x_off, y_off);
+                    arr[cur_idx] = time_remaining;
+                }
+                // soup: layer 11
+                if (tile_state == DONE_POT){
+                    cur_idx = arr_idx(x, y, 11, y_dim, z_dim, x_off, y_off);
+                    arr[cur_idx] = 1;
+                }
+            } else if (tile_type == COUNTER_TILE){
+                // counter location: layer 5
+                cur_idx = arr_idx(x, y, 5, y_dim, z_dim, x_off, y_off);
+                arr[cur_idx] = 1;
+                // positions of items dropped on counter
+                if (tile_state == SOUP_ITEM){
+                    // soup position: layer 11
+                    cur_idx = arr_idx(x, y, 11, y_dim, z_dim, x_off, y_off);
+                    arr[cur_idx] = 1;
+                } else if (tile_state == DISH_ITEM){
+                    // dish positions: layer 12
+                    cur_idx = arr_idx(x, y, 12, y_dim, z_dim, x_off, y_off);
+                    arr[cur_idx] = 1;
+                } else if (tile_state == ONION_ITEM){
+                    // onion positions: layer 13
+                    cur_idx = arr_idx(x, y, 13, y_dim, z_dim, x_off, y_off);
+                    arr[cur_idx] = 1;
+                }
+            } else if (tile_type == ONION_TILE){
+                // onion dispenser location: layer 6
+                cur_idx = arr_idx(x, y, 6, y_dim, z_dim, x_off, y_off);
+                arr[cur_idx] = 1;
+            } else if (tile_type == DISH_TILE){
+                // dish dispenser location: layer 7
+                cur_idx = arr_idx(x, y, 7, y_dim, z_dim, x_off, y_off);
+                arr[cur_idx] = 1;
+            } else if (tile_type == SERVING_TILE){
+                // serving location: layer 8
+                cur_idx = arr_idx(x, y, 8, y_dim, z_dim, x_off, y_off);
+                arr[cur_idx] = 1;
+            }
+        }
+    }
+    // full layers: only if a single pot in environment
+    if (state->pot_positions.size() == 1){
+        Coord pot_pos = state->pot_positions.front();
+        int cur_idx = pot_pos.first + state->w * pot_pos.second;
+        int tile_state = state->tile_states[cur_idx];
+        // number of onions in the pot: layer 9
+        float relative_onions_in_pot = (float) (min(3, tile_state) / 3.0);
+        fill_layer_overcooked(arr, relative_onions_in_pot, 9, x_dim, y_dim, z_dim);
+        // soup cook time remaining: layer 10
+        float time_remaining = 1.0;
+        if (tile_state > 3) time_remaining = (float) (tile_state - 4.0) / (float) state->cooking_time;
+        fill_layer_overcooked(arr, time_remaining, 10, x_dim, y_dim, z_dim);
+    }
+    // time features:
+    // urgency if time_left < 40: layer 14
+    if (state->turn > state->horizon - 40){
+        fill_layer_overcooked(arr, 1, 14, x_dim, y_dim, z_dim);
+    }
+    // time step in environment: layer 15
+    float time_remaining = (float) (state->horizon - state->turn) / (float) state->horizon;
+    fill_layer_overcooked(arr, time_remaining, 15, x_dim, y_dim, z_dim);
+}
 
 
+bool equals_overcooked(OvercookedGameState* state, OvercookedGameState* other){
+    // this assumes that the board is static and always equal for both game states
+    if (state->players.front().position != other->players.front().position) return false;
+    if (state->players.back().position != other->players.back().position) return false;
+    if (state->players.front().held_item != other->players.front().held_item) return false;
+    if (state->players.back().held_item != other->players.back().held_item) return false;
+    if (state->players.front().orientation != other->players.front().orientation) return false;
+    if (state->players.back().orientation != other->players.back().orientation) return false;
+    if (state->turn != other->turn) return false;
+    if (state->w != other->w or state->h != other->h) return false;
+    for (int idx = 0; idx < state->w * state->h; idx++){
+        if (state->tile_states[idx] != other->tile_states[idx]) return false;
+    }
+    return true;
 }
 
 

@@ -83,6 +83,8 @@ double step_overcooked(OvercookedGameState* state, int* actions);
 void close_overcooked(OvercookedGameState* state);
 void char_overcooked_matrix(OvercookedGameState* state, char* matrix);
 void construct_overcooked_encoding(OvercookedGameState* state, float* arr);
+bool equals_overcooked(OvercookedGameState* state, OvercookedGameState* other);
+
 
 #endif //BATTLESNAKECPP_OVERCOOKED_H
 

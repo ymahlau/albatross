@@ -19,6 +19,7 @@ class OvercookedGame(Game):
         self.action_list = [0, 1, 2, 3, 4, 5]
         self.obs_dict: dict[int, np.ndarray] = dict()
         self.is_closed = False
+        self.id_dict = {a: a for a in range(6)}
 
     def _init_cpp(self):
         board_np = np.asarray(self.cfg.board, dtype=ct.c_int)
@@ -98,8 +99,8 @@ class OvercookedGame(Game):
             return False
         if self.is_closed:
             raise ValueError("Cannot call function on closed game")
-        # TODO: implement
-        return False
+        equals = CPP_LIB.lib.equals_overcooked_cpp(self.state_p, other.state_p)
+        return equals
 
     def available_actions(self, player: int) -> list[int]:
         if self.turns_played < self.cfg.horizon:
@@ -121,7 +122,8 @@ class OvercookedGame(Game):
         return 1
 
     def get_obs_shape(self, never_flatten=False) -> tuple[int, ...]:
-        pass
+        max_dim = max(self.cfg.h, self.cfg.w)
+        return max_dim, max_dim, 16
 
     def get_obs(self, symmetry: Optional[int] = 0, temperatures: Optional[list[float]] = None,
                 single_temperature: Optional[bool] = None) -> tuple[
@@ -131,6 +133,13 @@ class OvercookedGame(Game):
     ]:
         if self.is_closed:
             raise ValueError("Cannot call function on closed game")
+        arr = np.zeros(shape=self.get_obs_shape(), dtype=ct.c_float)
+        arr_p = arr.ctypes.data_as(ct.POINTER(ct.c_float))
+        CPP_LIB.lib.construct_overcooked_encoding_cpp(
+            self.state_p,
+            arr_p,
+        )
+        return arr, self.id_dict, self.id_dict
 
     def get_str_repr(self) -> str:
         if self.is_closed:

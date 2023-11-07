@@ -1,6 +1,7 @@
 import unittest
 from enum import Enum
 
+from src.game.initialization import get_game_from_config
 from src.game.overcooked.config import CrampedRoomOvercookedConfig
 from src.game.overcooked.overcooked import OvercookedGame
 
@@ -31,6 +32,8 @@ class TestOvercookedGame(unittest.TestCase):
         reward, _, _ = game.step((4, 5))
         print(reward)
         game.render()
+        obs, _, _ = game.get_obs()
+        print(obs.shape)
 
     def test_cooking(self):
         game_cfg = CrampedRoomOvercookedConfig()
@@ -59,6 +62,8 @@ class TestOvercookedGame(unittest.TestCase):
             game.step((4, 4))
             game.render()
         print(game.get_cum_rewards())
+        obs, _, _ = game.get_obs()
+        print(obs.shape)
 
     def test_delivery(self):
         game_cfg = CrampedRoomOvercookedConfig()
@@ -92,9 +97,11 @@ class TestOvercookedGame(unittest.TestCase):
         game.render()
         game.step((1, 4))
         game.render()
+        obs, _, _ = game.get_obs()
         print(game.get_cum_rewards())
         game.step((5, 4))
         game.render()
+        obs, _, _ = game.get_obs()
         print(game.get_cum_rewards())
 
     def test_copy(self):
@@ -112,5 +119,27 @@ class TestOvercookedGame(unittest.TestCase):
         game.render()
         game2.render()
         print('##############################')
+
+    def test_obs(self):
+        game_cfg = CrampedRoomOvercookedConfig()
+        game = OvercookedGame(game_cfg)
+        obs, _, _ = game.get_obs()
+        self.assertEqual(5, obs.shape[0])
+        self.assertEqual(5, obs.shape[1])
+        self.assertEqual(16, obs.shape[2])
+
+    def test_equals(self):
+        game_cfg = CrampedRoomOvercookedConfig()
+        game = get_game_from_config(game_cfg)
+        game2 = get_game_from_config(game_cfg)
+        self.assertEqual(game, game2)
+        game.step((0, 0))
+        self.assertNotEquals(game, game2)
+        game3 = game.get_copy()
+        self.assertEqual(game, game3)
+        self.assertNotEquals(game3, game2)
+        game3.reset()
+        self.assertEqual(game3, game2)
+
 
 

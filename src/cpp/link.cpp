@@ -419,5 +419,13 @@ extern "C" {
     ){
         char_overcooked_matrix(state, matrix);
     }
+
+    void construct_overcooked_encoding_cpp(OvercookedGameState* state, float* arr){
+        construct_overcooked_encoding(state, arr);
+    }
+
+    bool equals_overcooked_cpp(OvercookedGameState* state, OvercookedGameState* other){
+        return equals_overcooked(state, other);
+    }
 }
 
