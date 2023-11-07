@@ -1,18 +1,15 @@
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import Optional
-
 
 from src.agent import AgentConfig
 from src.agent.one_shot import RandomAgentConfig
 from src.agent.search_agent import AreaControlSearchAgentConfig
 from src.game.game import GameConfig
-from src.game.battlesnake.battlesnake_conf import BattleSnakeConfig
 from src.network import NetworkConfig
 from src.search import SearchConfig
 from src.supervised.annealer import TemperatureAnnealingConfig
 from src.supervised.optim import OptimizerConfig
-from src.trainer.policy_eval import PolicyEvalConfig, policy_eval_config_from_structured
+from src.trainer.policy_eval import PolicyEvalConfig
 
 
 @dataclass

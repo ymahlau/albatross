@@ -1,10 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
 
-from hydra.core.config_store import ConfigStore
-
-cs = ConfigStore.instance()
-
 class PolicyEvalType(Enum):
     MC = 'MC'
     TD_0 = 'TD_0'
