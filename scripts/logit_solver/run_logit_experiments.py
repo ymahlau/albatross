@@ -12,8 +12,8 @@ def create_gt_logit_data():
     cfg = LogitSolverExperimentConfig(
         num_player=2,
         num_actions=6,
-        num_iterations=int(1e7),
-        nfg_type=NFGType.FULL_COOP,
+        num_iterations=int(1e6),
+        nfg_type=NFGType.ZERO_SUM,
         num_games=10,
         sbr_mode=SbrMode.NAGURNEY,
         temperature_range=(0, 5),
