@@ -1,19 +1,18 @@
+import sys
+
 import torch.multiprocessing as mp
 
 from scripts.logit_solver.run_logit_experiments import create_gt_logit_data
 
-# from scripts.plots.plot_modelling_error import compute_equilibria
-
-# from src.evaluation.estimate_bc_strength import estimate_bc_strength
-# from scripts.runs.play_config_oc_self import play_albatross_oc_self
-# from scripts.runs.play_config_oc_albatross import play_albatross_oc
-# from src.depth.training_strength import estimate_training_strength
-# from scripts.temp import main, merge_depth_logs, random_efg_experiment
-
 if __name__ == '__main__':
     mp.set_start_method('spawn', force=True)  # this is important for using CUDA
     print(f"{mp.get_start_method()=}")
+
+    num_iterations = int(sys.argv[1])
+
     create_gt_logit_data()
+
+
 
     # compute_equilibria()
 

@@ -1,5 +1,6 @@
 import multiprocessing as mp
 import os
+import pickle
 import random
 from dataclasses import dataclass
 from datetime import datetime
@@ -21,6 +22,8 @@ class LogitSolverExperimentConfig:
     num_games: int
     sbr_mode: SbrMode
     temperature_range: tuple[float, float]
+    hp_0: Optional[float] = None
+    hp_1: Optional[float] = None
 
 
 @dataclass
@@ -48,6 +51,9 @@ def solve_nfg(cfg: NormalFormConfig, temperature: float, game_id: int):
         num_iterations=static_experiment_cfg.num_iterations,
         temperatures=temps,
         epsilon=0,
+        sbr_mode=static_experiment_cfg.sbr_mode,
+        hp_0=static_experiment_cfg.hp_0,
+        hp_1=static_experiment_cfg.hp_1,
     )
     return values, policies, error
 
@@ -70,6 +76,7 @@ def compute_equilibrium_data_parallel(
         cfg: LogitSolverExperimentConfig,
         restrict_cpu: bool,
         num_procs: int,
+        gt_path: Optional[str],
 ) -> EquilibriumData:
     # restrict cpu
     cpu_list = None
@@ -78,15 +85,22 @@ def compute_equilibrium_data_parallel(
     # initialization
     print(f"{datetime.now()} - Main process with pid {os.getpid()} uses {cpu_list=}", flush=True)
     init_args = (cpu_list, cfg)
+    gt_data: Optional[EquilibriumData] = None
+    if gt_path is not None:
+        with open(gt_path, 'rb') as f:
+            gt_data = pickle.load(f)
     with mp.Pool(processes=num_procs, initargs=init_args, initializer=init_process) as pool:
         result_list_unfinished = []
         temperature_list = []
         game_cfg_list = []
         for game_id in range(cfg.num_games):
-            game_cfg = get_random_matrix_cfg(
-                nfg_type=cfg.nfg_type,
-                num_actions_per_player=[cfg.num_actions for _ in range(cfg.num_player)]
-            )
+            if gt_data is None:
+                game_cfg = get_random_matrix_cfg(
+                    nfg_type=cfg.nfg_type,
+                    num_actions_per_player=[cfg.num_actions for _ in range(cfg.num_player)]
+                )
+            else:
+                game_cfg = gt_data.game_cfgs[game_id]
             temperature = random.random() * (cfg.temperature_range[1] - cfg.temperature_range[0])
             temperature += cfg.temperature_range[0]
             result_tpl_unfinished = pool.apply_async(
