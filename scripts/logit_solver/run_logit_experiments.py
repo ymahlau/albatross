@@ -16,14 +16,14 @@ def create_logit_data_func(
         sbr_mode_str: str,
         hp_0: Optional[float],
         hp_1: Optional[float],
-        gt_path: str,
+        gt_path: Optional[str],
 ):
     sbr_mode = SbrMode[sbr_mode_str]
     cfg = LogitSolverExperimentConfig(
         num_player=2,
         num_actions=6,
         num_iterations=num_iterations,
-        nfg_type=NFGType.ZERO_SUM,
+        nfg_type=NFGType.FULL_COOP,
         num_games=200000,
         sbr_mode=sbr_mode,
         temperature_range=(0, 10),
