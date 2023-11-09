@@ -33,7 +33,7 @@ def create_logit_data_func(
     data = compute_equilibrium_data_parallel(
         cfg=cfg,
         restrict_cpu=True,
-        num_procs=16,
+        num_procs=8,
         gt_path=gt_path,
     )
     with open(save_path, 'wb') as f:
@@ -41,9 +41,11 @@ def create_logit_data_func(
     print(f'Done!', flush=True)
 
 def merge_data():
-    path_low = Path(__file__).parent.parent.parent.parent / 'a_data' / 'logit_solver' / 'ground_truth_0_5.pkl'
-    path_high = Path(__file__).parent.parent.parent.parent / 'a_data' / 'logit_solver' / 'ground_truth_5_10.pkl'
-    path_merged = Path(__file__).parent.parent.parent.parent / 'a_data' / 'logit_solver' / 'ground_truth_0_10.pkl'
+    path_low = (Path(__file__).parent.parent.parent.parent / 'a_data' / 'logit_solver' / 'old' /
+                'ground_truth_zs_0_5.pkl')
+    path_high = (Path(__file__).parent.parent.parent.parent / 'a_data' / 'logit_solver' / 'old' /
+                 'ground_truth_zs_5_10.pkl')
+    path_merged = Path(__file__).parent.parent.parent.parent / 'a_data' / 'logit_solver' / 'ground_truth_zs_0_10.pkl'
     with open(path_low, 'rb') as f:
         data_low: EquilibriumData = pickle.load(f)
     with open(path_high, 'rb') as f:
@@ -64,7 +66,7 @@ def merge_data():
         game_cfgs=data_low.game_cfgs + data_high.game_cfgs,
         temperatures=np.concatenate((data_low.temperatures, data_high.temperatures)),
         policies=np.concatenate((data_low.policies, data_high.policies), axis=0),
-        values=np.concatenate((data_low.policies, data_high.policies), axis=0),
+        values=np.concatenate((data_low.values, data_high.values), axis=0),
         errors=np.concatenate((data_low.errors, data_high.errors), axis=0),
     )
     with open(path_merged, 'wb') as f:
@@ -83,18 +85,21 @@ def temp():
     # )
     # with open(save_path, 'rb') as f:
     #     data = pickle.load(f)
-    # a = 1
-    pass
+    path = Path(__file__).parent.parent.parent.parent / 'a_data' / 'logit_solver' / 'ema' / 'ema_zs_50.pkl'
+    with open(path, 'rb') as f:
+        data = pickle.load(f)
+    a = 1
 
 
 def generate_experiment_data(experiment_id: int):
-    sbr_mode_str = 'MSA'
+    sbr_mode_str = 'POLYAK'
     hp_0 = None
     hp_1 = None
-    all_iterations = np.arange(50, 2000, 50)
+    all_iterations = np.arange(50, 2001, 50)
     cur_iterations = all_iterations[experiment_id].item()
-    file_name = f'msa_zs_{cur_iterations}'
-    save_path = Path(__file__).parent.parent.parent.parent / 'a_data' / 'logit_solver' / 'msa' / file_name
+    file_name = f'{sbr_mode_str.lower()}_zs_{cur_iterations}.pkl'
+    save_path = (Path(__file__).parent.parent.parent.parent / 'a_data' / 'logit_solver' / f'{sbr_mode_str.lower()}'
+                 / file_name)
     gt_path = Path(__file__).parent.parent.parent.parent / 'a_data' / 'logit_solver' / 'ground_truth_zs_0_10.pkl'
     create_logit_data_func(
         num_iterations=cur_iterations,
@@ -109,4 +114,5 @@ def generate_experiment_data(experiment_id: int):
 if __name__ == '__main__':
     # create_gt_logit_data()
     temp()
-    generate_experiment_data()
+    # merge_data()
+    # generate_experiment_data()

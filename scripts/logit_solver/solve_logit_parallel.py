@@ -38,7 +38,7 @@ class EquilibriumData:
 static_experiment_cfg: Optional[LogitSolverExperimentConfig] = None
 
 def solve_nfg(cfg: NormalFormConfig, temperature: float, game_id: int):
-    if game_id % 1 == 0:
+    if game_id % 100 == 0:
         print(f"{datetime.now()} - {game_id=}", flush=True)
     aa = [list(range(static_experiment_cfg.num_actions)) for _ in range(static_experiment_cfg.num_player)]
     ja = list(cfg.ja_dict.keys())
@@ -117,6 +117,9 @@ def compute_equilibrium_data_parallel(
     full_policies = np.stack([r[1] for r in result_list])
     full_errors = np.stack([r[2] for r in result_list])
     temperatures = np.asarray(temperature_list)
+    if gt_data is not None:
+        game_cfg_list = []
+        temperatures = np.asarray([])
     data = EquilibriumData(
         experiment_config=cfg,
         values=full_values,
