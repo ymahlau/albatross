@@ -8,7 +8,6 @@ from torch import nn
 
 from src.network import Network, NetworkConfig
 from src.network.fcn import HeadConfig, head_from_cfg
-from src.network.film import FiLM
 from src.network.lff import LearnedFourierFeatures
 
 
@@ -20,6 +19,7 @@ class FlatNetworkConfig(NetworkConfig):
     lff_features: bool = False
     lff_feature_expansion: int = 10
 
+
 class FlatNet(Network, ABC):
     """
     Network for processing inputs that are flat (1d). Applications are games like Goofspiel or Oshi-Zumo
@@ -30,9 +30,6 @@ class FlatNet(Network, ABC):
     ):
         super().__init__(cfg)
         self.cfg = cfg
-        if self.cfg.film_temperature_input:
-            raise NotImplementedError()
-
         # validate
         if len(self.game.get_obs_shape()) != 1:
             raise ValueError(f"Invalid input shape for fcn: {self.game.get_obs_shape()}")
@@ -48,15 +45,6 @@ class FlatNet(Network, ABC):
                 sin_cos=False,
                 trainable=True,
             )
-        # film for additional input (for now only scalar temperature)
-        if self.cfg.film_temperature_input:
-            film_input = 1 if self.cfg.single_film_temperature else self.cfg.game_cfg.num_players - 1
-            self.film_generator = head_from_cfg(
-                cfg=self.cfg.film_cfg,
-                input_size=film_input,
-                output_size=self.latent_size,
-            )
-            self.film = FiLM(feature_size=self.latent_size)
         self.value_head = head_from_cfg(
             cfg=self.cfg.value_head_cfg,
             input_size=self.latent_size,
@@ -92,15 +80,12 @@ class FlatNet(Network, ABC):
                 if m.bias is not None:
                     nn.init.zeros_(m.bias)
 
-    def _forward_impl(self, x: torch.Tensor, temperatures: Optional[torch.Tensor] = None) -> torch.Tensor:
+    def _forward_impl(self, x: torch.Tensor) -> torch.Tensor:
         # lff if specified
         if self.cfg.lff_features:
             x = self.lff(x)
         # x has to be flattened array
         latent = self.backbone(x)
-        if self.cfg.film_temperature_input:
-            gen_out = self.film_generator(temperatures)
-            latent = self.film(latent, gen_out)
         # heads
         tensor_list = []
         if self.cfg.predict_policy:

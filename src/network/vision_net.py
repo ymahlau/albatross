@@ -1,6 +1,6 @@
 import math
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from functools import cached_property
 from typing import Optional
@@ -12,11 +12,10 @@ from torch.nn import Conv2d
 from torchvision.transforms.functional import rotate, vflip
 
 from src.network import Network, NetworkConfig
-from src.network.film import FiLM
-from src.network.fcn import FCN, HeadConfig, head_from_cfg
+from src.network.fcn import HeadConfig, head_from_cfg
 from src.network.invariant_conv import InvariantConvolution
 from src.network.lff import LearnedFourierFeatures
-from src.network.utils import ActivationType, NormalizationType, get_activation_func
+from src.network.utils import ActivationType, NormalizationType
 
 
 class EquivarianceType(Enum):
@@ -70,15 +69,6 @@ class VisionNetwork(Network, ABC):
         else:
             self.transformation_out_features = self.in_channels
         self.avg_pool = nn.AdaptiveAvgPool2d(1)
-        # film for additional input (for now only scalar temperature)
-        if self.cfg.film_temperature_input:
-            film_input = 1 if self.cfg.single_film_temperature else self.cfg.game_cfg.num_players - 1
-            self.film_generator = head_from_cfg(
-                cfg=self.cfg.film_cfg,
-                input_size=film_input,
-                output_size=self.latent_size,
-            )
-            self.film = FiLM(feature_size=self.latent_size)
         # heads
         self.value_head = head_from_cfg(
             self.cfg.value_head_cfg,
@@ -148,9 +138,6 @@ class VisionNetwork(Network, ABC):
         # pooling and feature transform
         pooled = self.avg_pool(backbone_out)
         latent = torch.flatten(pooled, 1)
-        if self.cfg.film_temperature_input:
-            gen_out = self.film_generator(temperatures)
-            latent = self.film(latent, gen_out)
         # heads
         tensor_list = []
         if self.cfg.predict_policy:

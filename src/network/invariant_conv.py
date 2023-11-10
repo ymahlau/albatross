@@ -42,11 +42,13 @@ class InvariantConvolution(nn.Module):
             row0 = torch.stack([self.w[0], self.w[1], self.w[0]], dim=-1)
             row1 = torch.stack([self.w[1], self.w[2], self.w[1]], dim=-1)
             kernel = torch.stack([row0, row1, row0], dim=-1)
-        else:
+        elif self.kernel_size == 5:
             row0 = torch.stack([self.w[0], self.w[1], self.w[2], self.w[1], self.w[0]], dim=-1)
             row1 = torch.stack([self.w[1], self.w[3], self.w[4], self.w[3], self.w[1]], dim=-1)
             row2 = torch.stack([self.w[2], self.w[4], self.w[5], self.w[4], self.w[2]], dim=-1)
             kernel = torch.stack([row0, row1, row2, row1, row0], dim=-1)
+        else:
+            raise ValueError(f"Currently only kernel sizes of 3 and 5 are supported, but not {self.kernel_size}")
         return kernel
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:

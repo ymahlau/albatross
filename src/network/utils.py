@@ -60,21 +60,21 @@ def get_normalization_func(
         num_features: Optional[int] = None,
         normalized_shape: Optional[list[int]] = None,
 ) -> nn.Module:
-    if norm_type == NormalizationType.NONE or norm_type == NormalizationType.NONE.value:
+    if norm_type == NormalizationType.NONE:
         return nn.Identity()
-    elif norm_type == NormalizationType.BATCH_NORM or norm_type == NormalizationType.BATCH_NORM.value:
+    elif norm_type == NormalizationType.BATCH_NORM:
         if num_features is None:
             raise ValueError("Need feature number for batch norm")
         return nn.BatchNorm2d(num_features=num_features, affine=affine)
-    elif norm_type == NormalizationType.LAYER_NORM or norm_type == NormalizationType.LAYER_NORM.value:
+    elif norm_type == NormalizationType.LAYER_NORM:
         if normalized_shape is None:
             raise ValueError("Need norm shape for layer norm")
         return nn.LayerNorm(normalized_shape=normalized_shape, elementwise_affine=affine)
-    elif norm_type == NormalizationType.INSTANCE_NORM or norm_type == NormalizationType.INSTANCE_NORM.value:
+    elif norm_type == NormalizationType.INSTANCE_NORM:
         if num_features is None:
             raise ValueError("Need feature number for instance norm")
         return nn.InstanceNorm2d(num_features=num_features, affine=affine)
-    elif norm_type == NormalizationType.GROUP_NORM or norm_type == NormalizationType.GROUP_NORM.value:
+    elif norm_type == NormalizationType.GROUP_NORM:
         if num_features is None:
             raise ValueError("Need feature number for group norm")
         return nn.GroupNorm(num_groups=8, num_channels=num_features, affine=affine)

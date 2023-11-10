@@ -35,7 +35,6 @@ class SimpleNetwork(Network):
     def _forward_impl(
             self,
             x: torch.Tensor,
-            temperatures: Optional[torch.Tensor] = None
     ) -> torch.Tensor:
         out = self.fcn(x)
         return out

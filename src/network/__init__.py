@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from enum import Enum
 from functools import cached_property
 from os.path import exists
 from pathlib import Path
@@ -20,9 +19,6 @@ class NetworkConfig:
     game_cfg: Optional[GameConfig] = None
     predict_policy: bool = True
     predict_game_len: bool = False
-    film_temperature_input: bool = False
-    single_film_temperature: bool = True  # only used if film_temperature_input is True
-    film_cfg: Optional[HeadConfig] = None
 
 
 class Network(nn.Module, ABC):
@@ -36,25 +32,11 @@ class Network(nn.Module, ABC):
         self.cfg = cfg
         self.game = get_game_from_config(self.cfg.game_cfg)
 
-    def forward(self, x: torch.Tensor, temperatures: Optional[torch.Tensor] = None) -> torch.Tensor:
-        if temperatures is not None and not self.cfg.film_temperature_input:
-            raise ValueError(f"Cannot process temperatures in network (film not specified)")
-        if self.cfg.film_temperature_input:
-            if temperatures is None:
-                raise ValueError(f"Temperature in network input cannot be None")
-            if self.cfg.single_film_temperature:
-                if len(temperatures.shape) != 2 or temperatures.shape[1] != 1:
-                    raise ValueError(f"Invalid temperature shape: {temperatures.shape}")
-            else:
-                if len(temperatures.shape) != 2 or temperatures.shape[1] != self.cfg.game_cfg.num_players - 1:
-                    raise ValueError(f"Invalid temperature shape: {temperatures.shape}")
-        # divide film input by 10 to scale it appropriately
-        if temperatures is not None:
-            temperatures /= 10
-        return self._forward_impl(x, temperatures)
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self._forward_impl(x)
 
     @abstractmethod
-    def _forward_impl(self, x: torch.Tensor, temperatures: Optional[torch.Tensor] = None) -> torch.Tensor:
+    def _forward_impl(self, x: torch.Tensor) -> torch.Tensor:
         raise NotImplementedError()
 
     def reset(self):
