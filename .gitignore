@@ -10,6 +10,7 @@ logging_data/models
 /multirun
 /models
 
+outputs
 img
 
 # Byte-compiled / optimized / DLL files
