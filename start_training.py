@@ -7,8 +7,8 @@ import torch
 import torch.multiprocessing as mp
 from omegaconf import OmegaConf
 
+from src.misc.serialization import deserialize_dataclass
 from src.trainer.az_trainer import AlphaZeroTrainer, AlphaZeroTrainerConfig
-
 
 # @hydra.main(version_base=None, config_name='config', config_path=str(Path(__file__).parent / 'config_generated'))
 def main(cfg: AlphaZeroTrainerConfig):
@@ -16,13 +16,14 @@ def main(cfg: AlphaZeroTrainerConfig):
     os.environ["OMP_NUM_THREADS"] = "1"
     print(os.getcwd(), flush=True)
     print(OmegaConf.to_yaml(cfg), flush=True)
-    a = 1
-    # trainer_cfg = trainer_config_from_structured(cfg)
-    # trainer = AlphaZeroTrainer(trainer_cfg)
-    # if trainer_cfg.prev_run_dir is None:
-    #     trainer.start_training()
-    # else:
-    #     trainer.continue_training()
+    cfg_dict = OmegaConf.to_container(cfg, resolve=True)
+    trainer_cfg = deserialize_dataclass(cfg_dict)
+    trainer = AlphaZeroTrainer(trainer_cfg)
+    if trainer_cfg.prev_run_dir is None:
+        trainer.start_training()
+    else:
+        trainer.continue_training()
+
 
 if __name__ == '__main__':
     mp.set_start_method('spawn', force=True)  # this is important for using CUDA

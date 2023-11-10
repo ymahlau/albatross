@@ -43,7 +43,10 @@ data:
                 __name__: AreaControlEvalConfig
                 data:
                   health_threshold: 1.0
-                  value_norm_type: NONE
+                  value_norm_type:
+                    __module__: src.game.values
+                    __name__: UtilityNorm
+                    value: NONE
               expansion_depth: 0
               extract_func_cfg:
                 __module__: src.search.config
@@ -116,7 +119,10 @@ data:
         __name__: KillBattleSnakeRewardConfig
         data:
           living_reward: 0.0
-          reward_type: KILL
+          reward_type:
+            __module__: src.game.battlesnake.battlesnake_rewards
+            __name__: BattleSnakeRewardType
+            value: KILL
           terminal_reward: 1.0
       royale: true
       shrink_n_turns: 25
@@ -144,8 +150,14 @@ data:
     __module__: src.network.resnet
     __name__: ResNetConfig7x7Best
     data:
-      activation_type: LEAKY_RELU
-      eq_type: NONE
+      activation_type:
+        __module__: src.network.utils
+        __name__: ActivationType
+        value: LEAKY_RELU
+      eq_type:
+        __module__: src.network.vision_net
+        __name__: EquivarianceType
+        value: NONE
       film_cfg: null
       film_temperature_input: false
       game_cfg: null
@@ -183,16 +195,28 @@ data:
       length_head_cfg: null
       lff_feature_expansion: 27
       lff_features: false
-      norm_type: GROUP_NORM
+      norm_type:
+        __module__: src.network.utils
+        __name__: NormalizationType
+        value: GROUP_NORM
       policy_head_cfg:
         __module__: src.network.fcn
         __name__: HeadConfig
         data:
-          activation_type: LEAKY_RELU
+          activation_type:
+            __module__: src.network.utils
+            __name__: ActivationType
+            value: LEAKY_RELU
           dropout_p: 0.2
-          final_activation: NONE
+          final_activation:
+            __module__: src.network.utils
+            __name__: ActivationType
+            value: NONE
           hidden_size: null
-          normalization_type: GROUP_NORM
+          normalization_type:
+            __module__: src.network.utils
+            __name__: NormalizationType
+            value: GROUP_NORM
           num_layers: 1
       predict_game_len: false
       predict_policy: true
@@ -201,11 +225,20 @@ data:
         __module__: src.network.fcn
         __name__: HeadConfig
         data:
-          activation_type: LEAKY_RELU
+          activation_type:
+            __module__: src.network.utils
+            __name__: ActivationType
+            value: LEAKY_RELU
           dropout_p: 0.2
-          final_activation: TANH
+          final_activation:
+            __module__: src.network.utils
+            __name__: ActivationType
+            value: TANH
           hidden_size: null
-          normalization_type: GROUP_NORM
+          normalization_type:
+            __module__: src.network.utils
+            __name__: NormalizationType
+            value: GROUP_NORM
           num_layers: 1
   num_worker: 5
   obs_temperature_input: true
@@ -240,8 +273,12 @@ data:
               - 0.001
               - 1.0e-05
               anneal_types:
-              - LINEAR
-              - COSINE
+              - __module__: src.supervised.annealer
+                __name__: AnnealingType
+                value: LINEAR
+              - __module__: src.supervised.annealer
+                __name__: AnnealingType
+                value: COSINE
               cyclic: false
               end_times_min:
               - 1
@@ -250,7 +287,10 @@ data:
           beta1: 0.9
           beta2: 0.99
           fused: false
-          optim_type: ADAM_W
+          optim_type:
+            __module__: src.supervised.optim
+            __name__: OptimType
+            value: ADAM_W
           weight_decay: 0.0001
       updates_until_distribution: 2
       use_gpu: true
@@ -271,7 +311,10 @@ data:
         __module__: src.trainer.policy_eval
         __name__: PolicyEvalConfig
         data:
-          eval_type: TD_0
+          eval_type:
+            __module__: src.trainer.policy_eval
+            __name__: PolicyEvalType
+            value: TD_0
           lambda_val: 0.5
       prevent_draw: false
       quick_start: true
@@ -294,7 +337,10 @@ data:
               - 10
               - 10
               num_iterations: 200
-              sbr_mode: MSA
+              sbr_mode:
+                __module__: src.equilibria.logit
+                __name__: SbrMode
+                value: MSA
               use_cpp: true
           discount: 0.95
           eval_func_cfg:
@@ -311,7 +357,10 @@ data:
               random_symmetry: false
               single_temperature: true
               temperature_input: false
-              value_norm_type: NONE
+              value_norm_type:
+                __module__: src.game.values
+                __name__: UtilityNorm
+                value: NONE
           extract_func_cfg:
             __module__: src.search.config
             __name__: SpecialExtractConfig
