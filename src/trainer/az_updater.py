@@ -226,12 +226,6 @@ def log_info(
         msg_data['updater_policy_median_loss'] = np.median(stats.policy_losses).item()
         msg_data['updater_policy_max_loss'] = max(stats.policy_losses)
         msg_data['updater_policy_min_loss'] = max(stats.policy_losses)
-    if essentials.net.cfg.predict_game_len:
-        msg_data['updater_length_avg_loss'] = sum(stats.length_losses) / logger_cfg.updater_bucket_size
-        msg_data['updater_length_std_loss'] = np.std(stats.length_losses).item()
-        msg_data['updater_length_median_loss'] = np.median(stats.length_losses).item()
-        msg_data['updater_length_max_loss'] = max(stats.length_losses)
-        msg_data['updater_length_min_loss'] = max(stats.length_losses)
     if stats.zero_sum_losses:
         msg_data['updater_zerosum_avg_loss'] = sum(stats.zero_sum_losses) / logger_cfg.updater_bucket_size
         msg_data['updater_zerosum_std_loss'] = np.std(stats.zero_sum_losses).item()
@@ -294,8 +288,6 @@ def perform_update(
     loss = value_loss
     if essentials.net.cfg.predict_policy:
         loss += policy_loss
-    if essentials.net.cfg.predict_game_len:
-        loss += length_loss
     if updater_cfg.zero_sum_loss:
         loss += zero_sum_loss
     loss.backward()
@@ -321,8 +313,6 @@ def perform_update(
     stats.value_losses += [value_loss.cpu().item()]
     if essentials.net.cfg.predict_policy:
         stats.policy_losses += [policy_loss.cpu().item()]
-    if essentials.net.cfg.predict_game_len:
-        stats.length_losses += [length_loss.cpu().item()]
     if updater_cfg.zero_sum_loss:
         stats.zero_sum_losses += [zero_sum_loss.cpu().item()]
     stats.update_counter.value += 1
@@ -338,14 +328,10 @@ def compute_loss(
         use_zero_sum_loss: bool,
         mse_policy_loss: bool,
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
-    inputs = sample.obs.to(device)
-    temp_input = None
-    if net.cfg.film_temperature_input:
-        temp_input = sample.temperature.to(device)
-    values = sample.values.to(device)
-    policies = sample.policies.to(device)
-    game_lengths = sample.game_lengths.to(device)
-    outputs = net(inputs, temp_input)
+    inputs = torch.from_numpy(sample.obs).to(device)
+    values = torch.from_numpy(sample.values).to(device)
+    policies = torch.from_numpy(sample.policies).to(device)
+    outputs = net(inputs)
     val_output = net.retrieve_value(outputs).unsqueeze(-1)
     val_loss = compute_value_loss(val_output, values)
     action_loss, length_loss, zero_sum_loss = None, None, None

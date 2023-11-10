@@ -49,4 +49,3 @@ class SmallFlatFCNConfig(FlatFCNetworkConfig):
     hidden_size: int = field(default=128)
     policy_head_cfg: HeadConfig = field(default_factory=lambda: SmallHeadConfig(num_layers=1))
     value_head_cfg: HeadConfig = field(default_factory=lambda: SmallHeadConfig(num_layers=1))
-    length_head_cfg: HeadConfig = field(default_factory=lambda: SmallHeadConfig(num_layers=1))

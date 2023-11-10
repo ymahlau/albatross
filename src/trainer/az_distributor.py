@@ -4,8 +4,7 @@ import time
 from datetime import datetime
 from typing import Optional
 
-import torch
-import torch.multiprocessing as mp
+import multiprocessing as mp
 
 from src.trainer.utils import send_obj_to_queue
 
@@ -21,9 +20,6 @@ def run_distributor(
         info_bucket_size: int,
         cpu_list: Optional[list[int]] = None,  # only works on Linux
 ):
-    # important to avoid deadlocks
-    torch.set_num_threads(1)
-    os.environ["OMP_NUM_THREADS"] = "1"
     # init
     pid = os.getpid()
     if cpu_list is not None:

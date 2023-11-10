@@ -4,15 +4,17 @@ import sys
 import time
 from pathlib import Path
 
-import torch
-import torch.multiprocessing as mp
+import numpy as np
+import multiprocessing as mp
 
+from src.game.initialization import get_game_from_config
 from src.misc.utils import set_seed
 from src.network.initialization import get_network_from_config
 from src.search.initialization import get_search_from_config
 from src.trainer.az_collector import run_collector
 from src.trainer.az_distributor import run_distributor
 from src.trainer.az_evaluator import run_evaluator
+from src.trainer.az_inference_server import run_inference_server
 from src.trainer.az_logger import run_logger
 from src.trainer.az_saver import run_saver
 from src.trainer.az_updater import run_updater
@@ -55,9 +57,6 @@ class AlphaZeroTrainer:
         _ = get_search_from_config(self.cfg.worker_cfg.search_cfg)
 
     def _train(self) -> None:
-        # important for multiprocessing
-        torch.set_num_threads(1)
-        os.environ["OMP_NUM_THREADS"] = "1"
         if self.cfg.logger_cfg.id is not None:
             set_seed(self.cfg.logger_cfg.id)
         print(f'Started main process with pid {os.getpid()}')
@@ -77,16 +76,25 @@ class AlphaZeroTrainer:
         queue_list = [collector_in_queue, update_out_queue, eval_in_queue, info_queue, saver_in_queue,
                       updater_in_queue]
         dist_out_queue_list: list[mp.Queue] = [eval_in_queue, saver_in_queue]
-        gpu_counter, cpu_counter = 0, 0
-        available_cpu_list = None
+        cpu_counter, available_cpu_list = 0, None
         if self.cfg.restrict_cpu:
             available_cpu_list = list(os.sched_getaffinity(0))
             print(f"Available CPUs in Main: {available_cpu_list}", flush=True)
+        # inference server arrays
+        game = get_game_from_config(self.cfg.game_cfg)
+        obs_shape = game.get_obs_shape()
+        out_shape = 1 + game.num_actions if self.cfg.net_cfg.predict_policy else 1
+        input_rdy_arr_np = np.zeros(shape=(self.cfg.max_eval_per_worker * self.cfg.num_worker,), dtype=int)
+        input_rdy_arr = mp.Array('i', input_rdy_arr_np)
+        output_rdy_arr_np = np.zeros(shape=(self.cfg.max_eval_per_worker * self.cfg.num_worker,), dtype=int)
+        output_rdy_arr = mp.Array('i', output_rdy_arr_np)
+        input_arr_np = np.zeros(shape=(self.cfg.max_eval_per_worker * self.cfg.num_worker, *obs_shape), dtype=float)
+        input_arr = mp.Array('f', input_arr_np)
+        output_arr_np = np.zeros(shape=(self.cfg.max_eval_per_worker * self.cfg.num_worker, out_shape), dtype=float)
+        output_arr = mp.Array('i', output_arr_np)
         # start updater
         if not self.cfg.only_generate_buffer:
-            gpu_idx = gpu_counter if self.cfg.individual_gpu else None
-            if self.cfg.updater_cfg.use_gpu:
-                gpu_counter += 1
+            gpu_idx = 0 if self.cfg.updater_cfg.use_gpu else None
             cpu_list_updater = None
             if self.cfg.restrict_cpu and self.cfg.max_cpu_updater is not None:
                 cpu_list_updater = available_cpu_list[cpu_counter:cpu_counter + self.cfg.max_cpu_updater]
@@ -130,13 +138,7 @@ class AlphaZeroTrainer:
             p.start()
             process_list.append(p)
         # start worker
-        worker_per_gpu = -1
-        if self.cfg.worker_cfg.num_gpu > 0:
-            worker_per_gpu = self.cfg.num_worker / self.cfg.worker_cfg.num_gpu
-        temp_gpu_counter = gpu_counter
         for worker_id in range(self.cfg.num_worker):
-            worker_net_queue = mp.Queue(maxsize=self.cfg.distributor_out_qsize)
-            gpu_idx = temp_gpu_counter if self.cfg.individual_gpu else None
             cpu_list_worker = None
             if self.cfg.restrict_cpu and self.cfg.max_cpu_worker is not None:
                 cpu_list_worker = available_cpu_list[cpu_counter:cpu_counter + self.cfg.max_cpu_worker]
@@ -145,28 +147,50 @@ class AlphaZeroTrainer:
                 'worker_id': worker_id,
                 'trainer_cfg': self.cfg,
                 'data_queue': collector_in_queue,
-                'net_queue': worker_net_queue,
                 'stop_flag': stop_flag,
                 'info_queue': info_queue,
                 'step_counter': step_counter,
                 'episode_counter': episode_counter,
-                'gpu_idx': gpu_idx,
-                'prev_run_dir': Path(self.cfg.prev_run_dir) if self.cfg.prev_run_dir is not None else None,
-                'prev_run_idx': self.cfg.prev_run_idx,
                 'error_counter': error_counter,
+                'input_arr': input_arr,
+                'input_rdy_arr': input_rdy_arr,
+                'output_arr': output_arr,
+                'output_rdy_arr': output_rdy_arr,
                 'cpu_list': cpu_list_worker,
                 'seed': seed_worker,
+                'debug': False,
             }
             p = mp.Process(target=run_worker, kwargs=kwargs_worker)
             p.start()
-            queue_list.append(worker_net_queue)
-            dist_out_queue_list.append(worker_net_queue)
             process_list.append(p)
-            if (worker_id + 1) % worker_per_gpu == 0:
-                temp_gpu_counter += 1
-        gpu_counter += self.cfg.worker_cfg.num_gpu
         if self.cfg.restrict_cpu:
             cpu_counter += self.cfg.max_cpu_worker
+        # inference server
+        for inference_id in range(self.cfg.num_inference_gpu):
+            inference_net_queue = mp.Queue(maxsize=self.cfg.distributor_out_qsize)
+            cpu_list_inference = None
+            if self.cfg.restrict_cpu and self.cfg.max_cpu_inference_server is not None:
+                cpu_list_inference = available_cpu_list[cpu_counter:cpu_counter + self.cfg.max_cpu_inference_server]
+            gpu_idx = None if self.cfg.num_inference_gpu is None else inference_id + self.cfg.updater_cfg.use_gpu
+            kwargs_inference = {
+                'trainer_cfg': self.cfg,
+                'net_queue': inference_net_queue,
+                'stop_flag': stop_flag,
+                'info_queue': info_queue,
+                'input_rdy_arr': info_queue,
+                'output_rdy_arr': output_rdy_arr,
+                'input_arr': input_arr,
+                'output_arr': output_arr,
+                'cpu_list': cpu_list_inference,
+                'gpu_idx': gpu_idx,
+                'prev_run_dir': Path(self.cfg.prev_run_dir) if self.cfg.prev_run_dir is not None else None,
+                'prev_run_idx': self.cfg.prev_run_idx,
+            }
+            p = mp.Process(target=run_inference_server, kwargs=kwargs_inference)
+            p.start()
+            process_list.append(p)
+            dist_out_queue_list.append(inference_net_queue)
+            queue_list.append(inference_net_queue)
         # cpu list for distributor, collector, saver and logger
         cpu_list_ldsc = None
         if self.cfg.restrict_cpu and self.cfg.max_cpu_log_dist_save_collect is not None:
@@ -216,7 +240,6 @@ class AlphaZeroTrainer:
             process_list.append(p)
         # start collector
         seed_collector = random.randint(0, 2 ** 32 - 1)
-        collector_film_sample = False if self.cfg.only_generate_buffer else self.cfg.net_cfg.film_temperature_input
         kwargs_collector = {
             'trainer_cfg': self.cfg,
             'data_queue': collector_in_queue,
@@ -231,7 +254,6 @@ class AlphaZeroTrainer:
             'prev_run_dir': Path(self.cfg.prev_run_dir) if self.cfg.prev_run_dir is not None else None,
             'seed': seed_collector,
             'grouped_sampling': self.cfg.updater_cfg.zero_sum_loss,
-            'film_temperature_sampling': collector_film_sample,
         }
         p = mp.Process(target=run_collector, kwargs=kwargs_collector)
         p.start()

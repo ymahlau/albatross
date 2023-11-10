@@ -5,6 +5,7 @@ from os.path import exists
 from pathlib import Path
 from typing import Optional
 
+import numpy as np
 import torch
 import torch.nn as nn
 
@@ -18,7 +19,6 @@ from src.network.utils import cleanup_state_dict
 class NetworkConfig:
     game_cfg: Optional[GameConfig] = None
     predict_policy: bool = True
-    predict_game_len: bool = False
 
 
 class Network(nn.Module, ABC):
@@ -53,8 +53,6 @@ class Network(nn.Module, ABC):
         output_size = 1
         if self.cfg.predict_policy:
             output_size += self.cfg.game_cfg.num_actions
-        if self.cfg.predict_game_len:
-            output_size += 1
         return output_size
 
     def save(self, path: Path) -> None:
@@ -72,7 +70,7 @@ class Network(nn.Module, ABC):
         print('Successfully Loaded Model from existing Checkpoint!', flush=True)
 
     @staticmethod
-    def retrieve_value(output_tensor: torch.Tensor) -> torch.Tensor:
+    def retrieve_value(output_tensor: np.ndarray) -> np.ndarray:
         """
         Args:
             output_tensor (): Output of the forward function
@@ -81,40 +79,22 @@ class Network(nn.Module, ABC):
         """
         value = output_tensor[..., -1]
         # sanity checks
-        if not torch.any(torch.isfinite(value)) or torch.any(torch.isnan(value)):
+        if not np.any(np.isfinite(value)) or np.any(np.isnan(value)):
             raise Exception(f"Network value output contains invalid numbers: {value}")
         return value
 
-    def retrieve_policy(self, output_tensor: torch.Tensor) -> torch.Tensor:
+    @staticmethod
+    def retrieve_policy(output_tensor: np.ndarray) -> np.ndarray:
         """
         Args:
             output_tensor (): Output of the forward function
         Returns: Tensor (of shape (n,a), n players, a actions per player. (b,n,a) if output is a batch) containing
             the actions part of the output
         """
-        if not self.cfg.predict_policy:
-            raise ValueError("This network does not predict a policy")
-        if self.cfg.predict_game_len:
-            actions = output_tensor[..., 0:-2]
-        else:
-            actions = output_tensor[..., 0:-1]
-        if not torch.any(torch.isfinite(actions)) or torch.any(torch.isnan(actions)):
+        actions = output_tensor[..., 0:-1]
+        if not np.any(np.isfinite(actions)) or np.any(np.isnan(actions)):
             raise Exception(f"Network action output contains invalid numbers: {actions}")
         return actions
-
-    def retrieve_length(self, output_tensor: torch.Tensor) -> torch.Tensor:
-        """
-        Args:
-            output_tensor (): Output of the forward function
-        Returns: Tensor (of shape (n,a), n players, a actions per player. (b,n,a) if output is a batch) containing
-            the game length prediction part of the output
-        """
-        if not self.cfg.predict_game_len:
-            raise ValueError("This network does not predict game length")
-        lengths = output_tensor[..., -2]
-        if not torch.any(torch.isfinite(lengths)) or torch.any(torch.isnan(lengths)):
-            raise Exception(f"Network lengths output contains invalid numbers: {lengths}")
-        return lengths
 
     def __del__(self):
         self.game.close()

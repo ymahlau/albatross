@@ -1,37 +1,34 @@
+import multiprocessing as mp
 import os
 import random
 import sys
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
-from pathlib import Path
 from typing import Optional
 
 import numpy as np
-import torch
-import torch.multiprocessing as mp
 
-from src.game.game import Game
 from src.game.actions import sample_individual_actions, apply_permutation, filter_illegal_and_normalize
+from src.game.game import Game
 from src.game.initialization import get_game_from_config
 from src.game.utils import step_with_draw_prevention
 from src.misc.replay_buffer import BufferInputSample
 from src.misc.utils import set_seed
-from src.network.initialization import get_network_from_config, get_network_from_file
 from src.search import SearchInfo, Search
+from src.search.eval_func import InferenceServerEvalFunc
 from src.search.initialization import get_search_from_config
 from src.search.utils import compute_q_values
 from src.supervised.annealer import TemperatureAnnealer
 from src.trainer.config import WorkerConfig, AlphaZeroTrainerConfig
 from src.trainer.policy_eval import PolicyEvalType
-from src.trainer.utils import send_obj_to_queue, register_exit_function, get_latest_obj_from_queue
+from src.trainer.utils import send_obj_to_queue
 
 
 @dataclass
 class WorkerStatistics:
     step_counter: mp.Value
     episode_counter: mp.Value
-    load_time_sum: float = 0
     search_time_sum: float = 0
     idle_time_sum: float = 0
     data_conv_time_sum: float = 0
@@ -46,63 +43,46 @@ class WorkerStatistics:
     reward_counter: int = 0
 
 
-@torch.no_grad()
 def run_worker(
         worker_id: int,
         trainer_cfg: AlphaZeroTrainerConfig,
         data_queue: mp.Queue,
-        net_queue: mp.Queue,
         stop_flag: mp.Value,
         info_queue: mp.Queue,
         step_counter: mp.Value,
         episode_counter: mp.Value,
         error_counter: mp.Value,
+        input_rdy_arr: mp.Array,
+        output_rdy_arr: mp.Array,
+        input_arr: mp.Array,
+        output_arr: mp.Array,
         cpu_list: Optional[list[int]],
-        gpu_idx: Optional[int],
-        prev_run_dir: Optional[Path],
-        prev_run_idx: Optional[int],
         seed: int,
         debug: bool = False,
 ):
     game_cfg = trainer_cfg.game_cfg
-    net_cfg = trainer_cfg.net_cfg
     worker_cfg = trainer_cfg.worker_cfg
-    # important for multiprocessing
-    torch.set_num_threads(1)
-    os.environ["OMP_NUM_THREADS"] = "1"
     set_seed(seed)
     # initialization
     search = get_search_from_config(worker_cfg.search_cfg)
     game = get_game_from_config(game_cfg)
-    if worker_cfg.num_gpu != 0:
-        device = torch.device('cuda' if gpu_idx is None else f'cuda:{gpu_idx}')
-        torch.cuda.init()
-    else:
-        device = torch.device('cpu')
-    # network
-    net = None
-    if net_cfg is not None:
-        net = get_network_from_config(net_cfg)
-        if prev_run_dir is not None:
-            net = get_network_from_file(prev_run_dir / 'fixed_time_models' / f'm_{prev_run_idx}.pt')
-        # net = fabric.setup_module(net, move_to_device=False)
-        net = net.to(device)
-        net = net.eval()  # We are not updating here, but evaluating during play to generate new data
-        if not worker_cfg.quick_start:  # if quick start do not use network in search-eval
-            search.replace_net(net)
-            search.replace_device(device)
-        else:
-            print(f"Started Worker {worker_id} in Quick-Start mode without network", flush=True)
-    else:
-        print(f"Started Worker {worker_id} for Buffer Generation")
-    # exit
-    if net_cfg is not None:
-        register_exit_function(net, name=f'worker_net_{worker_id}')
-    # info for logging
-    stats = WorkerStatistics(step_counter=step_counter, episode_counter=episode_counter)
     if hasattr(search, "backup_func"):
         if hasattr(search.backup_func, "error_counter"):
             search.backup_func.error_counter = error_counter
+    if not isinstance(search.eval_func, InferenceServerEvalFunc):
+        raise ValueError(f"Worker needs Inference Server Evaluation Function")
+    search.eval_func.update_arrays_and_indices(
+        input_arr=input_arr,
+        output_arr=output_arr,
+        input_rdy_arr=input_rdy_arr,
+        output_rdy_arr=output_rdy_arr,
+        start_idx=worker_id * trainer_cfg.max_eval_per_worker,
+        max_length=trainer_cfg.max_eval_per_worker,
+        stop_flag=stop_flag,
+    )
+    # info for logging
+    stats = WorkerStatistics(step_counter=step_counter, episode_counter=episode_counter)
+    # temperature scheduling
     annealer_list: Optional[list[TemperatureAnnealer]] = None
     if worker_cfg.anneal_cfgs is not None:
         if trainer_cfg.single_sbr_temperature:
@@ -116,23 +96,12 @@ def run_worker(
     if cpu_list is not None:
         print(f"{datetime.now()} - CPU list in Worker: {cpu_list}")
         os.sched_setaffinity(pid, cpu_list)
-        print(f'{datetime.now()} - Started Worker process with pid {pid} using cpus: {os.sched_getaffinity(pid)}'
-              f" using device {device}", flush=True)
+        print(f'{datetime.now()} - Started Worker process {worker_id} with pid {pid} using cpus: '
+              f'{os.sched_getaffinity(pid)}', flush=True)
     else:
-        print(f'{datetime.now()} - Started Worker process with pid {pid} using device {device}', flush=True)
+        print(f'{datetime.now()} - Started Worker process {worker_id} with pid {pid}', flush=True)
     try:
         while not stop_flag.value:
-            # check if new version of net is available
-            load_time_start = time.time()
-            maybe_state_dict = get_latest_obj_from_queue(net_queue)
-            if stop_flag.value:
-                break
-            if maybe_state_dict is not None:
-                net.load_state_dict(maybe_state_dict)
-                net = net.eval()
-                search.replace_net(net)
-                search.replace_device(device)
-            stats.load_time_sum += time.time() - load_time_start
             # for exploration, start game with a random number of random steps
             game.reset()
             num_random_steps = random.randint(0, worker_cfg.max_random_start_steps)
@@ -267,10 +236,9 @@ def send_info(
         temps: Optional[list[float]],
 ):
     full_time = time.time() - stats.last_info_time
-    other_time = full_time - stats.load_time_sum - stats.search_time_sum - stats.idle_time_sum - stats.step_time_sum
+    other_time = full_time - stats.search_time_sum - stats.idle_time_sum - stats.step_time_sum
     other_time -= stats.data_conv_time_sum
     msg_data = {
-        'worker_load_ratio': stats.load_time_sum / full_time,
         'worker_search_ratio': stats.search_time_sum / full_time,
         'worker_idle_ratio': stats.idle_time_sum / full_time,
         'worker_data_ratio': stats.data_conv_time_sum / full_time,
@@ -298,7 +266,6 @@ def send_info(
     stats.idle_time_sum = time.time() - idle_time_start
     # reset values
     stats.last_info_time = time.time()
-    stats.load_time_sum = 0
     stats.search_time_sum = 0
     stats.data_conv_time_sum = 0
     stats.step_time_sum = 0
@@ -318,9 +285,8 @@ def convert_training_data(
         trainer_cfg: AlphaZeroTrainerConfig,
         temperature_list: Optional[list[list[float]]],
 ) -> BufferInputSample:
-    value_tensor_list, policy_tensor_list, obs_tensor_list, game_len_list = [], [], [], []
+    value_tensor_list, policy_tensor_list, obs_tensor_list = [], [], []
     turns_list, player_list, symmetry_list = [], [], []
-    temp_list = []
     # find game length for all players
     len_per_player = [-1 for _ in range(game_list[0].num_players)]
     for i, game in enumerate(game_list):
@@ -335,13 +301,11 @@ def convert_training_data(
     # construct
     counter = 0
     for game, values, action_probs in zip(game_list, eval_value_list, policy_list):
-        # turn values and actions to tensor
-        value_tensor = torch.tensor(values, dtype=torch.float32).cpu()
         # iterate symmetries
         sims = [0] if not trainer_cfg.worker_cfg.use_symmetries else list(range(game.get_symmetry_count()))
         for symmetry in sims:
             temp_obs_input = None
-            if trainer_cfg.temperature_input and trainer_cfg.obs_temperature_input:
+            if trainer_cfg.temperature_input:
                 if trainer_cfg.single_sbr_temperature:
                     temp_obs_input = [temperature_list[counter][0]]
                 else:
@@ -350,24 +314,13 @@ def convert_training_data(
             obs, perm, inverse_perm = game.get_obs(symmetry=symmetry, temperatures=temp_obs_input)
             # apply permutation to action probs
             perm_action = apply_permutation(action_probs, perm)
-            perm_action_tensor = torch.tensor(perm_action, dtype=torch.float32).cpu()
             # iterate players
             for player_idx, player in enumerate(game.players_at_turn()):
-                # parse temperature list only for film: either single or of all enemies
-                if trainer_cfg.temperature_input and not trainer_cfg.obs_temperature_input:
-                    cur_temp = temperature_list[counter]
-                    if trainer_cfg.single_sbr_temperature:
-                        temp_list.append([cur_temp[0]])  # single temperature
-                    else:
-                        t_list = [cur_temp[e] for e in range(game.num_players) if e != player]
-                        temp_list.append(t_list)
                 # value, policy and obs are tensors
                 obs_tensor_list.append(obs[player_idx, ...])
-                value_tensor_list.append(value_tensor[player])
-                policy_tensor_list.append(perm_action_tensor[player_idx, :])
-                # length, turn, player and symmetry are not
-                length_val = (len_per_player[player] - counter) / trainer_cfg.worker_cfg.max_game_length
-                game_len_list.append(length_val)
+                value_tensor_list.append(values[player])
+                policy_tensor_list.append(perm_action[player_idx, :])
+                # turn, player and symmetry are not
                 turns_list.append(counter)
                 player_list.append(player)
                 symmetry_list.append(symmetry)
@@ -378,22 +331,16 @@ def convert_training_data(
     full_values = np.stack(value_tensor_list, axis=0)[:, np.newaxis]
     full_policies = np.stack(policy_tensor_list, axis=0)
     # convert to tensor
-    full_len = torch.tensor(game_len_list, dtype=torch.float32).unsqueeze(1)
-    full_turns = torch.tensor(turns_list, dtype=torch.float32).unsqueeze(1)
-    full_players = torch.tensor(player_list, dtype=torch.float32).unsqueeze(1)
-    full_symmetry = torch.tensor(symmetry_list, dtype=torch.float32).unsqueeze(1)
-    full_temps = None
-    if trainer_cfg.temperature_input and not trainer_cfg.obs_temperature_input:
-        full_temps = torch.tensor(temp_list, dtype=torch.float32)
+    full_turns = np.asarray(turns_list, dtype=int)[:, np.newaxis]
+    full_players = np.asarray(player_list, dtype=int)[:, np.newaxis]
+    full_symmetry = np.asarray(symmetry_list, dtype=int)[:, np.newaxis]
     sample = BufferInputSample(
         obs=full_obs,
         values=full_values,
         policies=full_policies,
-        game_lengths=full_len,
         turns=full_turns,
         player=full_players,
         symmetry=full_symmetry,
-        temperature=full_temps,
     )
     return sample
 
@@ -432,7 +379,7 @@ def compute_policy_evaluation(
 
 
 def td_lambda(
-     full_rewards: np.ndarray,  # shape(player, T)
+        full_rewards: np.ndarray,  # shape(player, T)
         full_values: np.ndarray,  # shape(player, T)
         ld: float,
         discount: float,

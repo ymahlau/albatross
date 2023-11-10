@@ -28,7 +28,6 @@ class EquivarianceType(Enum):
 class VisionNetworkConfig(NetworkConfig):
     value_head_cfg: HeadConfig
     policy_head_cfg: Optional[HeadConfig] = None
-    length_head_cfg: Optional[HeadConfig] = None
     activation_type: ActivationType = ActivationType.LEAKY_RELU
     norm_type: NormalizationType = NormalizationType.GROUP_NORM
     eq_type: EquivarianceType = EquivarianceType.NONE
@@ -41,8 +40,6 @@ class VisionNetwork(Network, ABC):
         self.cfg = cfg
         if self.cfg.policy_head_cfg is None and self.cfg.predict_policy:
             raise ValueError("Need head config for predicting policy")
-        if self.cfg.length_head_cfg is None and self.cfg.predict_game_len:
-            raise ValueError("Need head config for predicting game length")
         # input shape
         if len(self.game.get_obs_shape()) != 3:
             raise ValueError(f"Invalid input shape for resnet: {self.game.get_obs_shape()}")
@@ -80,12 +77,6 @@ class VisionNetwork(Network, ABC):
                 self.cfg.policy_head_cfg,
                 input_size=self.latent_size,
                 output_size=self.game.num_actions,
-            )
-        if self.cfg.predict_game_len:
-            self.length_head = head_from_cfg(
-                self.cfg.length_head_cfg,
-                input_size=self.latent_size,
-                output_size=1,
             )
         # permutation for grouping the actions of all symmetries. A bit convoluted, but quick to compute.
         # Symmetries: 0,  1,  2,  3,  4,  5,  6,  7
@@ -143,9 +134,6 @@ class VisionNetwork(Network, ABC):
         if self.cfg.predict_policy:
             policy_out = self.policy_head(latent)
             tensor_list.append(policy_out)
-        if self.cfg.predict_game_len:
-            length_out = self.length_head(latent)
-            tensor_list.append(length_out)
         value_out = self.value_head(latent)
         tensor_list.append(value_out)
         # post transform and cat
@@ -167,13 +155,6 @@ class VisionNetwork(Network, ABC):
                 policy_grouped = torch.reshape(policy_permuted, (-1, 4, 8))
                 policy_pooled = torch.mean(policy_grouped, dim=-1)  # shape(-1, 4)
                 out.append(policy_pooled)
-                counter += 1
-            # game length
-            if self.cfg.predict_game_len:
-                length_out = out_list[counter]
-                length_reshaped = torch.reshape(length_out, (8, -1))
-                length_pooled = torch.mean(length_reshaped, dim=0).unsqueeze(-1)
-                out.append(length_pooled)
                 counter += 1
             # value
             value_out = out_list[counter]

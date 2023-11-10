@@ -102,11 +102,10 @@ class NashVsSBRBackupConfig(BackupFuncConfig):
 
 @dataclass
 class EvalFuncConfig(ABC):
-    value_norm_type: UtilityNorm = UtilityNorm.NONE
+    utility_norm: UtilityNorm = UtilityNorm.NONE
 
 @dataclass
 class AreaControlEvalConfig(EvalFuncConfig):
-    value_norm_type: UtilityNorm = field(default=UtilityNorm.NONE)
     health_threshold: float = 1.0
 
 @dataclass
@@ -125,16 +124,17 @@ class NetworkEvalConfig(EvalFuncConfig):
     init_temperatures: Optional[list[float]] = None
     temperature_input: bool = False
     single_temperature: bool = True
-    obs_temperature_input: bool = False
     max_batch_size: int = 128
     random_symmetry: bool = False
     no_grad: bool = True
     min_clip_value: float = -1
     max_clip_value: float = 20
 
+
 @dataclass
 class DummyEvalConfig(EvalFuncConfig):
     pass
+
 
 @dataclass(kw_only=True)
 class EnemyExploitationEvalConfig(EvalFuncConfig):
@@ -145,9 +145,23 @@ class EnemyExploitationEvalConfig(EvalFuncConfig):
     obs_temperature_input: bool = False
     precision: Optional[str] = None
 
+
 @dataclass
 class RandomRolloutEvalConfig(EvalFuncConfig):
     num_rollouts: int = 1
+
+
+@dataclass
+class InferenceServerEvalConfig(EvalFuncConfig):
+    init_temperatures: Optional[list[float]] = None
+    temperature_input: bool = False
+    single_temperature: bool = True
+    max_batch_size: int = 128
+    random_symmetry: bool = False
+    min_clip_value: float = -1
+    max_clip_value: float = 1
+    active_wait_time: float = 0.05
+    policy_prediction: bool = True
 
 
 # Extraction Function
@@ -156,18 +170,22 @@ class RandomRolloutEvalConfig(EvalFuncConfig):
 class ExtractFuncConfig(ABC):
     pass
 
+
 @dataclass
 class StandardExtractConfig(ExtractFuncConfig):
     pass
+
 
 @dataclass
 class SpecialExtractConfig(ExtractFuncConfig):
     pass
     zero_sum_norm: bool = False
 
+
 @dataclass
 class MeanPolicyExtractConfig(ExtractFuncConfig):
     pass
+
 
 @dataclass
 class PolicyExtractConfig(ExtractFuncConfig):
@@ -180,9 +198,11 @@ class PolicyExtractConfig(ExtractFuncConfig):
 class SelectionFuncConfig(ABC):
     pass
 
+
 @dataclass
 class DecoupledUCTSelectionConfig(SelectionFuncConfig):
     exp_bonus: float = 1.414
+
 
 @dataclass
 class AlphaZeroDecoupledSelectionConfig(SelectionFuncConfig):
@@ -190,16 +210,19 @@ class AlphaZeroDecoupledSelectionConfig(SelectionFuncConfig):
     dirichlet_eps: float = 0.25
     exp_bonus: float = 2.0
 
+
 @dataclass
 class SampleSelectionConfig(SelectionFuncConfig):
     dirichlet_alpha: float = math.inf
     dirichlet_eps: float = 0.25
     temperature: float = 1.0
 
+
 @dataclass
 class Exp3SelectionConfig(SelectionFuncConfig):
     altered: bool = False
     random_prob: float = 0.1
+
 
 @dataclass
 class RegretMatchingSelectionConfig(SelectionFuncConfig):
@@ -216,6 +239,7 @@ class SearchConfig(ABC):
     extract_func_cfg: ExtractFuncConfig
     discount: float = 0.99
 
+
 @dataclass(kw_only=True)
 class MCTSConfig(SearchConfig):
     sel_func_cfg: SelectionFuncConfig
@@ -224,14 +248,17 @@ class MCTSConfig(SearchConfig):
     use_hot_start: bool = True
     optimize_fully_explored: bool = False  # compute statistics if a subtree is fully explored
 
+
 @dataclass(kw_only=True)
 class FixedDepthConfig(SearchConfig):
     backup_func_cfg: BackupFuncConfig
     average_eval: bool = False  # value of every node is average of backup and heuristic eval
 
+
 @dataclass(kw_only=True)
 class IterativeDeepeningConfig(FixedDepthConfig):
     backup_func_cfg: BackupFuncConfig
+
 
 @dataclass(kw_only=True)
 class SMOOSConfig(SearchConfig):

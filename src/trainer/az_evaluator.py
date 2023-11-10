@@ -7,8 +7,9 @@ from pathlib import Path
 from typing import Optional, Any
 
 import numpy as np
+import multiprocessing as mp
+
 import torch
-import torch.multiprocessing as mp
 
 from src.agent import Agent
 from src.agent.initialization import get_agent_from_config
@@ -24,7 +25,6 @@ from src.trainer.config import EvaluatorConfig, AlphaZeroTrainerConfig
 from src.trainer.utils import wait_for_obj_from_queue, send_obj_to_queue
 
 
-@torch.no_grad()
 def run_evaluator(
         trainer_cfg: AlphaZeroTrainerConfig,
         net_queue: mp.Queue,
@@ -40,7 +40,6 @@ def run_evaluator(
     evaluator_cfg = trainer_cfg.evaluator_cfg
     # important for multiprocessing
     torch.set_num_threads(1)
-    os.environ["OMP_NUM_THREADS"] = "1"
     set_seed(seed)
     # paths
     model_folder: Path = Path(os.getcwd()) / 'eval_models'
@@ -62,7 +61,6 @@ def run_evaluator(
     if trainer_cfg.temperature_input:
         value_agent_cfg.search_cfg.eval_func_cfg.temperature_input = True
         value_agent_cfg.search_cfg.eval_func_cfg.single_temperature = trainer_cfg.single_sbr_temperature
-        value_agent_cfg.search_cfg.eval_func_cfg.obs_temperature_input = trainer_cfg.obs_temperature_input
     value_agent = SearchAgent(value_agent_cfg)
     value_agent.replace_net(net)
     value_agent.set_temperatures([12.5 for _ in range(game.num_players)])
@@ -73,7 +71,6 @@ def run_evaluator(
         if trainer_cfg.temperature_input:
             policy_agent_cfg.temperature_input = True
             policy_agent_cfg.single_temperature = trainer_cfg.single_sbr_temperature
-            policy_agent_cfg.obs_temperature_input = trainer_cfg.obs_temperature_input
         policy_agent = get_agent_from_config(policy_agent_cfg)
         policy_agent.set_temperatures([12.5 for _ in range(game.num_players)])
         policy_agent.replace_net(net)
@@ -203,7 +200,6 @@ def generate_msg_and_print(
     return input_dict
 
 
-@torch.no_grad()
 def do_evaluation(
         game: Game,
         evaluee: Agent,

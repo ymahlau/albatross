@@ -7,8 +7,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-import torch
-import torch.multiprocessing as mp
+import multiprocessing as mp
 
 from src.game.initialization import get_game_from_config, buffer_config_from_game
 from src.misc.replay_buffer import ReplayBuffer, BufferInputSample
@@ -55,13 +54,9 @@ def run_collector(
         prev_run_dir: Optional[Path],
         seed: int,
         grouped_sampling: bool,
-        film_temperature_sampling: bool,
 ):
     game_cfg = trainer_cfg.game_cfg
     collector_cfg = trainer_cfg.collector_cfg
-    # important to avoid deadlocks
-    torch.set_num_threads(1)
-    os.environ["OMP_NUM_THREADS"] = "1"
     set_seed(seed)
     # init
     pid = os.getpid()
@@ -124,7 +119,6 @@ def run_collector(
                     batch_size=collector_cfg.batch_size,
                     updater_queue_maxsize=updater_queue_maxsize,
                     grouped_sampling=grouped_sampling,
-                    film_temperature_sampling=film_temperature_sampling,
                 )
             else:
                 idle_start = time.time()
@@ -180,12 +174,11 @@ def sample_data(
         batch_size: int,
         updater_queue_maxsize: int,
         grouped_sampling: bool,
-        film_temperature_sampling: bool,
 ):
     sample_start = time.time()
     while essentials.updater_queue.qsize() < updater_queue_maxsize / 2:
         # sample
-        sample = essentials.buffer.sample(batch_size, grouped=grouped_sampling, temperature=film_temperature_sampling)
+        sample = essentials.buffer.sample(batch_size, grouped=grouped_sampling)
         # add to queue
         essentials.updater_queue.put_nowait(sample)
     stats.buffer_sample_time_sum += time.time() - sample_start

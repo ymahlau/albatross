@@ -1,21 +1,20 @@
+import multiprocessing as mp
 import random
+import time
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Optional
 
 import numpy as np
 import torch
-from overcooked_ai_py.mdp.overcooked_mdp import OvercookedGridworld
-from overcooked_ai_py.planning.planners import MediumLevelActionManager, NO_COUNTERS_PARAMS
 
-from src.game.actions import apply_permutation, filter_illegal_and_normalize
+from src.game.actions import apply_permutation, filter_illegal_and_normalize, softmax
 from src.game.battlesnake.battlesnake import BattleSnakeGame
-from src.game.overcooked_slow.overcooked import OvercookedGame
-from src.game.values import apply_utility_norm
+from src.game.values import apply_utility_norm, UtilityNorm
 from src.network import Network
 from src.network.initialization import get_network_from_config, get_network_from_file
 from src.search.config import NetworkEvalConfig, CopyCatEvalConfig, AreaControlEvalConfig, EvalFuncConfig, \
-    DummyEvalConfig, EnemyExploitationEvalConfig, RandomRolloutEvalConfig
+    DummyEvalConfig, EnemyExploitationEvalConfig, RandomRolloutEvalConfig, InferenceServerEvalConfig
 from src.search.node import Node
 
 
@@ -45,15 +44,16 @@ class EvalFunc(ABC):
         # and updates info dict containing additional information for later use (e.g. action tensor of network)
         raise NotImplementedError()
 
-    def update_node(self, node: Node, values: np.ndarray):
-        node.visits = 1
-        # optionally squash values to be zero-sum
-        norm_vals = apply_utility_norm(values, self.cfg.value_norm_type)
-        node.value_sum = norm_vals
-        for player in node.game.players_not_at_turn():
-            if node.value_sum[player] != 0:
-                node.game.render()
-                raise Exception(f"Player {player} has value {node.value_sum[player]}")
+
+def update_node(node: Node, values: np.ndarray, utility_norm: UtilityNorm):
+    node.visits = 1
+    # optionally squash values to be zero-sum
+    norm_vals = apply_utility_norm(values, utility_norm)
+    node.value_sum = norm_vals
+    for player in node.game.players_not_at_turn():
+        if node.value_sum[player] != 0:
+            node.game.render()
+            raise Exception(f"Player {player} has value {node.value_sum[player]}")
 
 
 class AreaControlEvalFunc(EvalFunc):
@@ -85,7 +85,7 @@ class AreaControlEvalFunc(EvalFunc):
             result = (ac_board_relative + health_factor) / 2
             values = np.zeros(shape=(node.game.num_players,), dtype=float)
             values[node.game.players_at_turn()] = result
-            self.update_node(node, values)
+            update_node(node, values, self.cfg.utility_norm)
 
 
 class CopyCatEvalFunc(EvalFunc):
@@ -103,7 +103,7 @@ class CopyCatEvalFunc(EvalFunc):
             if not isinstance(node.game, BattleSnakeGame):
                 raise ValueError("Can only use Area control eval with battlesnake game")
             values = self._copy_cat_eval_game(node.game)
-            self.update_node(node, values)
+            update_node(node, values, self.cfg.utility_norm)
 
     @staticmethod
     def _score_delta_advantage(x: np.ndarray):
@@ -185,6 +185,75 @@ class CopyCatEvalFunc(EvalFunc):
         return normalized_result
 
 
+def gather_encodings(
+        node_list: list[Node],
+        temperature_input: bool,
+        single_temperature: bool,
+        random_symmetry: bool,
+        temperatures: list[float],
+) -> tuple[
+    list[Node],
+    list[np.ndarray],
+    list[dict[int, int]],
+    list[int],
+]:
+    # stack all encodings to single tensor, filter terminal nodes
+    filtered_list = []  # list of non-terminal nodes
+    encoding_list = []  # list of all encodings for all players
+    inv_perm_list = []  # inverse permutations for nodes
+    index_list = []  # end-indices of nodes (filtered list)
+    # forward pass for every node
+    for node in node_list:
+        obs_temp_input = None
+        if temperature_input:
+            obs_temp_input = [temperatures[0]] if single_temperature else temperatures
+        symmetry = None if random_symmetry else 0
+        enc, perm, inv_perm = node.game.get_obs(
+            symmetry=symmetry,
+            temperatures=obs_temp_input,
+            single_temperature=single_temperature
+        )
+        # encoding for every separate player
+        for idx, player in enumerate(node.game.players_at_turn()):
+            encoding_list.append(enc[idx])
+        filtered_list.append(node)
+        inv_perm_list.append(inv_perm)
+        index_list.append(len(encoding_list))
+    return filtered_list, encoding_list, inv_perm_list, index_list
+
+
+def update_node_stats(
+        filtered_list: list[Node],
+        inv_perm_list: list[dict[int, int]],
+        index_list: list[int],
+        values: np.ndarray,
+        actions: Optional[np.ndarray],
+        min_clip_value: float,
+        max_clip_value: float,
+        utility_norm: UtilityNorm,
+) -> None:
+    start_idx = 0
+    for node, inv_perm, end_idx in zip(filtered_list, inv_perm_list, index_list):
+        # extract network output
+        net_values = values[start_idx:end_idx]
+        # clip
+        net_values = np.clip(net_values, min_clip_value, max_clip_value)
+        # compute values for each player, zero for dead players
+        node_values = np.zeros((node.game.num_players,), dtype=float)
+        for idx, player in enumerate(node.game.players_at_turn()):
+            node_values[player] = net_values[idx]
+        # apply permutation to actions and filter illegal
+        if actions is not None:
+            cur_action_probs = actions[start_idx:end_idx]
+            perm_actions = apply_permutation(cur_action_probs, inv_perm)
+            filtered_actions = filter_illegal_and_normalize(perm_actions, node.game)
+            # add results to node stats. Shape is (num_players_at_turn, num_actions)
+            node.info["net_action_probs"] = filtered_actions
+        update_node(node, node_values, utility_norm)
+        # update indices
+        start_idx = end_idx
+
+
 class NetworkEvalFunc(EvalFunc):
     """
     Compute node evaluation based on Neural Network. Saves the action probs of the network as info
@@ -219,51 +288,19 @@ class NetworkEvalFunc(EvalFunc):
                 node.value_sum *= 0
                 node.info["net_action_probs"] = filtered_actions
             return
-        # stack all encodings to single tensor, filter terminal nodes
-        filtered_list = []  # list of non-terminal nodes
-        encoding_list = []  # list of all encodings for all players
-        inv_perm_list = []  # inverse permutations for nodes
-        index_list = []  # end-indices of nodes (filtered list)
-        temp_in_list = []  # sbr-temperature input
-        # forward pass for every node
-        for node in node_list:
-            obs_temp_input = None
-            if self.cfg.temperature_input and self.cfg.obs_temperature_input and self.cfg.single_temperature:
-                obs_temp_input = [self.temperatures[0]]
-            elif self.cfg.temperature_input and self.cfg.obs_temperature_input and not self.cfg.single_temperature:
-                obs_temp_input = self.temperatures
-            if self.cfg.random_symmetry:
-                enc, perm, inv_perm = node.game.get_obs(None, obs_temp_input, self.cfg.single_temperature)
-            else:
-                enc, perm, inv_perm = node.game.get_obs(0, obs_temp_input, self.cfg.single_temperature)
-            # encoding for every separate player
-            for idx, player in enumerate(node.game.players_at_turn()):
-                encoding_list.append(enc[idx])
-                if self.net.cfg.film_temperature_input:
-                    if self.cfg.single_temperature:
-                        temp_in_list.append(torch.tensor([self.temperatures[0]], dtype=torch.float32))
-                    else:
-                        # multiple film inputs: Temperatures of all enemies, but dead players have temp of zero
-                        cur_film_in = torch.zeros(size=(node.game.num_players - 1,), dtype=torch.float32)
-                        counter = 0
-                        for enemy in range(node.game.num_players):
-                            if enemy != player:
-                                if node.game.is_player_at_turn(enemy):
-                                    cur_film_in[counter] = self.temperatures[enemy]
-                                counter += 1
-                        temp_in_list.append(cur_film_in)
-            filtered_list.append(node)
-            inv_perm_list.append(inv_perm)
-            index_list.append(len(encoding_list))
+        filtered_list, encoding_list_np, inv_perm_list, index_list = gather_encodings(
+            node_list=node_list,
+            temperature_input=self.cfg.temperature_input,
+            single_temperature=self.cfg.single_temperature,
+            random_symmetry=self.cfg.single_temperature,
+            temperatures=self.temperatures,
+        )
+        encoding_list = [torch.tensor(x, dtype=torch.float32) for x in encoding_list_np]
         # forward pass for all encodings, but do not exceed max batch size
         if len(encoding_list) <= self.cfg.max_batch_size:
             enc_tensor = torch.stack(encoding_list, dim=0).to(self.device)
-            temp_tensor = None
-            if self.cfg.temperature_input and self.net.cfg.film_temperature_input:
-                temp_tensor = torch.stack(temp_in_list, dim=0).to(self.device)
-            out_tensor_with_grad = self.net(enc_tensor, temp_tensor)
-            out_tensor = out_tensor_with_grad.cpu()
-            out_tensor = out_tensor.detach()
+            out_tensor_with_grad = self.net(enc_tensor)
+            out_tensor = out_tensor_with_grad.cpu().detach().float().numpy()
         else:
             start_idx = 0
             out_tensor_list = []
@@ -272,48 +309,33 @@ class NetworkEvalFunc(EvalFunc):
                 end_idx_list.append(len(encoding_list))
             for end_idx in end_idx_list:
                 enc_tensor = torch.stack(encoding_list[start_idx:end_idx], dim=0).to(self.device)
-                temp_tensor = None
-                if self.cfg.temperature_input and self.net.cfg.film_temperature_input:
-                    temp_tensor = torch.stack(temp_in_list[start_idx:end_idx], dim=0).to(self.device)
-                out_tensor_part_with_grad = self.net(enc_tensor, temp_tensor)
-                out_tensor_part = out_tensor_part_with_grad.cpu()
-                out_tensor_part = out_tensor_part.detach()
+                out_tensor_part_with_grad = self.net(enc_tensor)
+                out_tensor_part = out_tensor_part_with_grad.cpu().detach().float().numpy()
                 out_tensor_list.append(out_tensor_part)
                 start_idx = end_idx
-            out_tensor = torch.cat(out_tensor_list, dim=0)
-        out_tensor = out_tensor.float()
+            out_tensor = np.concatenate(out_tensor_list, axis=0)
         # retrieve values/actions
-        values = self.net.retrieve_value(out_tensor).numpy()
+        values = self.net.retrieve_value(out_tensor)
         actions = None
         if self.net.cfg.predict_policy:
             raw_actions = self.net.retrieve_policy(out_tensor)
             # apply softmax to raw log-actions
-            actions = torch.nn.functional.softmax(raw_actions, dim=-1).numpy()
+            actions = softmax(raw_actions, 1)
             # sanity checks
             if np.any(np.isnan(actions)) or np.any(np.isinf(actions)) \
                     or np.any(np.abs(1 - np.sum(actions, axis=-1)) > 1e3):
                 raise Exception(f"Invalid actions returned by network: {actions}")
         # update node stats
-        start_idx = 0
-        for node, inv_perm, end_idx in zip(filtered_list, inv_perm_list, index_list):
-            # extract network output
-            net_values = values[start_idx:end_idx]
-            # clip
-            net_values = np.clip(net_values, self.cfg.min_clip_value, self.cfg.max_clip_value)
-            # compute values for each player, zero for dead players
-            node_values = np.zeros((node.game.num_players,), dtype=float)
-            for idx, player in enumerate(node.game.players_at_turn()):
-                node_values[player] = net_values[idx]
-            # apply permutation to actions and filter illegal
-            if self.net.cfg.predict_policy:
-                cur_action_probs = actions[start_idx:end_idx]
-                perm_actions = apply_permutation(cur_action_probs, inv_perm)
-                filtered_actions = filter_illegal_and_normalize(perm_actions, node.game)
-                # add results to node stats. Shape is (num_players_at_turn, num_actions)
-                node.info["net_action_probs"] = filtered_actions
-            self.update_node(node, node_values)
-            # update indices
-            start_idx = end_idx
+        update_node_stats(
+            filtered_list=filtered_list,
+            inv_perm_list=inv_perm_list,
+            index_list=index_list,
+            values=values,
+            actions=actions if self.net.cfg.predict_policy else None,
+            min_clip_value=self.cfg.min_clip_value,
+            max_clip_value=self.cfg.max_clip_value,
+            utility_norm=self.cfg.utility_norm,
+        )
 
 
 class DummyEvalFunc(EvalFunc):
@@ -330,7 +352,7 @@ class DummyEvalFunc(EvalFunc):
             return
         node_values = np.zeros((node_list[0].game.num_players,), dtype=float)
         for node in node_list:
-            self.update_node(node, node_values)
+            update_node(node, node_values, self.cfg.utility_norm)
 
 
 class EnemyExploitationEvalFunc(EvalFunc):
@@ -344,12 +366,11 @@ class EnemyExploitationEvalFunc(EvalFunc):
         self.temperatures = cfg.init_temperatures
         # player eval function
         player_eval_cfg = NetworkEvalConfig(
-            value_norm_type=self.cfg.value_norm_type,
+            utility_norm=self.cfg.utility_norm,
             net_cfg=cfg.net_cfg,
             init_temperatures=self.cfg.init_temperatures,
             temperature_input=True,
             single_temperature=False,
-            obs_temperature_input=self.cfg.obs_temperature_input,
             max_batch_size=self.cfg.max_batch_size,
             random_symmetry=False,
         )
@@ -358,12 +379,11 @@ class EnemyExploitationEvalFunc(EvalFunc):
         self.enemy_net = get_network_from_file(Path(self.cfg.enemy_net_path))
         self.enemy_net = self.enemy_net.eval()
         enemy_eval_cfg = NetworkEvalConfig(
-            value_norm_type=self.cfg.value_norm_type,
+            utility_norm=self.cfg.utility_norm,
             net_cfg=self.enemy_net.cfg,
             init_temperatures=self.cfg.init_temperatures,
             temperature_input=True,
             single_temperature=True,
-            obs_temperature_input=self.cfg.obs_temperature_input,
             max_batch_size=self.cfg.max_batch_size,
             random_symmetry=False,
         )
@@ -415,7 +435,95 @@ class RandomRolloutEvalFunc(EvalFunc):
                     rewards, done, info = cpy.step(ja)
                     value_sum += rewards
             values = value_sum / self.cfg.num_rollouts
-            self.update_node(node, values)
+            update_node(node, values, self.cfg.utility_norm)
+
+
+class InferenceServerEvalFunc(EvalFunc):
+    def __init__(self, cfg: InferenceServerEvalConfig):
+        super().__init__(cfg)
+        self.cfg = cfg
+        self.temperatures = self.cfg.init_temperatures
+        self.input_arr: Optional[mp.Array] = None
+        self.output_arr: Optional[mp.Array] = None
+        self.input_rdy_arr: Optional[mp.Array] = None
+        self.output_rdy_arr: Optional[mp.Array] = None
+        self.start_idx: Optional[int] = None
+        self.max_length: Optional[int] = None
+        self.stop_flag: Optional[mp.Value] = None
+
+    def _compute(self, node_list: list[Node]) -> None:
+        if not node_list:
+            return
+        if self.input_arr is None or self.output_arr is None or self.input_rdy_arr is None \
+                or self.output_rdy_arr is None or self.start_idx is None or self.max_length is None:
+            raise Exception('Need Arrays and indices for sending data to inference server!')
+        # get observations from game states
+        filtered_list, encoding_list_np, inv_perm_list, index_list = gather_encodings(
+            node_list=node_list,
+            temperature_input=self.cfg.temperature_input,
+            single_temperature=self.cfg.single_temperature,
+            random_symmetry=self.cfg.single_temperature,
+            temperatures=self.temperatures,
+        )
+        stacked_obs = np.concatenate(encoding_list_np, axis=0)
+        if stacked_obs.shape[0] > self.max_length:
+            raise ValueError("Received more observation than inference server allows. Increase max size!")
+        # send observations to inference server
+        end_idx = self.start_idx+stacked_obs.shape[0]
+        self.input_arr[self.start_idx:end_idx] = stacked_obs
+        self.input_rdy_arr[self.start_idx:end_idx] = 1
+        # wait for inference to process data
+        while not self.stop_flag.value:
+            # check if data ready
+            if np.all(self.output_rdy_arr[self.start_idx:end_idx] == 1):
+                break
+            # wait again
+            time.sleep(self.cfg.active_wait_time)
+        if self.stop_flag.value:  # program terminated
+            return
+        # gather outputs and clear rdy arr
+        outputs = self.output_arr[self.start_idx:end_idx]
+        self.output_rdy_arr[self.start_idx:end_idx] = 0
+        # retrieve values/actions
+        values = Network.retrieve_value(outputs)
+        actions = None
+        if self.cfg.policy_prediction:
+            raw_actions = Network.retrieve_policy(outputs)
+            # apply softmax to raw log-actions
+            actions = softmax(raw_actions, 1)
+            # sanity checks
+            if np.any(np.isnan(actions)) or np.any(np.isinf(actions)) \
+                    or np.any(np.abs(1 - np.sum(actions, axis=-1)) > 1e3):
+                raise Exception(f"Invalid actions returned by network: {actions}")
+        # update node stats
+        update_node_stats(
+            filtered_list=filtered_list,
+            inv_perm_list=inv_perm_list,
+            index_list=index_list,
+            values=values,
+            actions=actions if self.cfg.policy_prediction else None,
+            min_clip_value=self.cfg.min_clip_value,
+            max_clip_value=self.cfg.max_clip_value,
+            utility_norm=self.cfg.utility_norm,
+        )
+
+    def update_arrays_and_indices(
+            self,
+            input_arr: mp.Array,
+            output_arr: mp.Array,
+            input_rdy_arr: mp.Array,
+            output_rdy_arr: mp.Array,
+            start_idx: int,
+            max_length: int,
+            stop_flag: mp.Value,
+    ):
+        self.input_arr = input_arr
+        self.output_arr = output_arr
+        self.input_rdy_arr = input_rdy_arr
+        self.output_rdy_arr = output_rdy_arr
+        self.start_idx = start_idx
+        self.max_length = max_length
+        self.stop_flag = stop_flag
 
 
 def get_eval_func_from_cfg(cfg: EvalFuncConfig) -> EvalFunc:
@@ -431,6 +539,7 @@ def get_eval_func_from_cfg(cfg: EvalFuncConfig) -> EvalFunc:
         return EnemyExploitationEvalFunc(cfg)
     elif isinstance(cfg, RandomRolloutEvalConfig):
         return RandomRolloutEvalFunc(cfg)
+    elif isinstance(cfg, InferenceServerEvalConfig):
+        return InferenceServerEvalFunc(cfg)
     else:
         raise ValueError(f"Unknown eval function config: {cfg}")
-

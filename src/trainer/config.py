@@ -24,6 +24,7 @@ class EvaluatorConfig:
     ])
     prevent_draw: bool = True
 
+
 @dataclass
 class LoggerConfig:
     project_name: str = 'battlesnake_rl_test'
@@ -33,6 +34,7 @@ class LoggerConfig:
     updater_bucket_size: int = 50
     worker_episode_bucket_size: int = 100
     wandb_mode: str = 'online'
+
 
 @dataclass(kw_only=True)
 class UpdaterConfig:
@@ -45,6 +47,7 @@ class UpdaterConfig:
     zero_sum_loss: bool = False
     mse_policy_loss: bool = False
 
+
 @dataclass
 class CollectorConfig:
     buffer_size: int = int(1e3)
@@ -54,6 +57,7 @@ class CollectorConfig:
     log_every_sec: int = 60
     validation_percentage: float = 0  # percentage of samples directed to validation buffer
 
+
 @dataclass
 class WorkerConfig:
     search_cfg: SearchConfig
@@ -62,16 +66,23 @@ class WorkerConfig:
     search_iterations: int = 128
     temperature: float = 1
     max_random_start_steps: int = 0
-    num_gpu: int = 0
     use_symmetries: bool = True
     quick_start: bool = True  # use uniform random policy at beginning
     max_game_length: float = 25  # only used for game length prediction
     prevent_draw: bool = False
     exploration_prob: float = 0.5
 
+
 @dataclass
 class SaverConfig:
-    save_interval_sec: float = 600
+    save_interval_sec: float = 6000
+
+
+@dataclass
+class InferenceServerConfig:
+    use_gpu: bool = True
+    statistics_every_sec: int = 60
+
 
 @dataclass
 class AlphaZeroTrainerConfig:
@@ -83,11 +94,14 @@ class AlphaZeroTrainerConfig:
     evaluator_cfg: EvaluatorConfig
     logger_cfg: LoggerConfig
     saver_cfg: SaverConfig
+    inf_cfg: InferenceServerConfig
 
+    max_batch_size: int
+    max_eval_per_worker: int  # maximum number of observation needing evaluation in a single process at a time
     net_cfg: Optional[NetworkConfig] = None
 
     num_worker: int = 1
-    individual_gpu: bool = True
+    num_inference_gpu: Optional[int] = None
     data_qsize: int = 10
     info_qsize: int = 100
     updater_out_qsize: int = 10
@@ -99,14 +113,14 @@ class AlphaZeroTrainerConfig:
     init_new_network_params: bool = False  # only used if previous run dir is continued
     only_generate_buffer: bool = False
     restrict_cpu: bool = False  # only works on LINUX
+    max_cpu_inference_server: Optional[int] = None
     max_cpu_updater: Optional[int] = None
     max_cpu_worker: Optional[int] = None
-    max_cpu_log_dist_save_collect: Optional[int] = 1
-    max_cpu_evaluator: Optional[int] = 3
+    max_cpu_log_dist_save_collect: Optional[int] = None
+    max_cpu_evaluator: Optional[int] = None
     save_state: bool = False
     temperature_input: bool = False
     single_sbr_temperature: bool = True
-    obs_temperature_input: bool = True
     save_state_after_seconds: int = 36000
     compile_model: bool = False
     compile_mode: str = 'reduce-overhead'  # Can also be max_autotune (currently does not work on rtx3090

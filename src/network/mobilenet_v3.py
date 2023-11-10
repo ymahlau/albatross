@@ -233,7 +233,6 @@ class MobileNetConfig3x3(MobileNetConfig):
     layer_specs: list[list[int]] = field(default_factory=lambda: default_3x3)
     policy_head_cfg: HeadConfig = field(default_factory=lambda: SmallHeadConfig())
     value_head_cfg: HeadConfig = field(default_factory=lambda: SmallHeadConfig())
-    length_head_cfg: HeadConfig = field(default_factory=lambda: SmallHeadConfig())
 
 
 # in_channels, exp_channels, out_channels, kernel_size, stride, se
@@ -248,7 +247,6 @@ class MobileNetConfig5x5(MobileNetConfig):
     layer_specs: list[list[int]] = field(default_factory=lambda: default_5x5)
     policy_head_cfg: HeadConfig = field(default_factory=lambda: MediumHeadConfig())
     value_head_cfg: HeadConfig = field(default_factory=lambda: MediumHeadConfig())
-    length_head_cfg: HeadConfig = field(default_factory=lambda: MediumHeadConfig())
 
 # in_channels, exp_channels, out_channels, kernel_size, stride, se
 large_5x5 = [
@@ -263,7 +261,6 @@ class MobileNetConfig5x5Large(MobileNetConfig):
     layer_specs: list[list[int]] = field(default_factory=lambda: large_5x5)
     policy_head_cfg: HeadConfig = field(default_factory=lambda: MediumHeadConfig())
     value_head_cfg: HeadConfig = field(default_factory=lambda: MediumHeadConfig())
-    length_head_cfg: HeadConfig = field(default_factory=lambda: MediumHeadConfig())
 
 
 # in_channels, exp_channels, out_channels, kernel_size, stride, se
@@ -281,7 +278,6 @@ class MobileNetConfig7x7(MobileNetConfig):
     layer_specs: list[list[int]] = field(default_factory=lambda: default_7x7)
     policy_head_cfg: HeadConfig = field(default_factory=lambda: MediumHeadConfig(hidden_size=256, num_layers=2))
     value_head_cfg: HeadConfig = field(default_factory=lambda: MediumHeadConfig(hidden_size=256, num_layers=2))
-    length_head_cfg: HeadConfig = field(default_factory=lambda: MediumHeadConfig(hidden_size=256, num_layers=2))
 
 # in_channels, exp_channels, out_channels, kernel_size, stride, se
 default_11x11 = [
@@ -300,7 +296,6 @@ class MobileNetConfig11x11(MobileNetConfig):
     layer_specs: list[list[int]] = field(default_factory=lambda: default_11x11)
     policy_head_cfg: HeadConfig = field(default_factory=lambda: MediumHeadConfig(hidden_size=256, num_layers=2))
     value_head_cfg: HeadConfig = field(default_factory=lambda: MediumHeadConfig(hidden_size=256, num_layers=2))
-    length_head_cfg: HeadConfig = field(default_factory=lambda: MediumHeadConfig(hidden_size=256, num_layers=2))
 
 
 # in_channels, exp_channels, out_channels, kernel_size, stride, se
@@ -319,7 +314,6 @@ class MobileNetConfig11x11Large(MobileNetConfig):
     layer_specs: list[list[int]] = field(default_factory=lambda: default_11x11_large)
     policy_head_cfg: HeadConfig = field(default_factory=lambda: HeadConfig(hidden_size=256, num_layers=2))
     value_head_cfg: HeadConfig = field(default_factory=lambda: HeadConfig(hidden_size=256, num_layers=2))
-    length_head_cfg: HeadConfig = field(default_factory=lambda: HeadConfig(hidden_size=256, num_layers=2))
 
 # in_channels, exp_channels, out_channels, kernel_size, stride, se
 incumbent_7x7 = [

@@ -194,7 +194,6 @@ class ResNetConfig3x3(ResNetConfig):
     layer_specs: list[list[int]] = field(default_factory=lambda: default_3x3)
     policy_head_cfg: HeadConfig = field(default_factory=lambda: SmallHeadConfig())
     value_head_cfg: HeadConfig = field(default_factory=lambda: SmallHeadConfig())
-    length_head_cfg: HeadConfig = field(default_factory=lambda: SmallHeadConfig())
 
 
 # channels, num_blocks, kernel_size, padding, norm
@@ -210,7 +209,6 @@ class ResNetConfig5x5(ResNetConfig):
     layer_specs: list[list[int]] = field(default_factory=lambda: default_5x5)
     policy_head_cfg: HeadConfig = field(default_factory=lambda: MediumHeadConfig())
     value_head_cfg: HeadConfig = field(default_factory=lambda: MediumHeadConfig())
-    length_head_cfg: HeadConfig = field(default_factory=lambda: MediumHeadConfig())
 
 
 default_7x7 = [
@@ -227,7 +225,6 @@ class ResNetConfig7x7(ResNetConfig):
     layer_specs: list[list[int]] = field(default_factory=lambda: default_7x7)
     policy_head_cfg: HeadConfig = field(default_factory=lambda: MediumHeadConfig())
     value_head_cfg: HeadConfig = field(default_factory=lambda: MediumHeadConfig())
-    length_head_cfg: HeadConfig = field(default_factory=lambda: MediumHeadConfig())
 
 
 default_7x7_large = [
@@ -244,7 +241,6 @@ class ResNetConfig7x7Large(ResNetConfig):
     layer_specs: list[list[int]] = field(default_factory=lambda: default_7x7_large)
     policy_head_cfg: HeadConfig = field(default_factory=lambda: LargeHeadConfig())
     value_head_cfg: HeadConfig = field(default_factory=lambda: LargeHeadConfig())
-    length_head_cfg: HeadConfig = field(default_factory=lambda: LargeHeadConfig())
 
 
 @dataclass
@@ -298,7 +294,6 @@ class ResNetConfig9x9(ResNetConfig):
     layer_specs: list[list[int]] = field(default_factory=lambda: default_centered_9x9)
     policy_head_cfg: HeadConfig = field(default_factory=lambda: LargeHeadConfig())
     value_head_cfg: HeadConfig = field(default_factory=lambda: LargeHeadConfig())
-    length_head_cfg: HeadConfig = field(default_factory=lambda: LargeHeadConfig())
 
 
 # channels, num_blocks, kernel_size, padding, norm
@@ -315,7 +310,6 @@ default_centered_11x11 = [
 @dataclass
 class ResNetConfig11x11(ResNetConfig):
     predict_policy: bool = field(default=True)
-    predict_game_len: bool = field(default=False)
     layer_specs: list[list[int]] = field(default_factory=lambda: default_centered_11x11)
     lff_features: bool = field(default=False)
     lff_feature_expansion: bool = field(default=27)

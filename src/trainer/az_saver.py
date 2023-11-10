@@ -5,8 +5,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-import torch
-import torch.multiprocessing as mp
+import multiprocessing as mp
 
 from src.network.initialization import get_network_from_config
 from src.trainer.config import AlphaZeroTrainerConfig
@@ -22,8 +21,6 @@ def run_saver(
 ):
     net_cfg = trainer_cfg.net_cfg
     saver_cfg = trainer_cfg.saver_cfg
-    torch.set_num_threads(1)
-    os.environ["OMP_NUM_THREADS"] = "1"
     model_folder: Path = Path(os.getcwd()) / 'fixed_time_models'
     if not Path.exists(model_folder):
         model_folder.mkdir(parents=True, exist_ok=True)

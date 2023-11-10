@@ -5,8 +5,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
 
-import torch
-import torch.multiprocessing as mp
+import multiprocessing as mp
 import wandb
 
 from src.misc.utils import flatten_dict_rec
@@ -29,9 +28,6 @@ def run_logger(
         error_counter: mp.Value,
         cpu_list: Optional[list[int]],
 ):
-    # important for multiprocessing
-    torch.set_num_threads(1)
-    os.environ["OMP_NUM_THREADS"] = "1"
     # paths
     wandb_dir = Path(__file__).parent.parent.parent / 'wandb'
     wandb_dir.mkdir(parents=True, exist_ok=True)

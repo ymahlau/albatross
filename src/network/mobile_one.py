@@ -360,7 +360,6 @@ class MobileOneNetwork(VisionNetwork):
                 raise ValueError("Number of SE blocks cannot exceed number of layers.")
             if idx >= (num_blocks - num_se_blocks):
                 use_se = True
-
             # Depth-wise conv
             blocks.append(
                 MobileOneBlock(
@@ -430,7 +429,6 @@ class MobileOneConfig3x3(MobileOneConfig):
     layer_specs: list[list[int]] = field(default_factory=lambda: default_3x3)
     policy_head_cfg: HeadConfig = field(default_factory=lambda: SmallHeadConfig())
     value_head_cfg: HeadConfig = field(default_factory=lambda: SmallHeadConfig())
-    length_head_cfg: HeadConfig = field(default_factory=lambda: SmallHeadConfig())
 
 # out_channels, num_blocks, num_se_blocks, stride, exp_factor, overparam_k
 default_7x7 = [
@@ -444,7 +442,6 @@ class MobileOneConfig7x7(MobileOneConfig):
     layer_specs: list[list[int]] = field(default_factory=lambda: default_7x7)
     policy_head_cfg: HeadConfig = field(default_factory=lambda: MediumHeadConfig(hidden_size=256, num_layers=2))
     value_head_cfg: HeadConfig = field(default_factory=lambda: MediumHeadConfig(hidden_size=256, num_layers=2))
-    length_head_cfg: HeadConfig = field(default_factory=lambda: MediumHeadConfig(hidden_size=256, num_layers=2))
 
 
 # out_channels, num_blocks, num_se_blocks, stride, exp_factor, overparam_k

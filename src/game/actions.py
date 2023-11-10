@@ -189,3 +189,8 @@ def q_values_from_individual_actions(
         enemy_ja = tuple(ja_lst)
         q_vals[player_action] += ja_val[player_idx] * enemy_ja_dict[enemy_ja]
     return q_vals
+
+
+def softmax(arr: np.ndarray, temperature: float) -> np.ndarray:
+    exp = np.exp(arr * temperature)
+    return exp / np.sum(exp, axis=-1, keepdims=True)

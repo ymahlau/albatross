@@ -15,7 +15,6 @@ from src.network.lff import LearnedFourierFeatures
 class FlatNetworkConfig(NetworkConfig):
     value_head_cfg: HeadConfig
     policy_head_cfg: Optional[HeadConfig] = None
-    length_head_cfg: Optional[HeadConfig] = None
     lff_features: bool = False
     lff_feature_expansion: int = 10
 
@@ -56,12 +55,6 @@ class FlatNet(Network, ABC):
                 input_size=self.latent_size,
                 output_size=self.game.num_actions,
             )
-        if self.cfg.predict_game_len:
-            self.length_head = head_from_cfg(
-                cfg=self.cfg.length_head_cfg,
-                input_size=self.latent_size,
-                output_size=1,
-            )
 
     def initialize_weights(self):
         for m in self.modules():
@@ -91,9 +84,6 @@ class FlatNet(Network, ABC):
         if self.cfg.predict_policy:
             policy_out = self.policy_head(latent)
             tensor_list.append(policy_out)
-        if self.cfg.predict_game_len:
-            length_out = self.length_head(latent)
-            tensor_list.append(length_out)
         value_out = self.value_head(latent)
         tensor_list.append(value_out)
         # post transform and cat

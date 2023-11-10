@@ -39,10 +39,6 @@ class SimpleNetwork(Network):
         out = self.fcn(x)
         return out
 
-    @staticmethod
-    def retrieve_value(output_tensor: torch.Tensor) -> torch.Tensor:
-        raise ValueError(f"Simple network does not predict a value")
-
     def retrieve_policy(self, output_tensor: torch.Tensor) -> torch.Tensor:
         """
         Args:
@@ -55,9 +51,6 @@ class SimpleNetwork(Network):
         if not torch.any(torch.isfinite(output_tensor)) or torch.any(torch.isnan(output_tensor)):
             raise Exception(f"Network action output contains invalid numbers: {output_tensor}")
         return output_tensor
-
-    def retrieve_length(self, output_tensor: torch.Tensor) -> torch.Tensor:
-        raise ValueError(f"Simple network does not predict a game length")
 
     def load_weights(self, weight_path: Path):
         """
