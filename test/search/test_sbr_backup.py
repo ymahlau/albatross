@@ -46,7 +46,7 @@ class TestIteratedEquilibriumBackup(unittest.TestCase):
         env = BattleSnakeGame(gc)
         sel_func_cfg = SampleSelectionConfig()
         net_cfg = ResNetConfig3x3(game_cfg=gc, predict_policy=True)
-        eval_func_cfg = NetworkEvalConfig(net_cfg=net_cfg, value_norm_type=UtilityNorm.ZERO_SUM)
+        eval_func_cfg = NetworkEvalConfig(net_cfg=net_cfg, utility_norm=UtilityNorm.ZERO_SUM)
         backup_func_cfg = LogitBackupConfig(
             num_iterations=1000,
             epsilon=0,

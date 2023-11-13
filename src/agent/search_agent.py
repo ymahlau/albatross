@@ -86,7 +86,7 @@ class SearchAgent(Agent):
 class AreaControlSearchAgentConfig(SearchAgentConfig):
     search_cfg: SearchConfig = field(default_factory=lambda: MCTSConfig(
         sel_func_cfg=DecoupledUCTSelectionConfig(exp_bonus=1.414),
-        eval_func_cfg=AreaControlEvalConfig(value_norm_type=UtilityNorm.NONE),
+        eval_func_cfg=AreaControlEvalConfig(utility_norm=UtilityNorm.NONE),
         backup_func_cfg=StandardBackupConfig(),
         extract_func_cfg=StandardExtractConfig(),
         expansion_depth=0,
@@ -100,7 +100,7 @@ class AreaControlSearchAgentConfig(SearchAgentConfig):
 class CopyCatSearchAgentConfig(SearchAgentConfig):
     search_cfg: SearchConfig = field(default_factory=lambda: MCTSConfig(
         sel_func_cfg=DecoupledUCTSelectionConfig(exp_bonus=2.0),
-        eval_func_cfg=CopyCatEvalConfig(value_norm_type=UtilityNorm.NONE),
+        eval_func_cfg=CopyCatEvalConfig(utility_norm=UtilityNorm.NONE),
         backup_func_cfg=StandardBackupConfig(),
         extract_func_cfg=StandardExtractConfig(),
         expansion_depth=0,
@@ -113,7 +113,7 @@ class CopyCatSearchAgentConfig(SearchAgentConfig):
 @dataclass(kw_only=True)
 class SBRFixedDepthAgentConfig(SearchAgentConfig):
     search_cfg: SearchConfig = field(default_factory=lambda: FixedDepthConfig(
-        eval_func_cfg=NetworkEvalConfig(net_cfg=None, value_norm_type=UtilityNorm.NONE),
+        eval_func_cfg=NetworkEvalConfig(net_cfg=None, utility_norm=UtilityNorm.NONE),
         backup_func_cfg=LogitBackupConfig(
             epsilon=0,
             num_iterations=200,
@@ -132,7 +132,6 @@ class LookaheadAgentConfig(AgentConfig):
     temperature_input: bool = False
     init_temperatures: Optional[list[float]] = None
     single_temperature: bool = True
-    obs_temperature_input: bool = False
     additional_latency_sec: float = 0.01
     search_depth: int = 1
     search_weight: float = 0.5
@@ -171,34 +170,14 @@ class LookaheadAgent(Agent):
         player_idx = game.players_at_turn().index(player)
         # obs input
         temp_obs_input = None
-        if self.cfg.temperature_input and self.cfg.obs_temperature_input and self.cfg.single_temperature:
+        if self.cfg.temperature_input and self.cfg.single_temperature:
             temp_obs_input = [self.temperatures[0]]
-        elif self.cfg.temperature_input and self.cfg.obs_temperature_input and not self.cfg.single_temperature:
+        elif self.cfg.temperature_input and not self.cfg.single_temperature:
             temp_obs_input = self.temperatures
         obs, _, _ = game.get_obs(symmetry=0, temperatures=temp_obs_input)
-        # film input
-        if not self.cfg.temperature_input or self.cfg.obs_temperature_input:
-            film_input = None
-        else:
-            film_list = []
-            for cur_player in game.players_at_turn():
-                if self.cfg.single_temperature:
-                    film_list.append(torch.tensor([self.temperatures[0]], dtype=torch.float32))
-                else:
-                    # multiple film inputs: Temperatures of all enemies, but dead players have temp of zero
-                    cur_film_in = torch.zeros(size=(game.num_players - 1,), dtype=torch.float32)
-                    counter = 0
-                    for enemy in range(game.num_players):
-                        if enemy != cur_player:
-                            if game.is_player_at_turn(enemy):
-                                cur_film_in[counter] = self.temperatures[enemy]
-                            counter += 1
-                    film_list.append(cur_film_in)
-            film_input = torch.stack(film_list, dim=0)
-            film_input.to(self.device)
         # forward pass
         obs = torch.tensor(obs, dtype=torch.float32).to(self.device)
-        net_out = self.net(obs, film_input)
+        net_out = self.net(obs)
         log_actions = self.net.retrieve_policy(net_out).cpu()
         net_probs = torch.nn.functional.softmax(log_actions, dim=-1).detach().numpy()
         filtered_net_probs = filter_illegal_and_normalize(net_probs, game)
@@ -227,7 +206,7 @@ class LookaheadAgent(Agent):
 @dataclass(kw_only=True)
 class TwoPlayerEvalAgentConfig(LookaheadAgentConfig):
     search_cfg: SearchConfig = field(default_factory=lambda: FixedDepthConfig(
-        eval_func_cfg=NetworkEvalConfig(net_cfg=None, value_norm_type=UtilityNorm.ZERO_SUM),
+        eval_func_cfg=NetworkEvalConfig(net_cfg=None, utility_norm=UtilityNorm.ZERO_SUM),
         backup_func_cfg=NashBackupConfig(),
         extract_func_cfg=SpecialExtractConfig(),
         average_eval=True,

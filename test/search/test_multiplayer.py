@@ -20,7 +20,7 @@ class TestMultiplayer(unittest.TestCase):
         # network
         net_cfg = ResNetConfig7x7(game_cfg=game_cfg)
         # search
-        eval_func_cfg = NetworkEvalConfig(net_cfg=net_cfg, value_norm_type=UtilityNorm.NONE)
+        eval_func_cfg = NetworkEvalConfig(net_cfg=net_cfg, utility_norm=UtilityNorm.NONE)
         sel_func_cfg = SampleSelectionConfig(dirichlet_alpha=math.inf, dirichlet_eps=0.25, temperature=1.0)
         backup_func_cfg = NashBackupConfig()
         extraction_func_cfg = SpecialExtractConfig()
@@ -53,7 +53,7 @@ class TestMultiplayer(unittest.TestCase):
         # network
         net_cfg = ResNetConfig7x7(game_cfg=game_cfg, predict_policy=True)
         # search
-        eval_func_cfg = NetworkEvalConfig(net_cfg=net_cfg, value_norm_type=UtilityNorm.NONE)
+        eval_func_cfg = NetworkEvalConfig(net_cfg=net_cfg, utility_norm=UtilityNorm.NONE)
         sel_func_cfg = AlphaZeroDecoupledSelectionConfig()
         backup_func_cfg = StandardBackupConfig()
         extraction_func_cfg = StandardExtractConfig()

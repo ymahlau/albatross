@@ -41,7 +41,7 @@ class BufferInputSample:  # data structure used for inserting new data into buff
 
 @dataclass
 class ReplayBufferContent:
-    # data channels: observation, value, policy, sbr-temperature
+    # data channels: observation, value, policy
     dc_obs: np.ndarray
     dc_val: np.ndarray
     dc_pol: np.ndarray
@@ -187,7 +187,6 @@ class ReplayBuffer:
         self.content.dc_obs = self.content.dc_obs[shuffled_indices]
         self.content.dc_val = self.content.dc_val[shuffled_indices]
         self.content.dc_pol = self.content.dc_pol[shuffled_indices]
-        self.content.dc_len = self.content.dc_len[shuffled_indices]
         self.content.mc_ids = self.content.mc_ids[shuffled_indices]
         self.content.mc_turns = self.content.mc_turns[shuffled_indices]
         self.content.mc_player = self.content.mc_player[shuffled_indices]
@@ -246,7 +245,6 @@ class ReplayBuffer:
         self.content.dc_obs = self.content.dc_obs[indices]
         self.content.dc_val = self.content.dc_val[indices]
         self.content.dc_pol = self.content.dc_pol[indices]
-        self.content.dc_len = self.content.dc_len[indices]
         self.content.mc_ids = self.content.mc_ids[indices]
         self.content.mc_turns = self.content.mc_turns[indices]
         self.content.mc_player = self.content.mc_player[indices]
@@ -264,12 +262,9 @@ class ReplayBuffer:
             data.obs = data.obs[:self.cfg.capacity]
             data.values = data.values[:self.cfg.capacity]
             data.policies = data.policies[:self.cfg.capacity]
-            data.game_lengths = data.game_lengths[:self.cfg.capacity]
             data.turns = data.turns[:self.cfg.capacity]
             data.player = data.player[:self.cfg.capacity]
             data.symmetry = data.symmetry[:self.cfg.capacity]
-            if data.temperature is not None:
-                data.temperature = data.temperature[:self.cfg.capacity]
             n = self.cfg.capacity
         # determine indices
         content_start_idx = self.content.idx

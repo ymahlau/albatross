@@ -98,7 +98,6 @@ class NetworkAgentConfig(AgentConfig):
     temperature_input: bool = False
     init_temperatures: Optional[list[float]] = None
     single_temperature: bool = True
-    obs_temperature_input: bool = False
     name: str = field(default="NetworkAgent")
 
 class NetworkAgent(Agent):
@@ -125,9 +124,9 @@ class NetworkAgent(Agent):
         # observation of game env
         symmetry = None if self.cfg.random_symmetry else 0
         temp_obs_input = None
-        if self.cfg.temperature_input and self.cfg.obs_temperature_input and self.cfg.single_temperature:
+        if self.cfg.temperature_input and self.cfg.single_temperature:
             temp_obs_input = [self.temperatures[0]]
-        elif self.cfg.temperature_input and self.cfg.obs_temperature_input and not self.cfg.single_temperature:
+        elif self.cfg.temperature_input and not self.cfg.single_temperature:
             temp_obs_input = self.temperatures
         obs, _, inv_perm = game.get_obs(
             symmetry=symmetry,
@@ -135,28 +134,8 @@ class NetworkAgent(Agent):
             single_temperature=self.cfg.single_temperature,
         )
         obs = torch.tensor(obs, dtype=torch.float32).to(self.device)
-        # film temperatures
-        if not self.cfg.temperature_input or self.cfg.obs_temperature_input:
-            film_input = None
-        else:
-            film_list = []
-            for cur_player in game.players_at_turn():
-                if self.cfg.single_temperature:
-                    film_list.append(torch.tensor([self.temperatures[0]], dtype=torch.float32))
-                else:
-                    # multiple film inputs: Temperatures of all enemies, but dead players have temp of zero
-                    cur_film_in = torch.zeros(size=(game.num_players - 1,), dtype=torch.float32)
-                    counter = 0
-                    for enemy in range(game.num_players):
-                        if enemy != cur_player:
-                            if game.is_player_at_turn(enemy):
-                                cur_film_in[counter] = self.temperatures[enemy]
-                            counter += 1
-                    film_list.append(cur_film_in)
-            film_input = torch.stack(film_list, dim=0)
-            film_input.to(self.device)
         # forward pass
-        out_tensor = self.net(obs, film_input).cpu().detach()
+        out_tensor = self.net(obs).cpu().detach()
         log_actions = self.net.retrieve_policy(out_tensor).cpu()
         action_probs = torch.nn.functional.softmax(log_actions, dim=-1).numpy()
         perm_probs = apply_permutation(action_probs, inv_perm)

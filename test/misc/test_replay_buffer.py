@@ -15,7 +15,6 @@ class TestReplayBuffer(unittest.TestCase):
             num_players=2,
             num_symmetries=1,
             capacity=8,
-            single_temperature=True,
         )
         buffer = ReplayBuffer(buffer_cfg)
 
@@ -24,11 +23,9 @@ class TestReplayBuffer(unittest.TestCase):
             obs=np.ones(shape=(data1_size, 5, 3), dtype=float),
             policies=np.ones(shape=(data1_size, 2), dtype=float),
             values=np.ones(shape=(data1_size, 1), dtype=float),
-            game_lengths=np.ones(shape=(data1_size, 1), dtype=float),
             turns=np.ones(shape=(data1_size, 1), dtype=float),
             player=np.ones(shape=(data1_size, 1), dtype=float),
             symmetry=np.ones(shape=(data1_size, 1), dtype=float),
-            temperature=np.ones(shape=(data1_size, 1), dtype=float),
         )
         buffer.put(data1)
         self.assertFalse(buffer.full())
@@ -38,22 +35,18 @@ class TestReplayBuffer(unittest.TestCase):
         self.assertEqual(size, sample.obs.shape[0])
         self.assertEqual(size, sample.values.shape[0])
         self.assertEqual(size, sample.policies.shape[0])
-        self.assertEqual(size, sample.game_lengths.shape[0])
-        self.assertTrue((sample.obs == 1).all().item())
-        self.assertTrue((sample.values == 1).all().item())
-        self.assertTrue((sample.policies == 1).all().item())
-        self.assertTrue((sample.game_lengths == 1).all().item())
+        self.assertTrue(np.all(sample.obs == 1).item())
+        self.assertTrue(np.all(sample.values == 1).item())
+        self.assertTrue(np.all(sample.policies == 1).item())
 
         data2_size = 4
         data2 = BufferInputSample(
             obs=np.ones(shape=(data2_size, 5, 3), dtype=float),
             policies=np.ones(shape=(data2_size, 2), dtype=float),
             values=np.ones(shape=(data2_size, 1), dtype=float),
-            game_lengths=np.ones(shape=(data2_size, 1), dtype=float),
             turns=np.ones(shape=(data2_size, 1), dtype=float),
             player=np.ones(shape=(data2_size, 1), dtype=float),
             symmetry=np.ones(shape=(data2_size, 1), dtype=float),
-            temperature=np.ones(shape=(data2_size, 1), dtype=float),
         )
         buffer.put(data2)
         self.assertTrue(buffer.full())
@@ -63,15 +56,12 @@ class TestReplayBuffer(unittest.TestCase):
         self.assertEqual(size, sample.obs.shape[0])
         self.assertEqual(size, sample.values.shape[0])
         self.assertEqual(size, sample.policies.shape[0])
-        self.assertEqual(size, sample.game_lengths.shape[0])
-        self.assertTrue((sample.obs == 1).all().item())
-        self.assertTrue((sample.values == 1).all().item())
-        self.assertTrue((sample.policies == 1).all().item())
-        self.assertTrue((sample.game_lengths == 1).all().item())
+        self.assertTrue(np.all(sample.obs == 1).item())
+        self.assertTrue(np.all(sample.values == 1).item())
+        self.assertTrue(np.all(sample.policies == 1).item())
 
     def test_large_emplace(self):
-        buffer_cfg = ReplayBufferConfig(obs_shape=(5, 3), num_actions=2, num_players=2, num_symmetries=1, capacity=8,
-                                        single_temperature=False)
+        buffer_cfg = ReplayBufferConfig(obs_shape=(5, 3), num_actions=2, num_players=2, num_symmetries=1, capacity=8)
         buffer = ReplayBuffer(buffer_cfg)
 
         data1_size = 10
@@ -79,31 +69,24 @@ class TestReplayBuffer(unittest.TestCase):
             obs=np.ones(shape=(data1_size, 5, 3), dtype=float),
             policies=np.ones(shape=(data1_size, 2), dtype=float),
             values=np.ones(shape=(data1_size, 1), dtype=float),
-            game_lengths=np.ones(shape=(data1_size, 1), dtype=float),
             turns=np.ones(shape=(data1_size, 1), dtype=float),
             player=np.ones(shape=(data1_size, 1), dtype=float),
             symmetry=np.ones(shape=(data1_size, 1), dtype=float),
-            temperature=np.ones(shape=(data1_size, 1), dtype=float),
         )
         buffer.put(data1)
         self.assertTrue(buffer.full())
 
         size = 2
-        sample = buffer.sample(size, temperature=True)
+        sample = buffer.sample(size)
         self.assertEqual(size, sample.obs.shape[0])
         self.assertEqual(size, sample.values.shape[0])
         self.assertEqual(size, sample.policies.shape[0])
-        self.assertEqual(size, sample.game_lengths.shape[0])
-        self.assertEqual(size, sample.temperature.shape[0])
-        self.assertTrue((sample.obs == 1).all().item())
-        self.assertTrue((sample.values == 1).all().item())
-        self.assertTrue((sample.policies == 1).all().item())
-        self.assertTrue((sample.game_lengths == 1).all().item())
-        self.assertTrue((sample.temperature == 1).all().item())
+        self.assertTrue(np.all(sample.obs == 1).item())
+        self.assertTrue(np.all(sample.values == 1).item())
+        self.assertTrue(np.all(sample.policies == 1).item())
 
     def test_grouped(self):
-        buffer_cfg = ReplayBufferConfig(obs_shape=(5, 3), num_actions=2, num_players=2, num_symmetries=1, capacity=8,
-                                        single_temperature=False)
+        buffer_cfg = ReplayBufferConfig(obs_shape=(5, 3), num_actions=2, num_players=2, num_symmetries=1, capacity=8)
         buffer = ReplayBuffer(buffer_cfg)
 
         data1_size = 6
@@ -111,33 +94,26 @@ class TestReplayBuffer(unittest.TestCase):
             obs=np.ones(shape=(data1_size, 5, 3), dtype=float),
             policies=np.ones(shape=(data1_size, 2), dtype=float),
             values=np.ones(shape=(data1_size, 1), dtype=float),
-            game_lengths=np.ones(shape=(data1_size, 1), dtype=float),
             turns=np.ones(shape=(data1_size, 1), dtype=float),
             player=np.ones(shape=(data1_size, 1), dtype=float),
             symmetry=np.ones(shape=(data1_size, 1), dtype=float),
-            temperature=np.ones(shape=(data1_size, 1), dtype=float),
         )
         buffer.put(data1)
         self.assertFalse(buffer.full())
 
         size = 2
-        sample = buffer.sample(size, grouped=True, temperature=True)
+        sample = buffer.sample(size, grouped=True)
         self.assertEqual(2, sample.obs.shape[0])
         self.assertEqual(2, sample.values.shape[0])
         self.assertEqual(2, sample.policies.shape[0])
-        self.assertEqual(2, sample.game_lengths.shape[0])
-        self.assertEqual(2, sample.temperature.shape[0])
-        self.assertTrue((sample.obs == 1).all().item())
-        self.assertTrue((sample.values == 1).all().item())
-        self.assertTrue((sample.policies == 1).all().item())
-        self.assertTrue((sample.game_lengths == 1).all().item())
-        self.assertTrue((sample.temperature == 1).all().item())
+        self.assertTrue(np.all(sample.obs == 1).item())
+        self.assertTrue(np.all(sample.values == 1).item())
+        self.assertTrue(np.all(sample.policies == 1).item())
 
     def test_buffer_save_load(self):
         save_path = Path(__file__).parent / 'temp_buffer.pt'
 
-        buffer_cfg = ReplayBufferConfig(obs_shape=(5, 3), num_actions=2, num_players=2, num_symmetries=1, capacity=8,
-                                        single_temperature=False)
+        buffer_cfg = ReplayBufferConfig(obs_shape=(5, 3), num_actions=2, num_players=2, num_symmetries=1, capacity=8)
         buffer = ReplayBuffer(buffer_cfg)
 
         data1_size = 4
@@ -145,11 +121,9 @@ class TestReplayBuffer(unittest.TestCase):
             obs=np.ones(shape=(data1_size, 5, 3), dtype=float),
             policies=np.ones(shape=(data1_size, 2), dtype=float),
             values=np.ones(shape=(data1_size, 1), dtype=float),
-            game_lengths=np.ones(shape=(data1_size, 1), dtype=float),
             turns=np.ones(shape=(data1_size, 1), dtype=float),
             player=np.ones(shape=(data1_size, 1), dtype=float),
             symmetry=np.ones(shape=(data1_size, 1), dtype=float),
-            temperature=np.ones(shape=(data1_size, 1), dtype=float),
         )
 
         buffer.put(data1)
@@ -159,11 +133,10 @@ class TestReplayBuffer(unittest.TestCase):
         for k, v in dataclasses.asdict(buffer2.content).items():
             if not isinstance(v, np.ndarray):
                 continue
-            self.assertTrue((v == b_dict[k]).all().item())
+            self.assertTrue(np.all(v == b_dict[k]).item())
 
     def test_shuffle(self):
-        buffer_cfg = ReplayBufferConfig(obs_shape=(5, 3), num_actions=2, num_players=3, num_symmetries=1, capacity=8,
-                                        single_temperature=False)
+        buffer_cfg = ReplayBufferConfig(obs_shape=(5, 3), num_actions=2, num_players=3, num_symmetries=1, capacity=8)
         buffer = ReplayBuffer(buffer_cfg)
 
         data1_size = 4
@@ -171,22 +144,18 @@ class TestReplayBuffer(unittest.TestCase):
             obs=np.ones(shape=(data1_size, 5, 3), dtype=float),
             policies=np.ones(shape=(data1_size, 2), dtype=float),
             values=np.ones(shape=(data1_size, 1), dtype=float),
-            game_lengths=np.ones(shape=(data1_size, 1), dtype=float),
             turns=np.ones(shape=(data1_size, 1), dtype=float),
             player=np.ones(shape=(data1_size, 1), dtype=float),
             symmetry=np.ones(shape=(data1_size, 1), dtype=float),
-            temperature=np.ones(shape=(data1_size, 2), dtype=float),
         )
         data2_size = 4
         data2 = BufferInputSample(
             obs=np.ones(shape=(data2_size, 5, 3), dtype=float) + 1,
             policies=np.ones(shape=(data2_size, 2), dtype=float) + 1,
             values=np.ones(shape=(data2_size, 1), dtype=float) + 1,
-            game_lengths=np.ones(shape=(data2_size, 1), dtype=float) + 1,
             turns=np.ones(shape=(data2_size, 1), dtype=float) + 1,
             player=np.ones(shape=(data2_size, 1), dtype=float) + 1,
             symmetry=np.ones(shape=(data2_size, 1), dtype=float) + 1,
-            temperature=np.ones(shape=(data2_size, 2), dtype=float) + 1,
         )
         buffer.put(data1)
         buffer.put(data2)
@@ -195,30 +164,25 @@ class TestReplayBuffer(unittest.TestCase):
         self.assertTrue(buffer.full())
 
     def test_shuffle_grouped(self):
-        buffer_cfg = ReplayBufferConfig(obs_shape=(5, 3), num_actions=2, num_players=2, num_symmetries=1, capacity=8,
-                                        single_temperature=True)
+        buffer_cfg = ReplayBufferConfig(obs_shape=(5, 3), num_actions=2, num_players=2, num_symmetries=1, capacity=8)
         buffer = ReplayBuffer(buffer_cfg)
         data1_size = 4
         data1 = BufferInputSample(
             obs=np.ones(shape=(data1_size, 5, 3), dtype=float),
             policies=np.ones(shape=(data1_size, 2), dtype=float),
             values=np.ones(shape=(data1_size, 1), dtype=float),
-            game_lengths=np.ones(shape=(data1_size, 1), dtype=float),
             turns=np.ones(shape=(data1_size, 1), dtype=float),
             player=np.ones(shape=(data1_size, 1), dtype=float),
             symmetry=np.ones(shape=(data1_size, 1), dtype=float),
-            temperature=np.ones(shape=(data1_size, 1), dtype=float),
         )
         data2_size = 4
         data2 = BufferInputSample(
             obs=np.ones(shape=(data2_size, 5, 3), dtype=float) + 1,
             policies=np.ones(shape=(data2_size, 2), dtype=float) + 1,
             values=np.ones(shape=(data2_size, 1), dtype=float) + 1,
-            game_lengths=np.ones(shape=(data2_size, 1), dtype=float) + 1,
             turns=np.ones(shape=(data2_size, 1), dtype=float) + 1,
             player=np.ones(shape=(data2_size, 1), dtype=float) + 1,
             symmetry=np.ones(shape=(data2_size, 1), dtype=float) + 1,
-            temperature=np.ones(shape=(data2_size, 1), dtype=float) + 1,
         )
         buffer.put(data1)
         buffer.put(data2)
@@ -227,63 +191,53 @@ class TestReplayBuffer(unittest.TestCase):
         self.assertTrue(buffer.full())
 
     def test_retrieve(self):
-        buffer_cfg = ReplayBufferConfig(obs_shape=(5, 3), num_actions=2, num_players=2, num_symmetries=1, capacity=8,
-                                        single_temperature=True)
+        buffer_cfg = ReplayBufferConfig(obs_shape=(5, 3), num_actions=2, num_players=2, num_symmetries=1, capacity=8)
         buffer = ReplayBuffer(buffer_cfg)
         data1_size = 4
         data1 = BufferInputSample(
             obs=np.ones(shape=(data1_size, 5, 3), dtype=float),
             policies=np.ones(shape=(data1_size, 2), dtype=float),
             values=np.ones(shape=(data1_size, 1), dtype=float),
-            game_lengths=np.ones(shape=(data1_size, 1), dtype=float),
             turns=np.ones(shape=(data1_size, 1), dtype=float),
             player=np.ones(shape=(data1_size, 1), dtype=float),
             symmetry=np.ones(shape=(data1_size, 1), dtype=float),
-            temperature=np.ones(shape=(data1_size, 1), dtype=float),
         )
         data2_size = 4
         data2 = BufferInputSample(
             obs=np.ones(shape=(data2_size, 5, 3), dtype=float) + 1,
             policies=np.ones(shape=(data2_size, 2), dtype=float) + 1,
             values=np.ones(shape=(data2_size, 1), dtype=float) + 1,
-            game_lengths=np.ones(shape=(data2_size, 1), dtype=float) + 1,
             turns=np.ones(shape=(data2_size, 1), dtype=float) + 1,
             player=np.ones(shape=(data2_size, 1), dtype=float) + 1,
             symmetry=np.ones(shape=(data2_size, 1), dtype=float) + 1,
-            temperature=np.ones(shape=(data2_size, 1), dtype=float) + 1,
         )
         buffer.put(data1)
         buffer.put(data2)
-        sample = buffer.retrieve(3, 5, temperature=True)
+        sample = buffer.retrieve(3, 5)
         self.assertEqual(2, sample.obs.shape[0])
-        sample2 = buffer.retrieve(1, 3, grouped=True, temperature=True)
+        sample2 = buffer.retrieve(1, 3, grouped=True)
         self.assertEqual(4, sample2.obs.shape[0])
 
     def test_buffer_decrease_capacity(self):
-        buffer_cfg = ReplayBufferConfig(obs_shape=(5, 3), num_actions=2, num_players=3, num_symmetries=1, capacity=8,
-                                        single_temperature=False)
+        buffer_cfg = ReplayBufferConfig(obs_shape=(5, 3), num_actions=2, num_players=3, num_symmetries=1, capacity=8)
         buffer = ReplayBuffer(buffer_cfg)
         data1_size = 4
         data1 = BufferInputSample(
             obs=np.ones(shape=(data1_size, 5, 3), dtype=float),
             policies=np.ones(shape=(data1_size, 2), dtype=float),
             values=np.ones(shape=(data1_size, 1), dtype=float),
-            game_lengths=np.ones(shape=(data1_size, 1), dtype=float),
             turns=np.ones(shape=(data1_size, 1), dtype=float),
             player=np.ones(shape=(data1_size, 1), dtype=float),
             symmetry=np.ones(shape=(data1_size, 1), dtype=float),
-            temperature=np.ones(shape=(data1_size, 2), dtype=float),
         )
         data2_size = 4
         data2 = BufferInputSample(
             obs=np.ones(shape=(data2_size, 5, 3), dtype=float) + 1,
             policies=np.ones(shape=(data2_size, 2), dtype=float) + 1,
             values=np.ones(shape=(data2_size, 1), dtype=float) + 1,
-            game_lengths=np.ones(shape=(data2_size, 1), dtype=float) + 1,
             turns=np.ones(shape=(data2_size, 1), dtype=float) + 1,
             player=np.ones(shape=(data2_size, 1), dtype=float) + 1,
             symmetry=np.ones(shape=(data2_size, 1), dtype=float) + 1,
-            temperature=np.ones(shape=(data2_size, 2), dtype=float) + 1,
         )
         buffer.put(data1)
         buffer.put(data2)

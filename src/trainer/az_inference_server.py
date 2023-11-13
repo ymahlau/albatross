@@ -9,7 +9,6 @@ from typing import Optional
 import numpy as np
 import torch
 
-from src.misc.utils import set_seed
 from src.network.initialization import get_network_from_config, get_network_from_file
 from src.trainer.config import AlphaZeroTrainerConfig
 import multiprocessing as mp
@@ -37,8 +36,8 @@ def run_inference_server(
         prev_run_idx: Optional[int],
 ):
     # important to avoid pytorch deadlocks
-    torch.set_num_threads(1)
-    os.environ["OMP_NUM_THREADS"] = "1"
+    # torch.set_num_threads(1)
+    # os.environ["OMP_NUM_THREADS"] = "1"
     inf_cfg = trainer_cfg.inf_cfg
     # load initial network
     net_cfg = trainer_cfg.net_cfg
@@ -48,7 +47,7 @@ def run_inference_server(
         net = get_network_from_file(model_path)
     # cuda
     if inf_cfg.use_gpu:
-        torch.cuda.init()
+        # torch.cuda.init()
         device = torch.device('cuda' if gpu_idx is None else f'cuda:{gpu_idx}')
     else:
         device = torch.device('cpu')

@@ -49,7 +49,7 @@ class TestStandard(unittest.TestCase):
         env = BattleSnakeGame(gc)
         sel_func_cfg = DecoupledUCTSelectionConfig(exp_bonus=2.0)
         net_config = ResNetConfig3x3(game_cfg=gc)
-        eval_func_cfg = NetworkEvalConfig(net_cfg=net_config, value_norm_type=UtilityNorm.ZERO_SUM)
+        eval_func_cfg = NetworkEvalConfig(net_cfg=net_config, utility_norm=UtilityNorm.ZERO_SUM)
         backup_func_cfg = StandardBackupConfig()
         extract_func_cfg = StandardExtractConfig()
         mcts_cfg = MCTSConfig(
@@ -75,7 +75,7 @@ class TestStandard(unittest.TestCase):
         env = BattleSnakeGame(gc)
         sel_func_cfg = AlphaZeroDecoupledSelectionConfig(exp_bonus=2.0)
         net_config = ResNetConfig3x3(game_cfg=gc, predict_policy=True)
-        eval_func_cfg = NetworkEvalConfig(net_cfg=net_config, value_norm_type=UtilityNorm.ZERO_SUM)
+        eval_func_cfg = NetworkEvalConfig(net_cfg=net_config, utility_norm=UtilityNorm.ZERO_SUM)
         backup_func_cfg = StandardBackupConfig()
         extract_func_cfg = StandardExtractConfig()
         mcts_cfg = MCTSConfig(
@@ -102,7 +102,7 @@ class TestStandard(unittest.TestCase):
         env = BattleSnakeGame(gc)
         sel_func_cfg = AlphaZeroDecoupledSelectionConfig()
         net_config = ResNetConfig5x5(game_cfg=gc, predict_policy=True)
-        eval_func_cfg = NetworkEvalConfig(net_cfg=net_config, value_norm_type=UtilityNorm.NONE)
+        eval_func_cfg = NetworkEvalConfig(net_cfg=net_config, utility_norm=UtilityNorm.NONE)
         backup_func_cfg = StandardBackupConfig()
         extract_func_cfg = StandardExtractConfig()
         mcts_cfg = MCTSConfig(
@@ -132,7 +132,7 @@ class TestStandard(unittest.TestCase):
         game = get_game_from_config(gc)
         net_cfg = ResNetConfig5x5(game_cfg=gc, predict_policy=True)
         search_cfg = MCTSConfig(
-            eval_func_cfg=NetworkEvalConfig(net_cfg=net_cfg, value_norm_type=UtilityNorm.NONE),
+            eval_func_cfg=NetworkEvalConfig(net_cfg=net_cfg, utility_norm=UtilityNorm.NONE),
             sel_func_cfg=AlphaZeroDecoupledSelectionConfig(),
             backup_func_cfg=StandardBackupConfig(),
             extract_func_cfg=StandardExtractConfig(),
@@ -153,7 +153,7 @@ class TestStandard(unittest.TestCase):
         env = BattleSnakeGame(gc)
         sel_func_cfg = AlphaZeroDecoupledSelectionConfig(exp_bonus=2.0)
         # net_config = ResNetConfigCentered3x3(game_cfg=gc)
-        eval_func_cfg = NetworkEvalConfig(value_norm_type=UtilityNorm.ZERO_SUM)
+        eval_func_cfg = NetworkEvalConfig(utility_norm=UtilityNorm.ZERO_SUM)
         backup_func_cfg = StandardBackupConfig()
         extract_func_cfg = StandardExtractConfig()
         mcts_cfg = MCTSConfig(
@@ -179,7 +179,7 @@ class TestStandard(unittest.TestCase):
         game.step((LEFT, UP))
         game.step((UP, UP))
         sel_func_cfg = AlphaZeroDecoupledSelectionConfig(exp_bonus=2.0)
-        eval_func_cfg = NetworkEvalConfig(value_norm_type=UtilityNorm.ZERO_SUM)
+        eval_func_cfg = NetworkEvalConfig(utility_norm=UtilityNorm.ZERO_SUM)
         backup_func_cfg = StandardBackupConfig()
         extract_func_cfg = StandardExtractConfig()
         mcts_cfg = MCTSConfig(
@@ -203,7 +203,7 @@ class TestStandard(unittest.TestCase):
         game_cfg = survive_on_7x7_constrictor()
         net_cfg = ResNetConfig7x7(game_cfg=game_cfg, predict_policy=True)
         sel_func_cfg = AlphaZeroDecoupledSelectionConfig(exp_bonus=2.0)
-        eval_func_cfg = NetworkEvalConfig(net_cfg=net_cfg, value_norm_type=UtilityNorm.ZERO_SUM)
+        eval_func_cfg = NetworkEvalConfig(net_cfg=net_cfg, utility_norm=UtilityNorm.ZERO_SUM)
         backup_func_cfg = StandardBackupConfig()
         extract_func_cfg = StandardExtractConfig()
         mcts_cfg = MCTSConfig(

@@ -48,7 +48,7 @@ class TestFixedDepthSearch(unittest.TestCase):
         gc = survive_on_5x5()
         game = BattleSnakeGame(gc)
         net_cfg = ResNetConfig5x5(game_cfg=gc)
-        eval_func_cfg = NetworkEvalConfig(net_cfg=net_cfg, max_batch_size=64, value_norm_type=UtilityNorm.NONE)
+        eval_func_cfg = NetworkEvalConfig(net_cfg=net_cfg, max_batch_size=64, utility_norm=UtilityNorm.NONE)
         backup_func_cfg = NashBackupConfig()
         extract_func_cfg = SpecialExtractConfig()
         search_cfg = FixedDepthConfig(
@@ -73,13 +73,10 @@ class TestFixedDepthSearch(unittest.TestCase):
 
         eq_type = EquivarianceType.NONE
         # net_cfg = MobileNetConfig5x5(predict_policy=False, predict_game_len=False, game_cfg=game_cfg)
-        net_cfg = ResNetConfig3x3(predict_policy=True, predict_game_len=False, eq_type=eq_type, lff_features=False,
+        net_cfg = ResNetConfig3x3(predict_policy=True, eq_type=eq_type, lff_features=False,
                                   game_cfg=game_cfg)
 
         net_cfg.value_head_cfg.final_activation = ActivationType.TANH
-        net_cfg.length_head_cfg.final_activation = ActivationType.SIGMOID
-        net_cfg.film_temperature_input = (not obs_input_temperature) and temperature_input
-        net_cfg.film_cfg = MediumHeadConfig() if net_cfg.film_temperature_input else None
 
         batch_size = 128
         eval_func_cfg = NetworkEvalConfig(
@@ -88,7 +85,6 @@ class TestFixedDepthSearch(unittest.TestCase):
             random_symmetry=False,
             temperature_input=temperature_input,
             single_temperature=single_temperature,
-            obs_temperature_input=obs_input_temperature,
         )
         backup_cfg = LogitBackupConfig(
             num_iterations=200,

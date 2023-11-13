@@ -35,14 +35,14 @@ class TestMaxMin(unittest.TestCase):
             for i in [2, 1, 0]:
                 env.render()
                 values, action_probs, info = mcts(env, iterations=100)
-                self.assertAlmostEqual(0.99**(i+1), values[0], places=4)
-                self.assertAlmostEqual(-(0.99**(i+1)), values[1], places=4)
+                self.assertAlmostEqual(0.99**(i+1), values[0].item(), places=4)
+                self.assertAlmostEqual(-(0.99**(i+1)), values[1].item(), places=4)
                 self.assertTrue(info.fully_explored)
                 if i != 0:
-                    self.assertGreater(action_probs[0, 0], action_probs[0, 1])
-                    self.assertGreater(action_probs[0, 0], action_probs[0, 1])
+                    self.assertGreater(action_probs[0, 0].item(), action_probs[0, 1])
+                    self.assertGreater(action_probs[0, 0].item(), action_probs[0, 1])
                 else:
-                    self.assertGreater(action_probs[0, 3], action_probs[0, 0])
+                    self.assertGreater(action_probs[0, 3].item(), action_probs[0, 0])
                 env.step((0, 0))
             env.render()
 
@@ -67,11 +67,11 @@ class TestMaxMin(unittest.TestCase):
         for i in [1, 0]:
             env.render()
             values, action_probs, info = mcts(env, iterations=1000)
-            self.assertAlmostEqual(0.99 ** i, values[0], delta=0.05)
-            self.assertAlmostEqual(-(0.99 ** i), values[1], delta=0.05)
+            self.assertAlmostEqual(0.99 ** i, values[0].item(), delta=0.05)
+            self.assertAlmostEqual(-(0.99 ** i), values[1].item(), delta=0.05)
             self.assertFalse(info.fully_explored)
-            self.assertGreater(action_probs[0, 0], action_probs[0, 3])
-            self.assertGreater(action_probs[0, 0], action_probs[0, 1])
+            self.assertGreater(action_probs[0, 0].item(), action_probs[0, 3])
+            self.assertGreater(action_probs[0, 0].item(), action_probs[0, 1])
             actions = sample_individual_actions(action_probs, 1)
             env.step((0, 0))
         env.render()
@@ -83,7 +83,7 @@ class TestMaxMin(unittest.TestCase):
             env = BattleSnakeGame(gc)
             sel_func_cfg = SampleSelectionConfig()
             net_config = ResNetConfig3x3(game_cfg=gc)
-            eval_func_cfg = NetworkEvalConfig(net_cfg=net_config, value_norm_type=UtilityNorm.ZERO_SUM)
+            eval_func_cfg = NetworkEvalConfig(net_cfg=net_config, utility_norm=UtilityNorm.ZERO_SUM)
             backup_func_cfg = MaxMinBackupConfig()
             extract_func_cfg = SpecialExtractConfig()
             mcts_cfg = MCTSConfig(
@@ -99,10 +99,10 @@ class TestMaxMin(unittest.TestCase):
             for i in [1, 0]:
                 env.render()
                 values, action_probs, info = mcts(env, iterations=1000)
-                self.assertAlmostEqual(0.99 ** i, values[0], delta=0.05)
-                self.assertAlmostEqual(-(0.99 ** i), values[1], delta=0.05)
-                self.assertGreater(action_probs[0, 0], action_probs[0, 3])
-                self.assertGreater(action_probs[0, 0], action_probs[0, 1])
+                self.assertAlmostEqual(0.99 ** i, values[0].item(), delta=0.05)
+                self.assertAlmostEqual(-(0.99 ** i), values[1].item(), delta=0.05)
+                self.assertGreater(action_probs[0, 0].item(), action_probs[0, 3])
+                self.assertGreater(action_probs[0, 0].item(), action_probs[0, 1])
                 actions = sample_individual_actions(action_probs, 1)
                 env.step((0, 0))
             env.render()
@@ -114,7 +114,7 @@ class TestMaxMin(unittest.TestCase):
             env = BattleSnakeGame(gc)
             sel_func_cfg = SampleSelectionConfig()
             net_config = ResNetConfig5x5(game_cfg=gc)
-            eval_func_cfg = NetworkEvalConfig(net_cfg=net_config, value_norm_type=UtilityNorm.NONE)
+            eval_func_cfg = NetworkEvalConfig(net_cfg=net_config, utility_norm=UtilityNorm.NONE)
             backup_func_cfg = MaxMinBackupConfig()
             extract_func_cfg = SpecialExtractConfig()
             mcts_cfg = MCTSConfig(
