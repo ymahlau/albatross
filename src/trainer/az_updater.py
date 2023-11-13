@@ -276,7 +276,7 @@ def perform_update(
     # compute loss and update
     essentials.optim.zero_grad()
     loss_time_start = time.time()
-    value_loss, policy_loss, length_loss, zero_sum_loss = compute_loss(
+    value_loss, policy_loss, zero_sum_loss = compute_loss(
         sample=maybe_sample,
         net=essentials.net,
         device=essentials.device,
@@ -327,23 +327,20 @@ def compute_loss(
         device: torch.device,
         use_zero_sum_loss: bool,
         mse_policy_loss: bool,
-) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     inputs = torch.from_numpy(sample.obs).to(device)
     values = torch.from_numpy(sample.values).to(device)
     policies = torch.from_numpy(sample.policies).to(device)
     outputs = net(inputs)
     val_output = net.retrieve_value(outputs).unsqueeze(-1)
     val_loss = compute_value_loss(val_output, values)
-    action_loss, length_loss, zero_sum_loss = None, None, None
+    action_loss, zero_sum_loss = None, None
     if net.cfg.predict_policy:
         action_output = net.retrieve_policy(outputs)
         action_loss = compute_policy_loss(action_output, policies, mse_policy_loss)
-    if net.cfg.predict_game_len:
-        length_output = net.retrieve_length(outputs).unsqueeze(-1)
-        length_loss = compute_length_loss(length_output, game_lengths)
     if use_zero_sum_loss:
         zero_sum_loss = compute_zero_sum_loss(val_output)
-    return val_loss, action_loss, length_loss, zero_sum_loss
+    return val_loss, action_loss, zero_sum_loss
 
 
 def save_optim_state(

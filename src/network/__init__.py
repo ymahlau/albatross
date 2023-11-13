@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from functools import cached_property
 from os.path import exists
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 import numpy as np
 import torch
@@ -70,7 +70,7 @@ class Network(nn.Module, ABC):
         print('Successfully Loaded Model from existing Checkpoint!', flush=True)
 
     @staticmethod
-    def retrieve_value(output_tensor: np.ndarray) -> np.ndarray:
+    def retrieve_value(output_tensor: Union[np.ndarray, torch.Tensor]) -> Union[np.ndarray, torch.Tensor]:
         """
         Args:
             output_tensor (): Output of the forward function
@@ -79,12 +79,16 @@ class Network(nn.Module, ABC):
         """
         value = output_tensor[..., -1]
         # sanity checks
-        if not np.any(np.isfinite(value)) or np.any(np.isnan(value)):
-            raise Exception(f"Network value output contains invalid numbers: {value}")
+        if isinstance(value, np.ndarray):
+            if not np.any(np.isfinite(value)) or np.any(np.isnan(value)):
+                raise Exception(f"Network value output contains invalid numbers: {value}")
+        elif isinstance(value, torch.Tensor):
+            if not torch.any(torch.isfinite(value)) or torch.any(torch.isnan(value)):
+                raise Exception(f"Network value output contains invalid numbers: {value}")
         return value
 
     @staticmethod
-    def retrieve_policy(output_tensor: np.ndarray) -> np.ndarray:
+    def retrieve_policy(output_tensor: Union[np.ndarray, torch.Tensor]) -> Union[np.ndarray, torch.Tensor]:
         """
         Args:
             output_tensor (): Output of the forward function
@@ -92,8 +96,12 @@ class Network(nn.Module, ABC):
             the actions part of the output
         """
         actions = output_tensor[..., 0:-1]
-        if not np.any(np.isfinite(actions)) or np.any(np.isnan(actions)):
-            raise Exception(f"Network action output contains invalid numbers: {actions}")
+        if isinstance(actions, np.ndarray):
+            if not np.any(np.isfinite(actions)) or np.any(np.isnan(actions)):
+                raise Exception(f"Network action output contains invalid numbers: {actions}")
+        elif isinstance(actions, torch.Tensor):
+            if not torch.any(torch.isfinite(actions)) or torch.any(torch.isnan(actions)):
+                raise Exception(f"Network action output contains invalid numbers: {actions}")
         return actions
 
     def __del__(self):

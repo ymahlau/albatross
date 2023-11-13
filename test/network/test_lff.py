@@ -13,7 +13,6 @@ class TestLearnedFourierFeatures(unittest.TestCase):
         net_cfg = ResNetConfig3x3(
             game_cfg=game_cfg,
             predict_policy=True,
-            predict_game_len=True,
             eq_type=EquivarianceType.NONE,
             lff_features=True,
         )
@@ -25,7 +24,7 @@ class TestLearnedFourierFeatures(unittest.TestCase):
         out = net(obs)
 
         self.assertEqual(2, len(out.shape))
-        self.assertEqual(6, out.shape[1])
+        self.assertEqual(5, out.shape[1])
 
 
 

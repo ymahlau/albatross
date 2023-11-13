@@ -32,7 +32,7 @@ class TestMobileNet(unittest.TestCase):
 
     def test_mobile_choke_game_len(self):
         game_cfg = perform_choke_2_player(centered=True, fully_connected=False)
-        net_cfg = MobileNetConfig3x3(game_cfg=game_cfg, predict_game_len=True)
+        net_cfg = MobileNetConfig3x3(game_cfg=game_cfg)
         game = BattleSnakeGame(game_cfg)
         net = get_network_from_config(net_cfg)
         print(f"{net.num_params()=}")
@@ -40,7 +40,7 @@ class TestMobileNet(unittest.TestCase):
         out = net(in_tensor)
         self.assertEqual(2, len(out.shape))
         self.assertEqual(2, out.shape[0])
-        self.assertEqual(6, out.shape[1])
+        self.assertEqual(5, out.shape[1])
 
     def test_latency(self):  # unfair comparison due to parameter count
         game_cfg = perform_choke_2_player(centered=True, fully_connected=False)
@@ -77,8 +77,7 @@ class TestMobileNet(unittest.TestCase):
 
     def test_5x5_large(self):
         game_cfg = perform_choke_5x5_4_player(centered=True)
-        net_cfg = MobileNetConfig5x5Large(game_cfg=game_cfg, predict_policy=False, predict_game_len=True,
-                                          eq_type=EquivarianceType.CONSTRAINED)
+        net_cfg = MobileNetConfig5x5Large(game_cfg=game_cfg, predict_policy=False, eq_type=EquivarianceType.CONSTRAINED)
         game = BattleSnakeGame(game_cfg)
         net = get_network_from_config(net_cfg)
 

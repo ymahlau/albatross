@@ -15,7 +15,6 @@ class TestConstrained(unittest.TestCase):
         net_cfg = ResNetConfig3x3(
             game_cfg=game_cfg,
             predict_policy=False,
-            predict_game_len=True,
             eq_type=EquivarianceType.CONSTRAINED,
         )
         net = get_network_from_config(net_cfg)
@@ -30,14 +29,12 @@ class TestConstrained(unittest.TestCase):
         for out in out_list[1:]:
             for player in range(2):
                 self.assertAlmostEqual(out_list[0][player][0].item(), out[player][0].item(), places=5)
-                self.assertAlmostEqual(out_list[0][player][1].item(), out[player][1].item(), places=5)
 
     def test_constrained_mobile_net(self):
         game_cfg = perform_choke_2_player(centered=True, fully_connected=False)
         net_cfg = MobileNetConfig3x3(
             game_cfg=game_cfg,
             predict_policy=False,
-            predict_game_len=True,
             eq_type=EquivarianceType.CONSTRAINED,
         )
         net = get_network_from_config(net_cfg)
@@ -52,14 +49,12 @@ class TestConstrained(unittest.TestCase):
         for out in out_list[1:]:
             for player in range(2):
                 self.assertAlmostEqual(out_list[0][player][0].item(), out[player][0].item(), places=5)
-                self.assertAlmostEqual(out_list[0][player][1].item(), out[player][1].item(), places=5)
 
     def test_speed(self):
         game_cfg = perform_choke_2_player(centered=True, fully_connected=False)
         net_cfg = ResNetConfig3x3(
             game_cfg=game_cfg,
             predict_policy=False,
-            predict_game_len=True,
             eq_type=EquivarianceType.CONSTRAINED,
         )
         net = get_network_from_config(net_cfg)

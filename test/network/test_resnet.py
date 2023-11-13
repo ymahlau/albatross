@@ -24,7 +24,6 @@ class TestResNet(unittest.TestCase):
         net_conf = ResNetConfig3x3(
             game_cfg=gc,
             predict_policy=True,
-            predict_game_len=False,
         )
         net = get_network_from_config(net_conf)
         in_tensor, _, _ = game.get_obs()
@@ -44,18 +43,17 @@ class TestResNet(unittest.TestCase):
         net_conf = ResNetConfig3x3(
             game_cfg=gc,
             predict_policy=True,
-            predict_game_len=True,
         )
         net = get_network_from_config(net_conf)
         in_tensor, _, _ = game.get_obs()
         out = net(in_tensor)
         self.assertEqual(2, len(out.shape))
         self.assertEqual(4, out.shape[0])
-        self.assertEqual(6, out.shape[1])
+        self.assertEqual(5, out.shape[1])
 
     def test_value_resnet(self):
         game_cfg = perform_choke_2_player(centered=True, fully_connected=False)
-        net_cfg = ResNetConfig3x3(game_cfg=game_cfg, predict_policy=False, predict_game_len=False)
+        net_cfg = ResNetConfig3x3(game_cfg=game_cfg, predict_policy=False)
         net = get_network_from_config(net_cfg)
         game = get_game_from_config(game_cfg)
         obs, _, _, = game.get_obs()
@@ -78,14 +76,13 @@ class TestResNet(unittest.TestCase):
         net_conf = ResNetConfig5x5(
             game_cfg=gc,
             predict_policy=True,
-            predict_game_len=True,
         )
         net = get_network_from_config(net_conf)
         in_tensor, _, _ = game.get_obs()
         out = net(in_tensor)
         self.assertEqual(2, len(out.shape))
         self.assertEqual(4, out.shape[0])
-        self.assertEqual(6, out.shape[1])
+        self.assertEqual(5, out.shape[1])
 
     def test_resnet_centered_7(self):
         gc = BattleSnakeConfig(
@@ -99,14 +96,13 @@ class TestResNet(unittest.TestCase):
         net_conf = ResNetConfig7x7(
             game_cfg=gc,
             predict_policy=True,
-            predict_game_len=True,
         )
         net = get_network_from_config(net_conf)
         in_tensor, _, _ = game.get_obs()
         out = net(in_tensor)
         self.assertEqual(2, len(out.shape))
         self.assertEqual(4, out.shape[0])
-        self.assertEqual(6, out.shape[1])
+        self.assertEqual(5, out.shape[1])
 
     def test_resnet_new_7x7(self):
         game_cfg = survive_on_7x7()
@@ -148,14 +144,13 @@ class TestResNet(unittest.TestCase):
         net_conf = ResNetConfig9x9(
             game_cfg=gc,
             predict_policy=True,
-            predict_game_len=True,
         )
         net = get_network_from_config(net_conf)
         in_tensor, _, _ = game.get_obs()
         out = net(in_tensor)
         self.assertEqual(2, len(out.shape))
         self.assertEqual(4, out.shape[0])
-        self.assertEqual(6, out.shape[1])
+        self.assertEqual(5, out.shape[1])
 
     def test_resnet_centered_11(self):
         gc = survive_on_11x11()
@@ -192,4 +187,3 @@ class TestResNet(unittest.TestCase):
             out = net(in_tensor)
         end_time = time.time()
         print(f"{(end_time - start_time) / n=}")
-

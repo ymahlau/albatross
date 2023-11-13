@@ -13,7 +13,6 @@ class TestPooled(unittest.TestCase):
         net_cfg = ResNetConfig3x3(
             game_cfg=game_cfg,
             predict_policy=False,
-            predict_game_len=True,
             eq_type=EquivarianceType.POOLED,
         )
         net = get_network_from_config(net_cfg)
@@ -27,19 +26,18 @@ class TestPooled(unittest.TestCase):
             out_list.append(out)
         for out in out_list[1:]:
             for player in range(2):
-                self.assertAlmostEqual(out_list[0][player][0].item(), out[player][0].item(), places=5)
-                self.assertAlmostEqual(out_list[0][player][1].item(), out[player][1].item(), places=5)
+                self.assertAlmostEqual(out_list[0][player].item(), out[player].item(), places=5)
+                self.assertAlmostEqual(out_list[0][player].item(), out[player].item(), places=5)
 
     def test_pooled_resnet_with_policy(self):
         game_cfg = perform_choke_2_player(centered=True, fully_connected=False)
         net_cfg = ResNetConfig3x3(
             game_cfg=game_cfg,
             predict_policy=True,
-            predict_game_len=True,
             eq_type=EquivarianceType.POOLED,
         )
         net = get_network_from_config(net_cfg)
-        net.eval()
+        net = net.eval()
         game = get_game_from_config(game_cfg)
 
         out_list = []
@@ -49,6 +47,5 @@ class TestPooled(unittest.TestCase):
             out_list.append(out)
         for out in out_list[1:]:
             for player in range(2):
-                self.assertAlmostEqual(out_list[0][player][-2].item(), out[player][-2].item(), places=5)
                 self.assertAlmostEqual(out_list[0][player][-1].item(), out[player][-1].item(), places=5)
 
