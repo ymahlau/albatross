@@ -17,6 +17,8 @@ from src.search.config import NetworkEvalConfig, CopyCatEvalConfig, AreaControlE
     DummyEvalConfig, EnemyExploitationEvalConfig, RandomRolloutEvalConfig, InferenceServerEvalConfig
 from src.search.node import Node
 
+import array
+import ctypes as ct
 
 class EvalFunc(ABC):
     def __init__(self, cfg: EvalFuncConfig):
@@ -190,7 +192,7 @@ def gather_encodings(
         temperature_input: bool,
         single_temperature: bool,
         random_symmetry: bool,
-        temperatures: list[float],
+        temperatures: Optional[list[float]],
 ) -> tuple[
     list[Node],
     list[np.ndarray],
@@ -206,6 +208,8 @@ def gather_encodings(
     for node in node_list:
         obs_temp_input = None
         if temperature_input:
+            if temperatures is None:
+                raise ValueError(f"Need temperatures in Evaluation function to gather encodings")
             obs_temp_input = [temperatures[0]] if single_temperature else temperatures
         symmetry = None if random_symmetry else 0
         enc, perm, inv_perm = node.game.get_obs(
@@ -444,9 +448,13 @@ class InferenceServerEvalFunc(EvalFunc):
         self.cfg = cfg
         self.temperatures = self.cfg.init_temperatures
         self.input_arr: Optional[mp.Array] = None
+        self.input_arr_np: Optional[np.ndarray] = None
         self.output_arr: Optional[mp.Array] = None
+        self.output_arr_np: Optional[np.ndarray] = None
         self.input_rdy_arr: Optional[mp.Array] = None
+        self.input_rdy_arr_np: Optional[np.ndarray] = None
         self.output_rdy_arr: Optional[mp.Array] = None
+        self.output_rdy_arr_np: Optional[np.ndarray] = None
         self.start_idx: Optional[int] = None
         self.max_length: Optional[int] = None
         self.stop_flag: Optional[mp.Value] = None
@@ -454,8 +462,9 @@ class InferenceServerEvalFunc(EvalFunc):
     def _compute(self, node_list: list[Node]) -> None:
         if not node_list:
             return
-        if self.input_arr is None or self.output_arr is None or self.input_rdy_arr is None \
-                or self.output_rdy_arr is None or self.start_idx is None or self.max_length is None:
+        if self.input_arr_np is None or self.output_arr_np is None or self.input_rdy_arr_np is None \
+                or self.output_rdy_arr_np is None or self.start_idx is None or self.max_length is None \
+                or self.stop_flag is None:
             raise Exception('Need Arrays and indices for sending data to inference server!')
         # get observations from game states
         filtered_list, encoding_list_np, inv_perm_list, index_list = gather_encodings(
@@ -465,25 +474,25 @@ class InferenceServerEvalFunc(EvalFunc):
             random_symmetry=self.cfg.single_temperature,
             temperatures=self.temperatures,
         )
-        stacked_obs = np.concatenate(encoding_list_np, axis=0)
+        stacked_obs = np.stack(encoding_list_np, axis=0)
         if stacked_obs.shape[0] > self.max_length:
             raise ValueError("Received more observation than inference server allows. Increase max size!")
         # send observations to inference server
         end_idx = self.start_idx+stacked_obs.shape[0]
-        self.input_arr[self.start_idx:end_idx] = stacked_obs
-        self.input_rdy_arr[self.start_idx:end_idx] = 1
+        self.input_arr_np[self.start_idx:end_idx] = stacked_obs
+        self.input_rdy_arr_np[self.start_idx:end_idx] = 1
         # wait for inference to process data
         while not self.stop_flag.value:
             # check if data ready
-            if np.all(self.output_rdy_arr[self.start_idx:end_idx] == 1):
+            if np.all(self.output_rdy_arr_np[self.start_idx:end_idx] == 1):
                 break
             # wait again
             time.sleep(self.cfg.active_wait_time)
         if self.stop_flag.value:  # program terminated
             return
         # gather outputs and clear rdy arr
-        outputs = self.output_arr[self.start_idx:end_idx]
-        self.output_rdy_arr[self.start_idx:end_idx] = 0
+        outputs = self.output_arr_np[self.start_idx:end_idx]
+        self.output_rdy_arr_np[self.start_idx:end_idx] = 0
         # retrieve values/actions
         values = Network.retrieve_value(outputs)
         actions = None
@@ -516,11 +525,17 @@ class InferenceServerEvalFunc(EvalFunc):
             start_idx: int,
             max_length: int,
             stop_flag: mp.Value,
+            input_shape: tuple[int, ...],
+            output_shape: tuple[int, ...],
     ):
         self.input_arr = input_arr
+        self.input_arr_np = np.frombuffer(input_arr.get_obj(), dtype=np.float32).reshape(input_shape)
         self.output_arr = output_arr
+        self.output_arr_np = np.frombuffer(output_arr.get_obj(), dtype=np.float32).reshape(output_shape)
         self.input_rdy_arr = input_rdy_arr
+        self.input_rdy_arr_np = np.frombuffer(input_rdy_arr.get_obj(), dtype=np.int32)
         self.output_rdy_arr = output_rdy_arr
+        self.output_rdy_arr_np = np.frombuffer(output_rdy_arr.get_obj(), dtype=np.int32)
         self.start_idx = start_idx
         self.max_length = max_length
         self.stop_flag = stop_flag

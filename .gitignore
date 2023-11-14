@@ -12,6 +12,7 @@ logging_data/models
 
 outputs
 img
+a_data
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -158,3 +159,4 @@ dmypy.json
 /smac3_output/
 /test/depth/test.npz
 /scripts/overcooked/outputs/
+/.vscode/

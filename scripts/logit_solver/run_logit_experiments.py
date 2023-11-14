@@ -74,7 +74,7 @@ def merge_data():
 
 def temp():
     # save_path = Path(__file__).parent.parent.parent.parent / 'a_data' / 'logit_solver' / 'temp2.pkl'
-    # gt_path = Path(__file__).parent.parent.parent.parent / 'a_data' / 'logit_solver' / 'temp.pkl'
+    # gt_path = Path(__file__).parent.parent.parent.parent / 'a_data' / 'logit_solver' / 'temp.py.pkl'
     # create_logit_data_func(
     #     num_iterations=100,
     #     sbr_mode_str='POLYAK',

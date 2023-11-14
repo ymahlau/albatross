@@ -484,7 +484,7 @@ class BattleSnakeGame(Game):
             temperatures: Optional[list[float]] = None,
             single_temperature: Optional[bool] = None,
     ) -> tuple[
-        torch.Tensor,
+        np.ndarray,
         dict[int, int],
         dict[int, int],
     ]:
@@ -545,7 +545,8 @@ class BattleSnakeGame(Game):
             raise Exception("Unknown Exception with observation shape")
         if self.cfg.ec.flatten:
             obs_res = obs_res.reshape(self.num_players_at_turn(), -1)
-        result = torch.tensor(obs_res.copy(), dtype=torch.float32)
+        result = obs_res.copy()  # necessary because of negative stride
+        # result = torch.tensor(obs_res.copy(), dtype=torch.float32)
         return result, perm, inv_perm
 
     def __del__(self):

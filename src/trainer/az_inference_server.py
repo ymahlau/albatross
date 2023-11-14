@@ -8,6 +8,7 @@ from typing import Optional
 
 import numpy as np
 import torch
+from src.game.initialization import get_game_from_config
 
 from src.network.initialization import get_network_from_config, get_network_from_file
 from src.trainer.config import AlphaZeroTrainerConfig
@@ -51,8 +52,7 @@ def run_inference_server(
         device = torch.device('cuda' if gpu_idx is None else f'cuda:{gpu_idx}')
     else:
         device = torch.device('cpu')
-    net = net.to(device)
-    net = net.test()
+    net = net.to(device).eval()
     # compile
     if trainer_cfg.compile_model:
         net = torch.compile(
@@ -70,6 +70,17 @@ def run_inference_server(
               f" using device {device}", flush=True)
     else:
         print(f'{datetime.now()} - Started Inference Server with pid {pid} using device {device}', flush=True)
+    # Determine array shapes
+    game = get_game_from_config(trainer_cfg.game_cfg)
+    obs_shape = game.get_obs_shape()
+    out_shape = 1 + game.num_actions if net_cfg.predict_policy else 1
+    # convert multiprocessing arrays
+    input_rdy_np = np.frombuffer(input_rdy_arr.get_obj(), dtype=np.int32)
+    output_rdy_np = np.frombuffer(output_rdy_arr.get_obj(), dtype=np.int32)
+    input_np = np.frombuffer(input_arr.get_obj(), dtype=np.float32)
+    input_np = input_np.reshape((trainer_cfg.max_eval_per_worker * trainer_cfg.num_worker, *obs_shape))
+    output_arr_np = np.frombuffer(output_arr.get_obj(), dtype=np.float32)
+    output_arr_np = output_arr_np.reshape((trainer_cfg.max_eval_per_worker * trainer_cfg.num_worker, out_shape))
     # statistics
     stats = InferenceServerStats()
     # processing loop
@@ -85,10 +96,11 @@ def run_inference_server(
                 net = net.eval()
             stats.load_time_sum += time.time() - load_time_start
             # get ready input data
-            input_rdy_cpy = np.array(np.copy(input_rdy_arr.value), dtype=bool)
+            input_rdy_cpy = np.array(np.copy(input_rdy_np), dtype=bool)
             if np.all(input_rdy_cpy == 0):
+                time.sleep(0.1)
                 continue
-            obs_filtered = input_arr.value[input_rdy_cpy]
+            obs_filtered = input_np[input_rdy_cpy]
             n = obs_filtered.shape[0]
             # forward pass for all encodings, but do not exceed max batch size
             if n <= trainer_cfg.max_batch_size:
@@ -109,9 +121,12 @@ def run_inference_server(
                     start_idx = end_idx
                 out_tensor = np.concatenate(out_tensor_list, axis=0)
             # send output back to processes
-            input_rdy_arr[input_rdy_cpy] = 0
-            output_arr[input_rdy_cpy] = out_tensor
-            output_rdy_arr[input_rdy_cpy] = 1
+            # input_rdy_arr[input_rdy_cpy] = np.zeros(shape=(n,), dtype=int)
+            input_rdy_np[input_rdy_cpy] = 0
+            # output_arr_np = np.frombuffer(output_arr.get_obj()).reshape((trainer_cfg.max_eval_per_worker * trainer_cfg.num_worker, out_shape))
+            output_arr_np[input_rdy_cpy] = out_tensor
+            # output_rdy_arr[input_rdy_cpy] = np.ones(shape=(n,), dtype=int)
+            output_rdy_np[input_rdy_cpy] = 1
             if stop_flag.value:
                 break
             # send statistics

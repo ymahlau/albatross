@@ -33,6 +33,5 @@ def buffer_config_from_game(
         num_players=game.num_players,
         num_symmetries=game.get_symmetry_count(),
         capacity=capacity,
-        single_temperature=single_temperature,
     )
     return buffer_cfg

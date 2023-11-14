@@ -84,14 +84,12 @@ class AlphaZeroTrainer:
         game = get_game_from_config(self.cfg.game_cfg)
         obs_shape = game.get_obs_shape()
         out_shape = 1 + game.num_actions if self.cfg.net_cfg.predict_policy else 1
-        input_rdy_arr_np = np.zeros(shape=(self.cfg.max_eval_per_worker * self.cfg.num_worker,), dtype=int)
-        input_rdy_arr = mp.Array('i', input_rdy_arr_np)
-        output_rdy_arr_np = np.zeros(shape=(self.cfg.max_eval_per_worker * self.cfg.num_worker,), dtype=int)
-        output_rdy_arr = mp.Array('i', output_rdy_arr_np)
-        input_arr_np = np.zeros(shape=(self.cfg.max_eval_per_worker * self.cfg.num_worker, *obs_shape), dtype=float)
-        input_arr = mp.Array('f', input_arr_np)
-        output_arr_np = np.zeros(shape=(self.cfg.max_eval_per_worker * self.cfg.num_worker, out_shape), dtype=float)
-        output_arr = mp.Array('i', output_arr_np)
+        input_rdy_arr = mp.Array('i', self.cfg.max_eval_per_worker * self.cfg.num_worker)
+        output_rdy_arr = mp.Array('i', self.cfg.max_eval_per_worker * self.cfg.num_worker)
+        input_arr_size = np.prod((self.cfg.max_eval_per_worker * self.cfg.num_worker, *obs_shape)).item()
+        input_arr = mp.Array('f', input_arr_size)
+        output_arr_size = np.prod((self.cfg.max_eval_per_worker * self.cfg.num_worker, out_shape)).item()
+        output_arr = mp.Array('f', output_arr_size)
         # start updater
         if not self.cfg.only_generate_buffer:
             gpu_idx = 0 if self.cfg.updater_cfg.use_gpu else None
@@ -166,18 +164,18 @@ class AlphaZeroTrainer:
         if self.cfg.restrict_cpu:
             cpu_counter += self.cfg.max_cpu_worker
         # inference server
-        for inference_id in range(self.cfg.num_inference_gpu):
+        for inference_id in range(self.cfg.num_inference_server):
             inference_net_queue = mp.Queue(maxsize=self.cfg.distributor_out_qsize)
             cpu_list_inference = None
             if self.cfg.restrict_cpu and self.cfg.max_cpu_inference_server is not None:
                 cpu_list_inference = available_cpu_list[cpu_counter:cpu_counter + self.cfg.max_cpu_inference_server]
-            gpu_idx = None if self.cfg.num_inference_gpu is None else inference_id + self.cfg.updater_cfg.use_gpu
+            gpu_idx = inference_id + self.cfg.updater_cfg.use_gpu
             kwargs_inference = {
                 'trainer_cfg': self.cfg,
                 'net_queue': inference_net_queue,
                 'stop_flag': stop_flag,
                 'info_queue': info_queue,
-                'input_rdy_arr': info_queue,
+                'input_rdy_arr': input_rdy_arr,
                 'output_rdy_arr': output_rdy_arr,
                 'input_arr': input_arr,
                 'output_arr': output_arr,

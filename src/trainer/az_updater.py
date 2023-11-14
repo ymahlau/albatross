@@ -77,8 +77,8 @@ def run_updater(
     # torch.autograd.set_detect_anomaly(True)
     state_save_dir = Path(os.getcwd()) / 'state'
     # important to avoid pytorch deadlocks
-    torch.set_num_threads(1)
-    os.environ["OMP_NUM_THREADS"] = "1"
+    # torch.set_num_threads(1)
+    # os.environ["OMP_NUM_THREADS"] = "1"
     set_seed(seed)
     if updater_cfg.zero_sum_loss and game_cfg.num_players != 2:
         raise ValueError(f"Can only use zero-sum loss with two players")
@@ -90,7 +90,7 @@ def run_updater(
     game = get_game_from_config(game_cfg)
     # cuda
     if updater_cfg.use_gpu:
-        torch.cuda.init()
+        # torch.cuda.init()
         device = torch.device('cuda' if gpu_idx is None else f'cuda:{gpu_idx}')
     else:
         device = torch.device('cpu')
@@ -328,9 +328,9 @@ def compute_loss(
         use_zero_sum_loss: bool,
         mse_policy_loss: bool,
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-    inputs = torch.from_numpy(sample.obs).to(device)
-    values = torch.from_numpy(sample.values).to(device)
-    policies = torch.from_numpy(sample.policies).to(device)
+    inputs = torch.from_numpy(sample.obs).to(device).float()
+    values = torch.from_numpy(sample.values).to(device).float()
+    policies = torch.from_numpy(sample.policies).to(device).float()
     outputs = net(inputs)
     val_output = net.retrieve_value(outputs).unsqueeze(-1)
     val_loss = compute_value_loss(val_output, values)

@@ -101,7 +101,7 @@ class AlphaZeroTrainerConfig:
     net_cfg: Optional[NetworkConfig] = None
 
     num_worker: int = 1
-    num_inference_gpu: Optional[int] = None
+    num_inference_server: int = 1
     data_qsize: int = 10
     info_qsize: int = 100
     updater_out_qsize: int = 10

@@ -71,6 +71,9 @@ def run_worker(
             search.backup_func.error_counter = error_counter
     if not isinstance(search.eval_func, InferenceServerEvalFunc):
         raise ValueError(f"Worker needs Inference Server Evaluation Function")
+    game = get_game_from_config(trainer_cfg.game_cfg)
+    obs_shape = game.get_obs_shape()
+    out_shape = 1 + game.num_actions if trainer_cfg.net_cfg.predict_policy else 1
     search.eval_func.update_arrays_and_indices(
         input_arr=input_arr,
         output_arr=output_arr,
@@ -79,6 +82,14 @@ def run_worker(
         start_idx=worker_id * trainer_cfg.max_eval_per_worker,
         max_length=trainer_cfg.max_eval_per_worker,
         stop_flag=stop_flag,
+        input_shape=(
+            trainer_cfg.max_eval_per_worker * trainer_cfg.num_worker, 
+            *obs_shape
+        ),
+        output_shape=(
+            trainer_cfg.max_eval_per_worker * trainer_cfg.num_worker, 
+            out_shape
+        )
     )
     # info for logging
     stats = WorkerStatistics(step_counter=step_counter, episode_counter=episode_counter)

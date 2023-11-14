@@ -6,10 +6,10 @@ data:
     __name__: CollectorConfig
     data:
       batch_size: 200
-      buffer_size: 10000
+      buffer_size: 500
       log_every_sec: 20
       quick_start_buffer_path: null
-      start_wait_n_samples: 10000
+      start_wait_n_samples: 500
       validation_percentage: 0.1
   compile_mode: reduce-overhead
   compile_model: false
@@ -43,7 +43,7 @@ data:
                 __name__: AreaControlEvalConfig
                 data:
                   health_threshold: 1.0
-                  value_norm_type:
+                  utility_norm:
                     __module__: src.game.values
                     __name__: UtilityNorm
                     value: NONE
@@ -68,11 +68,11 @@ data:
     __module__: src.game.battlesnake.battlesnake_conf
     __name__: BattleSnakeConfig
     data:
-      all_actions_legal: false
+      all_actions_legal: true
       constrictor: false
       ec:
         __module__: src.game.battlesnake.battlesnake_enc
-        __name__: VanillaBattleSnakeEncodingConfig
+        __name__: SimpleBattleSnakeEncodingConfig
         data:
           centered: true
           compress_enemies: true
@@ -81,54 +81,65 @@ data:
           include_area_control: false
           include_board: true
           include_current_food: true
-          include_distance_map: true
+          include_distance_map: false
           include_food_distance: false
-          include_hazards: true
+          include_hazards: false
           include_next_food: false
           include_num_food_on_board: false
           include_number_of_turns: false
           include_snake_body: true
-          include_snake_body_as_one_hot: true
+          include_snake_body_as_one_hot: false
           include_snake_head: true
-          include_snake_health: true
-          include_snake_length: true
-          include_snake_tail: true
+          include_snake_health: false
+          include_snake_length: false
+          include_snake_tail: false
           include_tail_distance: false
           single_temperature_input: true
           temperature_input: false
-      food_spawn_chance: 15
-      h: 7
-      hazard_damage: 15
-      init_food_pos: null
+      food_spawn_chance: 0
+      h: 3
+      hazard_damage: 14
+      init_food_pos: []
       init_hazards: null
-      init_snake_health: null
+      init_snake_health:
+      - 4
+      - 4
       init_snake_len:
       - 3
       - 3
-      - 3
-      - 3
-      init_snake_pos: null
+      init_snake_pos:
+        0:
+        - - 1
+          - 0
+        1:
+        - - 2
+          - 0
       init_snakes_alive: null
       init_turns_played: 0
       max_snake_health: null
-      min_food: 1
+      min_food: 0
       num_actions: 4
-      num_players: 4
+      num_players: 2
       reward_cfg:
         __module__: src.game.battlesnake.battlesnake_rewards
-        __name__: KillBattleSnakeRewardConfig
+        __name__: StandardBattleSnakeRewardConfig
         data:
           living_reward: 0.0
           reward_type:
             __module__: src.game.battlesnake.battlesnake_rewards
             __name__: BattleSnakeRewardType
-            value: KILL
+            value: STANDARD
           terminal_reward: 1.0
-      royale: true
+      royale: false
       shrink_n_turns: 25
-      w: 7
+      w: 3
       wrapped: false
-  individual_gpu: false
+  inf_cfg:
+    __module__: src.trainer.config
+    __name__: InferenceServerConfig
+    data:
+      statistics_every_sec: 60
+      use_gpu: false
   info_qsize: 100
   init_new_network_params: false
   logger_cfg:
@@ -139,16 +150,19 @@ data:
       id: 0
       name: null
       project_name: battlesnake_rl_test
-      updater_bucket_size: 50
+      updater_bucket_size: 500
       wandb_mode: offline
       worker_episode_bucket_size: 50
-  max_cpu_evaluator: 3
+  max_batch_size: 200
+  max_cpu_evaluator: 1
+  max_cpu_inference_server: 1
   max_cpu_log_dist_save_collect: 1
-  max_cpu_updater: null
-  max_cpu_worker: null
+  max_cpu_updater: 1
+  max_cpu_worker: 1
+  max_eval_per_worker: 400
   net_cfg:
     __module__: src.network.resnet
-    __name__: ResNetConfig7x7Best
+    __name__: ResNetConfig3x3
     data:
       activation_type:
         __module__: src.network.utils
@@ -158,42 +172,14 @@ data:
         __module__: src.network.vision_net
         __name__: EquivarianceType
         value: NONE
-      film_cfg: null
-      film_temperature_input: false
       game_cfg: null
       layer_specs:
       - - 32
         - 1
         - 3
-        - 1
-        - 1
-      - - 64
-        - 1
-        - 3
         - 0
         - 1
-      - - 96
-        - 1
-        - 3
-        - 1
-        - 1
-      - - 128
-        - 1
-        - 3
-        - 0
-        - 1
-      - - 256
-        - 1
-        - 3
-        - 1
-        - 1
-      - - 384
-        - 1
-        - 3
-        - 0
-        - 1
-      length_head_cfg: null
-      lff_feature_expansion: 27
+      lff_feature_expansion: 40
       lff_features: false
       norm_type:
         __module__: src.network.utils
@@ -201,7 +187,7 @@ data:
         value: GROUP_NORM
       policy_head_cfg:
         __module__: src.network.fcn
-        __name__: HeadConfig
+        __name__: SmallHeadConfig
         data:
           activation_type:
             __module__: src.network.utils
@@ -212,18 +198,16 @@ data:
             __module__: src.network.utils
             __name__: ActivationType
             value: NONE
-          hidden_size: null
+          hidden_size: 64
           normalization_type:
             __module__: src.network.utils
             __name__: NormalizationType
             value: GROUP_NORM
-          num_layers: 1
-      predict_game_len: false
+          num_layers: 2
       predict_policy: true
-      single_film_temperature: true
       value_head_cfg:
         __module__: src.network.fcn
-        __name__: HeadConfig
+        __name__: SmallHeadConfig
         data:
           activation_type:
             __module__: src.network.utils
@@ -234,19 +218,19 @@ data:
             __module__: src.network.utils
             __name__: ActivationType
             value: TANH
-          hidden_size: null
+          hidden_size: 64
           normalization_type:
             __module__: src.network.utils
             __name__: NormalizationType
             value: GROUP_NORM
-          num_layers: 1
-  num_worker: 5
-  obs_temperature_input: true
+          num_layers: 2
+  num_inference_server: 1
+  num_worker: 1
   only_generate_buffer: false
   prev_run_dir: null
   prev_run_idx: null
-  restrict_cpu: false
-  save_state: true
+  restrict_cpu: true
+  save_state: false
   save_state_after_seconds: 30
   saver_cfg:
     __module__: src.trainer.config
@@ -292,9 +276,9 @@ data:
             __name__: OptimType
             value: ADAM_W
           weight_decay: 0.0001
-      updates_until_distribution: 2
-      use_gpu: true
-      zero_sum_loss: false
+      updates_until_distribution: 50
+      use_gpu: false
+      zero_sum_loss: true
   updater_in_qsize: 100
   updater_out_qsize: 10
   validator_data_qsize: 100
@@ -306,7 +290,6 @@ data:
       exploration_prob: 0.5
       max_game_length: 8
       max_random_start_steps: 0
-      num_gpu: 1
       policy_eval_cfg:
         __module__: src.trainer.policy_eval
         __name__: PolicyEvalConfig
@@ -334,8 +317,6 @@ data:
               init_temperatures:
               - 10
               - 10
-              - 10
-              - 10
               num_iterations: 200
               sbr_mode:
                 __module__: src.equilibria.logit
@@ -345,19 +326,18 @@ data:
           discount: 0.95
           eval_func_cfg:
             __module__: src.search.config
-            __name__: NetworkEvalConfig
+            __name__: InferenceServerEvalConfig
             data:
+              active_wait_time: 0.05
               init_temperatures: null
               max_batch_size: 200
-              max_clip_value: 20
+              max_clip_value: 1
               min_clip_value: -1
-              net_cfg: null
-              no_grad: true
-              obs_temperature_input: true
+              policy_prediction: true
               random_symmetry: false
               single_temperature: true
               temperature_input: false
-              value_norm_type:
+              utility_norm:
                 __module__: src.game.values
                 __name__: UtilityNorm
                 value: NONE

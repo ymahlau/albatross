@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=temp
+#SBATCH --job-name=temp.py
 #SBATCH --output=slurm-%j-out.txt
 #SBATCH --time=24:00:00 # (HH:MM:SS)
 #SBATCH --partition=lena,amo,haku,taurus,imuk,stahl,phd,tnt,ai

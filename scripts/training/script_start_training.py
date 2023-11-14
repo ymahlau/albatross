@@ -5,9 +5,11 @@ from pathlib import Path
 
 import hydra
 import yaml
+import numpy as np
 
 from src.agent.one_shot import LegalRandomAgentConfig
 from src.agent.search_agent import AreaControlSearchAgentConfig
+from src.game.battlesnake.battlesnake import BattleSnakeGame
 from src.game.battlesnake.bootcamp.test_envs_3x3 import perform_choke_2_player
 from src.game.battlesnake.bootcamp.test_envs_5x5 import perform_choke_5x5_4_player
 from src.game.battlesnake.bootcamp.test_envs_7x7 import survive_on_7x7_4_player_royale
@@ -19,7 +21,7 @@ from src.network.mobilenet_v3 import MobileNetConfig3x3, MobileNetConfig5x5
 from src.network.resnet import ResNetConfig3x3, ResNetConfig7x7Best
 from src.network.utils import ActivationType
 from src.network.vision_net import EquivarianceType
-from src.search.config import AlphaZeroDecoupledSelectionConfig, StandardBackupConfig, StandardExtractConfig, \
+from src.search.config import AlphaZeroDecoupledSelectionConfig, InferenceServerEvalConfig, StandardBackupConfig, StandardExtractConfig, \
     DecoupledUCTSelectionConfig, LogitBackupConfig, FixedDepthConfig, SpecialExtractConfig, NashBackupConfig, \
     Exp3SelectionConfig, MeanPolicyExtractConfig, Exp3BackupConfig, RegretMatchingSelectionConfig, \
     RegretMatchingBackupConfig, SMOOSConfig, PolicyExtractConfig, EnemyExploitationEvalConfig, \
@@ -31,7 +33,7 @@ from src.trainer.az_evaluator import EvaluatorConfig
 from src.trainer.az_trainer import AlphaZeroTrainerConfig
 from src.trainer.az_updater import UpdaterConfig
 from src.trainer.az_worker import WorkerConfig
-from src.trainer.config import LoggerConfig, SaverConfig, CollectorConfig
+from src.trainer.config import InferenceServerConfig, LoggerConfig, SaverConfig, CollectorConfig
 from src.supervised.optim import OptimizerConfig, OptimType
 from src.trainer.policy_eval import PolicyEvalType, PolicyEvalConfig
 from start_training import main
@@ -44,46 +46,47 @@ def start_training_from_structured_configs():
 
     temperature_input = False
     single_temperature = True
-    obs_input_temperature = True
     # game
-    # game_cfg = perform_choke_2_player(fully_connected=False, centered=True)
-    game_cfg = survive_on_7x7_4_player_royale()
+    game_cfg = perform_choke_2_player(fully_connected=False, centered=True)
+    # game_cfg = survive_on_7x7_4_player_royale()
     # game_cfg = perform_choke_5x5_4_player(centered=True)
     # game_cfg.all_actions_legal = False
-    if obs_input_temperature:
-        game_cfg.ec.temperature_input = temperature_input
-        game_cfg.ec.single_temperature_input = single_temperature
 
     # network
     eq_type = EquivarianceType.NONE
-    # net_cfg = ResNetConfig3x3(predict_policy=True, predict_game_len=False, eq_type=eq_type, lff_features=False)
+    net_cfg = ResNetConfig3x3(predict_policy=True, eq_type=eq_type, lff_features=False)
+    
     # net_cfg = MobileNetConfig3x3(predict_policy=True, predict_game_len=False, eq_type=eq_type)
     # net_cfg = MobileOneConfig3x3(predict_policy=True, predict_game_len=False, eq_type=eq_type)
     # net_cfg = MobileNetConfig5x5(predict_policy=True, predict_game_len=False, eq_type=eq_type)
-    net_cfg = ResNetConfig7x7Best()
+    # net_cfg = ResNetConfig7x7Best()
 
     net_cfg.value_head_cfg.final_activation = ActivationType.TANH
-    net_cfg.film_temperature_input = (not obs_input_temperature) and temperature_input
-    net_cfg.film_cfg = MediumHeadConfig() if net_cfg.film_temperature_input else None
-    net_cfg.single_film_temperature = single_temperature
 
     # net_cfg = EquivariantMobileNetConfig3x3(predict_game_len=True)
     # search
     # eval_func_cfg = NetworkEvalConfig(zero_sum_norm=ZeroSumNorm.LINEAR)
     batch_size = 200
-    eval_func_cfg = NetworkEvalConfig(
-        max_batch_size=batch_size,
-        random_symmetry=False,
-        temperature_input=temperature_input,
-        single_temperature=single_temperature,
-        obs_temperature_input=obs_input_temperature,
-    )
+    # eval_func_cfg = NetworkEvalConfig(
+    #     max_batch_size=batch_size,
+    #     random_symmetry=False,
+    #     temperature_input=temperature_input,
+    #     single_temperature=single_temperature,
+    # )
     # enemy_path = Path(__file__).parent.parent.parent / 'trained_models' / 'choke_obs_in.pt'
     # eval_func_cfg = EnemyExploitationEvalConfig(
     #     enemy_net_path=str(enemy_path),
     #     obs_temperature_input=True,
     #     max_batch_size=batch_size,
     # )
+    eval_func_cfg = InferenceServerEvalConfig(
+        max_batch_size=batch_size,
+        random_symmetry=False,
+        temperature_input=temperature_input,
+        single_temperature=single_temperature,
+    )
+    
+    
     # sel_func_cfg = DecoupledUCTSelectionConfig(exp_bonus=1.414)  # 1.4)
     # sel_func_cfg = SampleSelectionConfig(dirichlet_alpha=math.inf, dirichlet_eps=0.25, temperature=1.0)
     # sel_func_cfg = AlphaZeroDecoupledSelectionConfig(exp_bonus=1.414, dirichlet_alpha=0.3, dirichlet_eps=0.25)
@@ -165,7 +168,6 @@ def start_training_from_structured_configs():
         search_iterations=1,
         temperature=1,
         max_random_start_steps=0,
-        num_gpu=1,
         use_symmetries=True,
         quick_start=True,
         max_game_length=8,
@@ -197,19 +199,19 @@ def start_training_from_structured_configs():
         beta2=0.99,
     )
     collector_cfg = CollectorConfig(
-        buffer_size=10000,
+        buffer_size=500,
         batch_size=batch_size,
         quick_start_buffer_path=None,
-        start_wait_n_samples=10000,  # int(5e2),
+        start_wait_n_samples=500,  # int(5e2),
         # quick_start_buffer_path=Path(__file__).parent.parent.parent / 'buffer' / 'choke_1e3.pt',
         log_every_sec=20,
         validation_percentage=0.1,
     )
     updater_cfg = UpdaterConfig(
-        updates_until_distribution=2,
+        updates_until_distribution=50,
         optim_cfg=optim_cfg,
-        use_gpu=True,
-        zero_sum_loss=False,
+        use_gpu=False,
+        zero_sum_loss=True,
         mse_policy_loss=True,
     )
     logger_cfg = LoggerConfig(
@@ -217,23 +219,20 @@ def start_training_from_structured_configs():
         buffer_gen=False,
         name=None,
         id=0,
-        updater_bucket_size=50,
+        updater_bucket_size=500,
         worker_episode_bucket_size=50,
         wandb_mode='offline',
     )
     saver_cfg = SaverConfig(
         save_interval_sec=30,
     )
-    validator_cfg = None
-    # validator_cfg = ValidatorConfig(
-    #     buffer_size=100,
-    #     val_every_sec=30,
-    #     start_wait_n_samples=100,
-    # )
+    inf_cfg = InferenceServerConfig(
+        use_gpu=False,
+    )
     trainer_cfg = AlphaZeroTrainerConfig(
-        num_worker=5,  # IMPORTANT
-        individual_gpu=False,  # only used if the use_gpu-flag in worker/updater config is true
-        save_state=True,
+        num_worker=1,  # IMPORTANT
+        num_inference_server=1,
+        save_state=False,
         save_state_after_seconds=30,
         net_cfg=net_cfg,
         game_cfg=game_cfg,
@@ -243,6 +242,9 @@ def start_training_from_structured_configs():
         logger_cfg=logger_cfg,
         saver_cfg=saver_cfg,
         collector_cfg=collector_cfg,
+        inf_cfg=inf_cfg,
+        max_batch_size=batch_size,
+        max_eval_per_worker=batch_size*2,
         data_qsize=10,
         info_qsize=100,
         updater_in_qsize=100,
@@ -251,14 +253,14 @@ def start_training_from_structured_configs():
         prev_run_dir=None,
         prev_run_idx=None,
         only_generate_buffer=False,
-        restrict_cpu=False,  # only works on LINUX
-        max_cpu_updater=None,
-        max_cpu_worker=None,
-        max_cpu_evaluator=3,
+        restrict_cpu=True,  # only works on LINUX
+        max_cpu_updater=1,
+        max_cpu_worker=1,
+        max_cpu_evaluator=1,
         max_cpu_log_dist_save_collect=1,
+        max_cpu_inference_server=1,
         temperature_input=temperature_input,
         single_sbr_temperature=single_temperature,
-        obs_temperature_input=obs_input_temperature,
         compile_model=False,
     )
     # initialize yaml file and hydra
