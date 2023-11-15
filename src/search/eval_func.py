@@ -529,13 +529,13 @@ class InferenceServerEvalFunc(EvalFunc):
             output_shape: tuple[int, ...],
     ):
         self.input_arr = input_arr
-        self.input_arr_np = np.frombuffer(input_arr.get_obj(), dtype=np.float32).reshape(input_shape)
+        self.input_arr_np = np.frombuffer(input_arr, dtype=np.float32).reshape(input_shape)
         self.output_arr = output_arr
-        self.output_arr_np = np.frombuffer(output_arr.get_obj(), dtype=np.float32).reshape(output_shape)
+        self.output_arr_np = np.frombuffer(output_arr, dtype=np.float32).reshape(output_shape)
         self.input_rdy_arr = input_rdy_arr
-        self.input_rdy_arr_np = np.frombuffer(input_rdy_arr.get_obj(), dtype=np.int32)
+        self.input_rdy_arr_np = np.frombuffer(input_rdy_arr, dtype=np.int32)
         self.output_rdy_arr = output_rdy_arr
-        self.output_rdy_arr_np = np.frombuffer(output_rdy_arr.get_obj(), dtype=np.int32)
+        self.output_rdy_arr_np = np.frombuffer(output_rdy_arr, dtype=np.int32)
         self.start_idx = start_idx
         self.max_length = max_length
         self.stop_flag = stop_flag

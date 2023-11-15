@@ -65,7 +65,6 @@ def run_worker(
     set_seed(seed)
     # initialization
     search = get_search_from_config(worker_cfg.search_cfg)
-    game = get_game_from_config(game_cfg)
     if hasattr(search, "backup_func"):
         if hasattr(search.backup_func, "error_counter"):
             search.backup_func.error_counter = error_counter
@@ -74,22 +73,19 @@ def run_worker(
     game = get_game_from_config(trainer_cfg.game_cfg)
     obs_shape = game.get_obs_shape()
     out_shape = 1 + game.num_actions if trainer_cfg.net_cfg.predict_policy else 1
+    worker_per_server = int(trainer_cfg.num_worker / trainer_cfg.num_inference_server)
+    start_idx = (worker_id % worker_per_server) * trainer_cfg.max_eval_per_worker
+    n = int(trainer_cfg.max_eval_per_worker * trainer_cfg.num_worker / trainer_cfg.num_inference_server)
     search.eval_func.update_arrays_and_indices(
         input_arr=input_arr,
         output_arr=output_arr,
         input_rdy_arr=input_rdy_arr,
         output_rdy_arr=output_rdy_arr,
-        start_idx=worker_id * trainer_cfg.max_eval_per_worker,
+        start_idx=start_idx,
         max_length=trainer_cfg.max_eval_per_worker,
         stop_flag=stop_flag,
-        input_shape=(
-            trainer_cfg.max_eval_per_worker * trainer_cfg.num_worker, 
-            *obs_shape
-        ),
-        output_shape=(
-            trainer_cfg.max_eval_per_worker * trainer_cfg.num_worker, 
-            out_shape
-        )
+        input_shape=(n, *obs_shape),
+        output_shape=(n, out_shape)
     )
     # info for logging
     stats = WorkerStatistics(step_counter=step_counter, episode_counter=episode_counter)

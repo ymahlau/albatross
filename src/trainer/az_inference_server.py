@@ -75,12 +75,13 @@ def run_inference_server(
     obs_shape = game.get_obs_shape()
     out_shape = 1 + game.num_actions if net_cfg.predict_policy else 1
     # convert multiprocessing arrays
-    input_rdy_np = np.frombuffer(input_rdy_arr.get_obj(), dtype=np.int32)
-    output_rdy_np = np.frombuffer(output_rdy_arr.get_obj(), dtype=np.int32)
-    input_np = np.frombuffer(input_arr.get_obj(), dtype=np.float32)
-    input_np = input_np.reshape((trainer_cfg.max_eval_per_worker * trainer_cfg.num_worker, *obs_shape))
-    output_arr_np = np.frombuffer(output_arr.get_obj(), dtype=np.float32)
-    output_arr_np = output_arr_np.reshape((trainer_cfg.max_eval_per_worker * trainer_cfg.num_worker, out_shape))
+    n = int(trainer_cfg.max_eval_per_worker * trainer_cfg.num_worker / trainer_cfg.num_inference_server)
+    input_rdy_np = np.frombuffer(input_rdy_arr, dtype=np.int32)
+    output_rdy_np = np.frombuffer(output_rdy_arr, dtype=np.int32)
+    input_np = np.frombuffer(input_arr, dtype=np.float32)
+    input_np = input_np.reshape((n, *obs_shape))
+    output_arr_np = np.frombuffer(output_arr, dtype=np.float32)
+    output_arr_np = output_arr_np.reshape((n, out_shape))
     # statistics
     stats = InferenceServerStats()
     # processing loop
@@ -121,11 +122,8 @@ def run_inference_server(
                     start_idx = end_idx
                 out_tensor = np.concatenate(out_tensor_list, axis=0)
             # send output back to processes
-            # input_rdy_arr[input_rdy_cpy] = np.zeros(shape=(n,), dtype=int)
             input_rdy_np[input_rdy_cpy] = 0
-            # output_arr_np = np.frombuffer(output_arr.get_obj()).reshape((trainer_cfg.max_eval_per_worker * trainer_cfg.num_worker, out_shape))
             output_arr_np[input_rdy_cpy] = out_tensor
-            # output_rdy_arr[input_rdy_cpy] = np.ones(shape=(n,), dtype=int)
             output_rdy_np[input_rdy_cpy] = 1
             if stop_flag.value:
                 break

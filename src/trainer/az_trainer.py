@@ -1,3 +1,4 @@
+import math
 import os
 import random
 import sys
@@ -51,6 +52,8 @@ class AlphaZeroTrainer:
             else:
                 if len(self.cfg.worker_cfg.anneal_cfgs) != self.cfg.game_cfg.num_players:
                     raise ValueError(f"Invalid number of annealing configs")
+        if self.cfg.num_worker % self.cfg.num_inference_server != 0:
+            raise ValueError(f"Number of workers needs to be divisible by number of inference server")
         # test if network and search config can be initialized
         if self.cfg.net_cfg is not None:
             _ = get_network_from_config(self.cfg.net_cfg)
@@ -84,12 +87,15 @@ class AlphaZeroTrainer:
         game = get_game_from_config(self.cfg.game_cfg)
         obs_shape = game.get_obs_shape()
         out_shape = 1 + game.num_actions if self.cfg.net_cfg.predict_policy else 1
-        input_rdy_arr = mp.Array('i', self.cfg.max_eval_per_worker * self.cfg.num_worker)
-        output_rdy_arr = mp.Array('i', self.cfg.max_eval_per_worker * self.cfg.num_worker)
-        input_arr_size = np.prod((self.cfg.max_eval_per_worker * self.cfg.num_worker, *obs_shape)).item()
-        input_arr = mp.Array('f', input_arr_size)
-        output_arr_size = np.prod((self.cfg.max_eval_per_worker * self.cfg.num_worker, out_shape)).item()
-        output_arr = mp.Array('f', output_arr_size)
+        n = int(self.cfg.max_eval_per_worker * self.cfg.num_worker / self.cfg.num_inference_server)
+        input_arr_size = np.prod(np.asarray([n, *obs_shape])).item()
+        output_arr_size = np.prod(np.asarray((n, out_shape))).item()
+        input_list, input_rdy_list, output_list, output_rdy_list = [], [], [], []
+        for inference_id in range(self.cfg.num_inference_server):
+            input_rdy_list.append(mp.Array('i', n, lock=False))
+            output_rdy_list.append(mp.Array('i', n, lock=False))
+            input_list.append(mp.Array('f', input_arr_size, lock=False))
+            output_list.append(mp.Array('f', output_arr_size, lock=False))
         # start updater
         if not self.cfg.only_generate_buffer:
             gpu_idx = 0 if self.cfg.updater_cfg.use_gpu else None
@@ -141,6 +147,7 @@ class AlphaZeroTrainer:
             if self.cfg.restrict_cpu and self.cfg.max_cpu_worker is not None:
                 cpu_list_worker = available_cpu_list[cpu_counter:cpu_counter + self.cfg.max_cpu_worker]
             seed_worker = random.randint(0, 2 ** 32 - 1)
+            inference_id = math.floor(worker_id / self.cfg.num_inference_server)
             kwargs_worker = {
                 'worker_id': worker_id,
                 'trainer_cfg': self.cfg,
@@ -150,10 +157,10 @@ class AlphaZeroTrainer:
                 'step_counter': step_counter,
                 'episode_counter': episode_counter,
                 'error_counter': error_counter,
-                'input_arr': input_arr,
-                'input_rdy_arr': input_rdy_arr,
-                'output_arr': output_arr,
-                'output_rdy_arr': output_rdy_arr,
+                'input_arr': input_list[inference_id],
+                'input_rdy_arr': input_rdy_list[inference_id],
+                'output_arr': output_list[inference_id],
+                'output_rdy_arr': output_rdy_list[inference_id],
                 'cpu_list': cpu_list_worker,
                 'seed': seed_worker,
                 'debug': False,
@@ -175,10 +182,10 @@ class AlphaZeroTrainer:
                 'net_queue': inference_net_queue,
                 'stop_flag': stop_flag,
                 'info_queue': info_queue,
-                'input_rdy_arr': input_rdy_arr,
-                'output_rdy_arr': output_rdy_arr,
-                'input_arr': input_arr,
-                'output_arr': output_arr,
+                'input_rdy_arr': input_rdy_list[inference_id],
+                'output_rdy_arr': output_rdy_list[inference_id],
+                'input_arr': input_list[inference_id],
+                'output_arr': output_list[inference_id],
                 'cpu_list': cpu_list_inference,
                 'gpu_idx': gpu_idx,
                 'prev_run_dir': Path(self.cfg.prev_run_dir) if self.cfg.prev_run_dir is not None else None,
@@ -189,6 +196,8 @@ class AlphaZeroTrainer:
             process_list.append(p)
             dist_out_queue_list.append(inference_net_queue)
             queue_list.append(inference_net_queue)
+        if self.cfg.restrict_cpu:
+            cpu_counter += self.cfg.max_cpu_inference_server
         # cpu list for distributor, collector, saver and logger
         cpu_list_ldsc = None
         if self.cfg.restrict_cpu and self.cfg.max_cpu_log_dist_save_collect is not None:

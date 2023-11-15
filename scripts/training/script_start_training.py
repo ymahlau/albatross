@@ -230,8 +230,8 @@ def start_training_from_structured_configs():
         use_gpu=False,
     )
     trainer_cfg = AlphaZeroTrainerConfig(
-        num_worker=1,  # IMPORTANT
-        num_inference_server=1,
+        num_worker=4,  # IMPORTANT
+        num_inference_server=2,
         save_state=False,
         save_state_after_seconds=30,
         net_cfg=net_cfg,
