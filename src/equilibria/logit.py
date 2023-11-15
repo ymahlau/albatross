@@ -17,6 +17,7 @@ class SbrMode(Enum):
     BB_NAGURNEY = 'BB_NAGURNEY'
     BB_MSA = 'BB_MSA'
     SRA = 'SRA'
+    SRA_NAGURNEY = 'SRA_NAGURNEY'
 
 
 def compute_logit_equilibrium(
@@ -86,6 +87,8 @@ def compute_logit_equilibrium(
             raise ValueError(f"Invalid EMA hyperparameter: {hp_0=}")
         if hp_1 < 1.5 or hp_1 > 2:
             raise ValueError(f"Invalid EMA hyperparameter: {hp_1=}")
+    elif sbr_mode == SbrMode.SRA_NAGURNEY or sbr_mode == SbrMode.SRA_NAGURNEY.value:
+        sbr_code = 10
     # default values to satisfy static types. Those are unused
     if hp_0 is None:
         hp_0 = -1

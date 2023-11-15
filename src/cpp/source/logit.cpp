@@ -20,6 +20,7 @@ const int MODE_BB_2_3 = 6;
 const int MODE_BB_REPETITIONS = 7;
 const int MODE_BB_MSA = 8;
 const int MODE_SRA = 9;
+const int MODE_SRA_REPETITIONS = 10;
 
 const double MIN_PROB = 1e-5;  // for numerical stability
 const double MAX_PROB = 1 - MIN_PROB;
@@ -209,19 +210,35 @@ double compute_logit_cpp(
             if (episode + 1.5 > 0.5 * (cur_repetition * cur_repetition + cur_repetition)) {
                 cur_repetition += 1;
             }
-        } else if (mode == MODE_SRA){
+        } else if (mode == MODE_SRA) {
             // Self-regulating averaging. hp_0 is gamma and hp_1 is large GAMMA
             // the paper proposes gamma in [0.01, 0.5] and GAMMA in [1.5, 2]
             double cur_diff = 0;
             double last_diff = 0;
-            for(int idx = 0; idx < num_all_actions; idx++){
+            for (int idx = 0; idx < num_all_actions; idx++) {
                 cur_diff += (cur_pol[idx] - cur_aux_pol[idx]) * (cur_pol[idx] - cur_aux_pol[idx]);
                 last_diff += (last_pol[idx] - last_aux_pol[idx]) * (last_pol[idx] - last_aux_pol[idx]);
             }
-            if (cur_diff < last_diff){
+            if (cur_diff < last_diff) {
                 sra_beta += hp_0;
             } else {
                 sra_beta += hp_1;
+            }
+            step_size = 1.0 / sra_beta;
+        } else if (mode == MODE_SRA_REPETITIONS){
+            double cur_diff = 0;
+            double last_diff = 0;
+            for (int idx = 0; idx < num_all_actions; idx++) {
+                cur_diff += (cur_pol[idx] - cur_aux_pol[idx]) * (cur_pol[idx] - cur_aux_pol[idx]);
+                last_diff += (last_pol[idx] - last_aux_pol[idx]) * (last_pol[idx] - last_aux_pol[idx]);
+            }
+            if (cur_diff < last_diff) {
+                sra_beta = cur_repetition;
+            } else {
+                sra_beta += hp_0;
+            }
+            if (episode + 1.5 > 0.5 * (cur_repetition * cur_repetition + cur_repetition)) {
+                cur_repetition += 1;
             }
             step_size = 1.0 / sra_beta;
         } else {

@@ -250,7 +250,7 @@ int main() {
     double temperatures[] = {7, 7};
     bool initial_uniform = true;
     double* initial_policies = nullptr;
-    int compute_mode = 0;
+    int compute_mode = 10;
     double moving_avg = 0.9;
     double result_values[] = {0, 0};
     double result_policies[] = {0, 0, 0, 0, 0};
@@ -299,23 +299,23 @@ int main() {
 //        result_policies // shape (sum(num_available_actions))
 //    );
 
-//    compute_logit_cpp(
-//            num_player,
-//            num_available_actions,
-//            available_actions,
-//            joint_actions,
-//            joint_action_values,
-//            num_iterations,
-//            epsilon,
-//            temperatures,
-//            initial_uniform,
-//            compute_mode,  // mode
-//            0.5, // hp0
-//            1.5, // hp1
-//            initial_policies,
-//            result_values,
-//            result_policies
-//    );
+    compute_logit_cpp(
+            num_player,
+            num_available_actions,
+            available_actions,
+            joint_actions,
+            joint_action_values,
+            num_iterations,
+            epsilon,
+            temperatures,
+            initial_uniform,
+            compute_mode,  // mode
+            0.5, // hp0
+            1.5, // hp1
+            initial_policies,
+            result_values,
+            result_policies
+    );
 
 //    compute_2p_nash(num_available_actions, available_actions, joint_actions, joint_action_values, result_values,
 //                    result_policies);

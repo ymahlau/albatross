@@ -151,7 +151,7 @@ data:
       name: null
       project_name: battlesnake_rl_test
       updater_bucket_size: 500
-      wandb_mode: offline
+      wandb_mode: online
       worker_episode_bucket_size: 50
   max_batch_size: 200
   max_cpu_evaluator: 1

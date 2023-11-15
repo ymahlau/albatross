@@ -221,7 +221,7 @@ def start_training_from_structured_configs():
         id=0,
         updater_bucket_size=500,
         worker_episode_bucket_size=50,
-        wandb_mode='offline',
+        wandb_mode='online',
     )
     saver_cfg = SaverConfig(
         save_interval_sec=30,

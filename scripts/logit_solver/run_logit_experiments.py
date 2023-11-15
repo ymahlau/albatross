@@ -92,8 +92,8 @@ def temp():
 
 
 def generate_experiment_data(experiment_id: int):
-    sbr_mode_str = 'POLYAK'
-    hp_0 = None
+    sbr_mode_str = 'SRA_NAGURNEY'
+    hp_0 = 1.5
     hp_1 = None
     all_iterations = np.arange(50, 2001, 50)
     cur_iterations = all_iterations[experiment_id].item()
