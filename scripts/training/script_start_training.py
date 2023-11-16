@@ -9,11 +9,13 @@ import numpy as np
 
 from src.agent.one_shot import LegalRandomAgentConfig, RandomAgentConfig
 from src.agent.search_agent import AreaControlSearchAgentConfig
+from src.equilibria.logit import SbrMode
 from src.game.battlesnake.battlesnake import BattleSnakeGame
 from src.game.battlesnake.bootcamp.test_envs_3x3 import perform_choke_2_player
 from src.game.battlesnake.bootcamp.test_envs_5x5 import perform_choke_5x5_4_player
 from src.game.battlesnake.bootcamp.test_envs_7x7 import survive_on_7x7_4_player_royale
 from src.game.overcooked.config import CrampedRoomOvercookedConfig
+from src.game.values import UtilityNorm
 from src.misc.const import PHI
 from src.misc.serialization import serialize_dataclass
 from src.network.fcn import MediumHeadConfig
@@ -97,8 +99,9 @@ def start_training_from_structured_configs():
     # sel_func_cfg = UncertaintySelectionConfig(informed=True)
     # backup_func_cfg = NashBackupConfig()
     backup_func_cfg = LogitBackupConfig(
-        num_iterations=200,
-        init_temperatures=[10 for _ in range(game_cfg.num_players)]
+        num_iterations=100,
+        init_temperatures=[10 for _ in range(game_cfg.num_players)],
+        sbr_mode=SbrMode.NAGURNEY,
     )
     # backup_func_cfg = EnemyExploitationBackupConfig(
     #     enemy_net_path=str(enemy_path),
@@ -114,7 +117,7 @@ def start_training_from_structured_configs():
     # backup_func_cfg = StandardBackupConfig()
     # backup_func_cfg = Exp3BackupConfig()
     # backup_func_cfg = RegretMatchingBackupConfig(avg_backup=True)
-    extraction_func_cfg = SpecialExtractConfig()
+    extraction_func_cfg = SpecialExtractConfig(utility_norm=UtilityNorm.FULL_COOP)
     # extraction_func_cfg = StandardExtractConfig()
     # extraction_func_cfg = MeanPolicyExtractConfig()
     # extraction_func_cfg = PolicyExtractConfig()
@@ -224,7 +227,7 @@ def start_training_from_structured_configs():
         id=0,
         updater_bucket_size=100,
         worker_episode_bucket_size=25,
-        wandb_mode='online',
+        wandb_mode='offline',
     )
     saver_cfg = SaverConfig(
         save_interval_sec=30,

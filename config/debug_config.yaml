@@ -107,9 +107,9 @@ data:
       id: 0
       name: null
       project_name: battlesnake_rl_test
-      updater_bucket_size: 500
-      wandb_mode: online
-      worker_episode_bucket_size: 50
+      updater_bucket_size: 100
+      wandb_mode: offline
+      worker_episode_bucket_size: 25
   max_batch_size: 200
   max_cpu_evaluator: 1
   max_cpu_inference_server: 1
@@ -289,11 +289,11 @@ data:
               init_temperatures:
               - 10
               - 10
-              num_iterations: 200
+              num_iterations: 100
               sbr_mode:
                 __module__: src.equilibria.logit
                 __name__: SbrMode
-                value: MSA
+                value: NAGURNEY
               use_cpp: true
           discount: 0.95
           eval_func_cfg:
@@ -317,7 +317,10 @@ data:
             __module__: src.search.config
             __name__: SpecialExtractConfig
             data:
-              zero_sum_norm: false
+              utility_norm:
+                __module__: src.game.values
+                __name__: UtilityNorm
+                value: FULL_COOP
       search_iterations: 1
       temperature: 1
       use_symmetries: true

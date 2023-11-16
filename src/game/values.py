@@ -27,6 +27,11 @@ def apply_utility_norm(
             raise ValueError(f"Invalid array shape for zero sum norm: {values.shape}")
         return norm
     elif norm == UtilityNorm.FULL_COOP:
-        raise NotImplementedError()
+        avg = np.average(values, axis=-1)
+        if len(values.shape) == 1:
+            norm = np.ones_like(values) * avg
+        elif len(values.shape) == 2:
+            norm = np.ones_like(values) * avg[:, np.newaxis]
+        return norm
     else:
         raise ValueError(f"Invalid norm type: {norm}")

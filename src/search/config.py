@@ -178,8 +178,7 @@ class StandardExtractConfig(ExtractFuncConfig):
 
 @dataclass
 class SpecialExtractConfig(ExtractFuncConfig):
-    pass
-    zero_sum_norm: bool = False
+    utility_norm: UtilityNorm = UtilityNorm.NONE
 
 
 @dataclass

@@ -17,8 +17,6 @@ from src.search.config import NetworkEvalConfig, CopyCatEvalConfig, AreaControlE
     DummyEvalConfig, EnemyExploitationEvalConfig, RandomRolloutEvalConfig, InferenceServerEvalConfig
 from src.search.node import Node
 
-import array
-import ctypes as ct
 
 class EvalFunc(ABC):
     def __init__(self, cfg: EvalFuncConfig):

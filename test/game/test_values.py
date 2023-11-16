@@ -17,3 +17,17 @@ class TestValue(unittest.TestCase):
         normed = apply_utility_norm(values, norm=UtilityNorm.ZERO_SUM)
         self.assertEqual(1, normed[0])
         self.assertEqual(-1, normed[1])
+        
+    def test_fc_simple(self):
+        values = np.asarray([[0, 2], [5, 3]])
+        normed = apply_utility_norm(values, norm=UtilityNorm.FULL_COOP)
+        self.assertEqual(1, normed[0, 0])
+        self.assertEqual(1, normed[0, 1])
+        self.assertEqual(4, normed[1, 0])
+        self.assertEqual(4, normed[1, 1])
+        
+    def test_values_shape(self):
+        values = np.asarray([5, 3])
+        normed = apply_utility_norm(values, norm=UtilityNorm.FULL_COOP)
+        self.assertEqual(4, normed[0])
+        self.assertEqual(4, normed[1])

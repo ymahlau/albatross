@@ -65,8 +65,7 @@ class SpecialExtractFunc(ExtractFunc):
         if "action_probs" not in root.info or "action_probs_count" not in root.info:
             raise Exception("Special extraction only works with backup storing action probs")
         values = root.forward_estimate()
-        if self.cfg.zero_sum_norm:
-            values = apply_utility_norm(values, UtilityNorm.ZERO_SUM)
+        values = apply_utility_norm(values, self.cfg.utility_norm)
         action_prob_sum: np.ndarray = root.info["action_probs"]
         action_prob_count: int = root.info["action_probs_count"]
         # sanity checks
