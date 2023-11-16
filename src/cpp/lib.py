@@ -238,7 +238,7 @@ class CPPLibrary:
         self.lib.step_overcooked_cpp.argtypes = [ct.POINTER(Struct), ct.POINTER(ct.c_int)]
         self.lib.step_overcooked_cpp.restype = ct.c_double
         self.lib.char_overcooked_matrix_cpp.argtypes = [ct.POINTER(Struct), ct.c_char_p]
-        self.lib.construct_overcooked_encoding_cpp.argtypes = [ct.POINTER(Struct), ct.POINTER(ct.c_float)]
+        self.lib.construct_overcooked_encoding_cpp.argtypes = [ct.POINTER(Struct), ct.POINTER(ct.c_float), ct.c_int]
         self.lib.equals_overcooked_cpp.argtypes = [ct.POINTER(Struct), ct.POINTER(Struct)]
         self.lib.equals_overcooked_cpp.restype = ct.c_bool
 

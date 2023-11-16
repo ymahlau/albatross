@@ -147,7 +147,8 @@ class AlphaZeroTrainer:
             if self.cfg.restrict_cpu and self.cfg.max_cpu_worker is not None:
                 cpu_list_worker = available_cpu_list[cpu_counter:cpu_counter + self.cfg.max_cpu_worker]
             seed_worker = random.randint(0, 2 ** 32 - 1)
-            inference_id = math.floor(worker_id / self.cfg.num_inference_server)
+            worker_per_server = int(self.cfg.num_worker / self.cfg.num_inference_server)
+            inference_id = math.floor(worker_id / worker_per_server)
             kwargs_worker = {
                 'worker_id': worker_id,
                 'trainer_cfg': self.cfg,

@@ -21,44 +21,9 @@ data:
     data:
       enemy_cfgs:
       - __module__: src.agent.one_shot
-        __name__: LegalRandomAgentConfig
+        __name__: RandomAgentConfig
         data:
-          name: LegalRandomAgent
-      - __module__: src.agent.search_agent
-        __name__: AreaControlSearchAgentConfig
-        data:
-          deterministic: false
-          name: AreaControlAgent
-          search_cfg:
-            __module__: src.search.config
-            __name__: MCTSConfig
-            data:
-              backup_func_cfg:
-                __module__: src.search.config
-                __name__: StandardBackupConfig
-                data: {}
-              discount: 0.99
-              eval_func_cfg:
-                __module__: src.search.config
-                __name__: AreaControlEvalConfig
-                data:
-                  health_threshold: 1.0
-                  utility_norm:
-                    __module__: src.game.values
-                    __name__: UtilityNorm
-                    value: NONE
-              expansion_depth: 0
-              extract_func_cfg:
-                __module__: src.search.config
-                __name__: StandardExtractConfig
-                data: {}
-              optimize_fully_explored: false
-              sel_func_cfg:
-                __module__: src.search.config
-                __name__: DecoupledUCTSelectionConfig
-                data:
-                  exp_bonus: 1.414
-              use_hot_start: true
+          name: RandomAgent
       enemy_iterations: 100
       eval_rate_sec: 10
       num_episodes: 50

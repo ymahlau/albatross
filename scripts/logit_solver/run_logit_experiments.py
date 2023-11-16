@@ -113,6 +113,6 @@ def generate_experiment_data(experiment_id: int):
 
 if __name__ == '__main__':
     # create_gt_logit_data()
-    temp()
+    # temp()
     # merge_data()
-    # generate_experiment_data()
+    generate_experiment_data(0)

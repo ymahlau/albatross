@@ -7,7 +7,7 @@ import hydra
 import yaml
 import numpy as np
 
-from src.agent.one_shot import LegalRandomAgentConfig
+from src.agent.one_shot import LegalRandomAgentConfig, RandomAgentConfig
 from src.agent.search_agent import AreaControlSearchAgentConfig
 from src.game.battlesnake.battlesnake import BattleSnakeGame
 from src.game.battlesnake.bootcamp.test_envs_3x3 import perform_choke_2_player
@@ -182,8 +182,9 @@ def start_training_from_structured_configs():
         temperature=1,
         enemy_iterations=100,
         enemy_cfgs=[
-            LegalRandomAgentConfig(),
-            AreaControlSearchAgentConfig(),
+            RandomAgentConfig()
+            # LegalRandomAgentConfig(),
+            # AreaControlSearchAgentConfig(),
             # CopyCatSearchAgentConfig()
         ],
         prevent_draw=True,
@@ -221,8 +222,8 @@ def start_training_from_structured_configs():
         buffer_gen=False,
         name=None,
         id=0,
-        updater_bucket_size=500,
-        worker_episode_bucket_size=50,
+        updater_bucket_size=100,
+        worker_episode_bucket_size=25,
         wandb_mode='online',
     )
     saver_cfg = SaverConfig(

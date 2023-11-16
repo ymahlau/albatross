@@ -82,7 +82,7 @@ OvercookedGameState* clone_overcooked(OvercookedGameState* state);
 double step_overcooked(OvercookedGameState* state, int* actions);
 void close_overcooked(OvercookedGameState* state);
 void char_overcooked_matrix(OvercookedGameState* state, char* matrix);
-void construct_overcooked_encoding(OvercookedGameState* state, float* arr);
+void construct_overcooked_encoding(OvercookedGameState* state, float* arr, int player);
 bool equals_overcooked(OvercookedGameState* state, OvercookedGameState* other);
 
 

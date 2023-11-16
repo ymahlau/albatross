@@ -5,6 +5,7 @@
 #include <utility>
 #include <string>
 #include <cmath>
+#include <vector>
 
 #include "../header/overcooked.h"
 
@@ -372,7 +373,7 @@ void fill_layer_overcooked(float* arr, float value, int layer_id, int x_dim, int
     }
 }
 
-void construct_overcooked_encoding(OvercookedGameState* state, float* arr){
+void construct_overcooked_encoding(OvercookedGameState* state, float* arr, int player){
     int x_dim = state->w;
     int y_dim = state->h;
     int z_dim = 16;
@@ -388,7 +389,8 @@ void construct_overcooked_encoding(OvercookedGameState* state, float* arr){
     int y_off = floor(y_pad / 2.0);
     int layer_id = 0;
     // player layer encodings
-    for (int player_id = 0; player_id < 2; player_id++){
+    int player_id = player;
+    for (int p_idx = 0; p_idx < 2; p_idx++){
         Player p = state->players[player_id];
         // position
         arr[arr_idx(p.position.first, p.position.second, layer_id, y_dim, z_dim, x_off, y_off)] = 1;
@@ -418,6 +420,8 @@ void construct_overcooked_encoding(OvercookedGameState* state, float* arr){
             int cur_idx = arr_idx(p.position.first, p.position.second, 13, y_dim, z_dim, x_off, y_off);
             arr[cur_idx] = 1;
         }
+        // update player to other player
+        player = 1 - player;
     }
     // base map + variable map encodings
     for (int x = 0; x < state->w; x++){

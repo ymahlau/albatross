@@ -109,7 +109,7 @@ class OvercookedGame(Game):
 
     def players_at_turn(self) -> list[int]:
         if self.turns_played < self.cfg.horizon:
-            return [1, 2]
+            return [0, 1]
         return []
 
     def players_alive(self) -> list[int]:
@@ -133,13 +133,18 @@ class OvercookedGame(Game):
     ]:
         if self.is_closed:
             raise ValueError("Cannot call function on closed game")
-        arr = np.zeros(shape=self.get_obs_shape(), dtype=ct.c_float)
-        arr_p = arr.ctypes.data_as(ct.POINTER(ct.c_float))
-        CPP_LIB.lib.construct_overcooked_encoding_cpp(
-            self.state_p,
-            arr_p,
-        )
-        return arr, self.id_dict, self.id_dict
+        obs_list = []
+        for player in range(2):
+            arr = np.zeros(shape=self.get_obs_shape(), dtype=ct.c_float)
+            arr_p = arr.ctypes.data_as(ct.POINTER(ct.c_float))
+            CPP_LIB.lib.construct_overcooked_encoding_cpp(
+                self.state_p,
+                arr_p,
+                player
+            )
+            obs_list.append(arr)
+        result = np.stack(obs_list, axis=0)
+        return result, self.id_dict, self.id_dict
 
     def get_str_repr(self) -> str:
         if self.is_closed:
