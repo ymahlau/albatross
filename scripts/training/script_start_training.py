@@ -13,12 +13,13 @@ from src.game.battlesnake.battlesnake import BattleSnakeGame
 from src.game.battlesnake.bootcamp.test_envs_3x3 import perform_choke_2_player
 from src.game.battlesnake.bootcamp.test_envs_5x5 import perform_choke_5x5_4_player
 from src.game.battlesnake.bootcamp.test_envs_7x7 import survive_on_7x7_4_player_royale
+from src.game.overcooked.config import CrampedRoomOvercookedConfig
 from src.misc.const import PHI
 from src.misc.serialization import serialize_dataclass
 from src.network.fcn import MediumHeadConfig
 from src.network.mobile_one import MobileOneConfig3x3
 from src.network.mobilenet_v3 import MobileNetConfig3x3, MobileNetConfig5x5
-from src.network.resnet import ResNetConfig3x3, ResNetConfig7x7Best
+from src.network.resnet import ResNetConfig3x3, ResNetConfig7x7Best, OvercookedResNetConfig5x5
 from src.network.utils import ActivationType
 from src.network.vision_net import EquivarianceType
 from src.search.config import AlphaZeroDecoupledSelectionConfig, InferenceServerEvalConfig, StandardBackupConfig, StandardExtractConfig, \
@@ -47,19 +48,20 @@ def start_training_from_structured_configs():
     temperature_input = False
     single_temperature = True
     # game
-    game_cfg = perform_choke_2_player(fully_connected=False, centered=True)
+    # game_cfg = perform_choke_2_player(fully_connected=False, centered=True)
+    game_cfg = CrampedRoomOvercookedConfig(horizon=15)
     # game_cfg = survive_on_7x7_4_player_royale()
     # game_cfg = perform_choke_5x5_4_player(centered=True)
     # game_cfg.all_actions_legal = False
 
     # network
     eq_type = EquivarianceType.NONE
-    net_cfg = ResNetConfig3x3(predict_policy=True, eq_type=eq_type, lff_features=False)
-    
+    # net_cfg = ResNetConfig3x3(predict_policy=True, eq_type=eq_type, lff_features=False)
     # net_cfg = MobileNetConfig3x3(predict_policy=True, predict_game_len=False, eq_type=eq_type)
     # net_cfg = MobileOneConfig3x3(predict_policy=True, predict_game_len=False, eq_type=eq_type)
     # net_cfg = MobileNetConfig5x5(predict_policy=True, predict_game_len=False, eq_type=eq_type)
     # net_cfg = ResNetConfig7x7Best()
+    net_cfg = OvercookedResNetConfig5x5(predict_policy=True, eq_type=eq_type, lff_features=False)
 
     net_cfg.value_head_cfg.final_activation = ActivationType.TANH
 
@@ -230,8 +232,8 @@ def start_training_from_structured_configs():
         use_gpu=False,
     )
     trainer_cfg = AlphaZeroTrainerConfig(
-        num_worker=4,  # IMPORTANT
-        num_inference_server=2,
+        num_worker=2,  # IMPORTANT
+        num_inference_server=1,
         save_state=False,
         save_state_after_seconds=30,
         net_cfg=net_cfg,
@@ -255,7 +257,7 @@ def start_training_from_structured_configs():
         only_generate_buffer=False,
         restrict_cpu=True,  # only works on LINUX
         max_cpu_updater=1,
-        max_cpu_worker=1,
+        max_cpu_worker=2,
         max_cpu_evaluator=1,
         max_cpu_log_dist_save_collect=1,
         max_cpu_inference_server=1,

@@ -1,8 +1,14 @@
 import dataclasses
+from dataclasses import dataclass
 import importlib
 from collections.abc import Iterable
 from enum import Enum
 from typing import Any
+
+
+@dataclass
+class TupleWrapper:
+    data: list
 
 
 def serialize_obj(obj) -> Any:
@@ -17,9 +23,8 @@ def serialize_obj(obj) -> Any:
             serialize_obj(v) for v in obj
         ]
     elif isinstance(obj, tuple):
-        return tuple([
-            serialize_obj(v) for v in obj
-        ])
+        wrapped = TupleWrapper(list(obj))
+        return serialize_dataclass(wrapped)
     elif dataclasses.is_dataclass(obj):
         return serialize_dataclass(obj)
     return obj
@@ -51,8 +56,6 @@ def deserialize_obj(data: Any) -> Any:
     elif isinstance(data, list):
         # convert every item in list
         return [deserialize_obj(v) for v in data]
-    elif isinstance(data, tuple):
-        return tuple([deserialize_obj(v) for v in data])
     return data
 
 
@@ -63,5 +66,7 @@ def deserialize_dataclass(d: dict):
         attribute_dict[k] = attribute
     m = importlib.import_module(d['__module__'])
     c = getattr(m, d['__name__'])
+    if c == TupleWrapper:  # tuple deserialization
+        return tuple(attribute_dict['data'])
     res = c(**attribute_dict)
     return res

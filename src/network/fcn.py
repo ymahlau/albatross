@@ -38,7 +38,7 @@ class FCN(nn.Module):
             )
             self.lin_in = nn.Linear(input_size, hidden_size, bias=self.lin_bias)
             self.hidden = nn.ModuleList([
-                nn.Linear(hidden_size, hidden_size, bias=self.lin_bias) for _ in range(num_layer-2)
+                nn.Linear(hidden_size, hidden_size, bias=self.lin_bias) for _ in range(num_layer - 2)
             ])
             self.hidden_norms = nn.ModuleList([
                 get_normalization_func(
@@ -47,7 +47,7 @@ class FCN(nn.Module):
                     num_features=hidden_size,
                     normalized_shape=[hidden_size],
                 )
-                for _ in range(num_layer-2)
+                for _ in range(num_layer - 2)
             ])
             self.lin_out = nn.Linear(hidden_size, output_size, bias=True)
             self.activ_func = get_activation_func(activation_type, inplace=False)
@@ -82,6 +82,7 @@ class HeadConfig:
     dropout_p: float = 0.2
     final_activation: ActivationType = ActivationType.NONE
 
+
 def head_from_cfg(
         cfg: HeadConfig,
         input_size: int,
@@ -100,17 +101,26 @@ def head_from_cfg(
     seq = nn.Sequential(fcn, activation)
     return seq
 
+
 @dataclass
 class SmallHeadConfig(HeadConfig):
     num_layers: int = field(default=2)
     hidden_size: int = field(default=64)
+
 
 @dataclass
 class MediumHeadConfig(HeadConfig):
     num_layers: int = field(default=3)
     hidden_size: int = field(default=128)
 
+
 @dataclass
 class LargeHeadConfig(HeadConfig):
     num_layers: int = field(default=3)
+    hidden_size: int = field(default=256)
+
+
+@dataclass
+class WideHeadConfig(HeadConfig):
+    num_layers: int = field(default=1)
     hidden_size: int = field(default=256)

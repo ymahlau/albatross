@@ -5,7 +5,7 @@ from typing import Union, Type
 import torch
 from torch import nn
 
-from src.network.fcn import HeadConfig, LargeHeadConfig, MediumHeadConfig, SmallHeadConfig
+from src.network.fcn import HeadConfig, LargeHeadConfig, MediumHeadConfig, SmallHeadConfig, WideHeadConfig
 from src.network.invariant_conv import InvariantConvolution
 from src.network.utils import NormalizationType, ActivationType, get_normalization_func, get_activation_func
 from src.network.vision_net import VisionNetwork, VisionNetworkConfig
@@ -189,6 +189,7 @@ default_3x3 = [
     [32, 1, 3, 0, 1]
 ]
 
+
 @dataclass
 class ResNetConfig3x3(ResNetConfig):
     layer_specs: list[list[int]] = field(default_factory=lambda: default_3x3)
@@ -204,11 +205,28 @@ default_5x5 = [
     [64, 1, 3, 0, 1],
 ]
 
+
 @dataclass
 class ResNetConfig5x5(ResNetConfig):
     layer_specs: list[list[int]] = field(default_factory=lambda: default_5x5)
     policy_head_cfg: HeadConfig = field(default_factory=lambda: MediumHeadConfig())
     value_head_cfg: HeadConfig = field(default_factory=lambda: MediumHeadConfig())
+
+
+# channels, num_blocks, kernel_size, padding, norm
+best_5x5 = [
+    [32, 3, 3, 1, 1],
+    [64, 2, 3, 1, 1],
+    [128, 1, 3, 1, 1],
+    [256, 1, 3, 0, 1],
+]
+
+
+@dataclass
+class OvercookedResNetConfig5x5(ResNetConfig):
+    layer_specs: list[list[int]] = field(default_factory=lambda: best_5x5)
+    policy_head_cfg: HeadConfig = field(default_factory=lambda: WideHeadConfig())
+    value_head_cfg: HeadConfig = field(default_factory=lambda: WideHeadConfig())
 
 
 default_7x7 = [
@@ -219,6 +237,7 @@ default_7x7 = [
     [80, 2, 3, 1, 1],
     [96, 1, 3, 0, 1],
 ]
+
 
 @dataclass
 class ResNetConfig7x7(ResNetConfig):
@@ -235,6 +254,7 @@ default_7x7_large = [
     [80, 3, 3, 1, 1],
     [96, 1, 3, 0, 1],
 ]
+
 
 @dataclass
 class ResNetConfig7x7Large(ResNetConfig):
@@ -255,6 +275,7 @@ class ResNetConfig7x7New(ResNetConfig):
         default_factory=lambda: HeadConfig(num_layers=1, final_activation=ActivationType.TANH)
     )
 
+
 # channels, num_blocks, kernel_size, padding, norm
 best_7x7 = [
     [32, 1, 3, 1, 1],
@@ -264,6 +285,7 @@ best_7x7 = [
     [256, 1, 3, 1, 1],
     [384, 1, 3, 0, 1],
 ]
+
 
 @dataclass
 class ResNetConfig7x7Best(ResNetConfig):
@@ -277,6 +299,7 @@ class ResNetConfig7x7Best(ResNetConfig):
         default_factory=lambda: HeadConfig(num_layers=1, final_activation=ActivationType.TANH)
     )
 
+
 # channels, num_blocks, kernel_size, padding, norm
 default_centered_9x9 = [
     [32, 2, 3, 1, 1],
@@ -288,6 +311,7 @@ default_centered_9x9 = [
     [96, 2, 3, 1, 1],
     [128, 1, 3, 0, 1],
 ]
+
 
 @dataclass
 class ResNetConfig9x9(ResNetConfig):
@@ -306,6 +330,7 @@ default_centered_11x11 = [
     [384, 1, 3, 1, 1],
     [512, 1, 3, 0, 1],  # 5-1
 ]
+
 
 @dataclass
 class ResNetConfig11x11(ResNetConfig):
