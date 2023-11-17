@@ -43,7 +43,7 @@ class MCTS(Search):
             game: Game,
             time_limit: Optional[float] = None,  # runtime limit in seconds
             iterations: Optional[int] = None,  # iteration limit
-            save_probs: Optional[mp.Array] = None,  # int value, to which current belief of best action is saved
+            save_probs = None,  # int value, to which current belief of best action is saved
             save_player_idx: Optional[int] = None,  # idx of player, whose action probs should be saved
             options: Optional[dict[str, Any]] = None,
     ) -> tuple[np.ndarray, np.ndarray, SearchInfo]:
@@ -57,18 +57,21 @@ class MCTS(Search):
         info = SearchInfo()
         action_probs, values = None, None
         # check if we re-used the same game
+        last_actions = game.get_last_actions()
         if self.root is not None and game == self.root.game:
             root = self.root
         # check if the game state used in last call is same as provided now (i.e. food spawning randomness)
-        elif self.cfg.use_hot_start and self.root is not None and game.get_last_actions() is not None \
+        elif self.cfg.use_hot_start and self.root is not None and last_actions is not None \
                 and self.root.children is not None \
                 and game.get_last_actions() in self.root.children \
                 and self.root.visits > 0:  # hot start is of no use if node was never visited
-            maybe_root = self.root.children[game.get_last_actions()]
+            maybe_root = self.root.children[last_actions]
             if maybe_root.game == game:
                 root = maybe_root
                 root.parent = None
-                root.last_action = None
+                root.last_actions = None
+                if root.rewards is None:
+                    raise Exception("This should never happen")
                 root.rewards *= 0  # if a player died in the last turn, we do not want to punish him twice
                 cleanup_time_start = time.time()
                 self.cleanup_root(exception_node=root)
@@ -175,6 +178,8 @@ class MCTS(Search):
         cur_node = node
         while not cur_node.is_leaf():
             joint_actions = self.sel_func(cur_node)
+            if cur_node.children is None:
+                raise Exception("This should never happen")
             cur_node = cur_node.children[joint_actions]
         # sanity check
         if self.cfg.optimize_fully_explored and cur_node.is_terminal():
@@ -199,4 +204,6 @@ class MCTS(Search):
         while cur_node is not None:
             values, backup_values = self.backup_func(cur_node, cur_child, values, options)
             cur_node = cur_node.parent
+            if cur_child is None:
+                raise Exception("This should never happen")
             cur_child = cur_child.parent

@@ -62,7 +62,7 @@ class TestResNet(unittest.TestCase):
         out = net(torch.tensor(obs))
         self.assertEqual(2, len(out.shape))
         self.assertEqual(1, out.shape[1])
-        value = net.retrieve_value(out)
+        value = net.retrieve_value_tensor(out)
         self.assertEqual(1, len(value.shape))
         self.assertEqual(2, value.shape[0])
 

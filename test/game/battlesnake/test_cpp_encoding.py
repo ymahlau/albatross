@@ -513,9 +513,9 @@ class TestEncodingCPP(unittest.TestCase):
         obs, _, _ = game.get_obs(temperatures=[1, 2, 3, 4])
         tl = obs[0, :, :, -1]
         self.assertTrue(
-            torch.logical_or(
-                torch.logical_or(
-                    torch.logical_or(
+            np.logical_or(
+                np.logical_or(
+                    np.logical_or(
                         (tl == 0.2), (tl == 0.3)
                     ),
                     (tl == 0.4)),
@@ -524,9 +524,9 @@ class TestEncodingCPP(unittest.TestCase):
         )
         tl = obs[1, :, :, -1]
         self.assertTrue(
-            torch.logical_or(
-                torch.logical_or(
-                    torch.logical_or(
+            np.logical_or(
+                np.logical_or(
+                    np.logical_or(
                         (tl == 0.1), (tl == 0.3)
                     ),
                     (tl == 0.4)),
@@ -535,9 +535,9 @@ class TestEncodingCPP(unittest.TestCase):
         )
         tl = obs[2, :, :, -1]
         self.assertTrue(
-            torch.logical_or(
-                torch.logical_or(
-                    torch.logical_or(
+            np.logical_or(
+                np.logical_or(
+                    np.logical_or(
                         (tl == 0.2), (tl == 0.1)
                     ),
                     (tl == 0.4)),
@@ -546,9 +546,9 @@ class TestEncodingCPP(unittest.TestCase):
         )
         tl = obs[3, :, :, -1]
         self.assertTrue(
-            torch.logical_or(
-                torch.logical_or(
-                    torch.logical_or(
+            np.logical_or(
+                np.logical_or(
+                    np.logical_or(
                         (tl == 0.2), (tl == 0.3)
                     ),
                     (tl == 0.1)),

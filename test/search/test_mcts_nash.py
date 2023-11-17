@@ -3,6 +3,7 @@ import unittest
 from src.game.battlesnake.battlesnake import BattleSnakeGame
 from src.game.battlesnake.bootcamp.test_envs_3x3 import perform_choke_2_player
 from src.game.battlesnake.bootcamp.test_envs_5x5 import perform_choke_5x5_4_player
+from src.game.values import UtilityNorm
 from src.search.backup_func import NashBackupConfig
 from src.search.config import DecoupledUCTSelectionConfig
 from src.search.eval_func import AreaControlEvalConfig
@@ -74,7 +75,7 @@ class TestNash(unittest.TestCase):
         sel_func_cfg = SampleSelectionConfig()
         eval_func_cfg = AreaControlEvalConfig()
         backup_func_cfg = NashBackupConfig()
-        extract_func_cfg = SpecialExtractConfig(zero_sum_norm=True)
+        extract_func_cfg = SpecialExtractConfig(utility_norm=UtilityNorm.ZERO_SUM)
         mcts_cfg = MCTSConfig(
             sel_func_cfg=sel_func_cfg,
             eval_func_cfg=eval_func_cfg,

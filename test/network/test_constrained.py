@@ -74,7 +74,7 @@ class TestConstrained(unittest.TestCase):
         net.eval()
         start_eval = time.time()
         for _ in range(num_samples):
-            out = net(obs)
+            out = net(torch.tensor(obs))
         eval_time = time.time() - start_eval
         print(f"{eval_time=}")
 
