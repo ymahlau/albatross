@@ -11,6 +11,7 @@ import wandb
 from src.misc.utils import flatten_dict_rec
 from src.trainer.config import AlphaZeroTrainerConfig
 from src.trainer.utils import wait_for_obj_from_queue
+import multiprocessing.sharedctypes as sc
 
 """
 Single purpose of this logger is to send all logging info to wandb.
@@ -21,11 +22,11 @@ def run_logger(
         trainer_cfg: AlphaZeroTrainerConfig,
         info_queue: mp.Queue,
         data_queue: mp.Queue,
-        stop_flag: mp.Value,
-        step_counter: mp.Value,
-        episode_counter: mp.Value,
-        update_counter: mp.Value,
-        error_counter: mp.Value,
+        stop_flag: sc.Synchronized,
+        step_counter: sc.Synchronized,
+        episode_counter: sc.Synchronized,
+        update_counter: sc.Synchronized,
+        error_counter: sc.Synchronized,
         cpu_list: Optional[list[int]],
 ):
     # paths
@@ -43,6 +44,8 @@ def run_logger(
         name = logger_cfg.name if logger_cfg.id is None else f"{logger_cfg.name}_{logger_cfg.id}"
         kwargs["name"] = name
     run = wandb.init(**kwargs)
+    if run is None:
+        raise Exception("run is None, error of wandb")
     print(f"Wandb Dir: {run.dir}", flush=True)
     # restrict cpus
     pid = os.getpid()
@@ -73,10 +76,10 @@ def save_info(
         info_dict: dict[str, Any],
         info_queue: mp.Queue,
         data_queue: mp.Queue,
-        step_counter: mp.Value,
-        episode_counter: mp.Value,
-        update_counter: mp.Value,
-        error_counter: mp.Value,
+        step_counter: sc.Synchronized,
+        episode_counter: sc.Synchronized,
+        update_counter: sc.Synchronized,
+        error_counter: sc.Synchronized,
 ) -> None:
     # add values to logging dict (x-Axis and status)
     info_dict["update_counter"] = update_counter.value

@@ -14,7 +14,7 @@ from src.misc.replay_buffer import ReplayBuffer, BufferInputSample
 from src.misc.utils import set_seed
 from src.trainer.config import CollectorConfig, AlphaZeroTrainerConfig
 from src.trainer.utils import send_obj_to_queue
-
+import multiprocessing.sharedctypes as sc
 
 @dataclass
 class CollectorEssentials:
@@ -22,7 +22,7 @@ class CollectorEssentials:
     data_queue: mp.Queue
     updater_queue: mp.Queue
     info_queue: mp.Queue
-    stop_flag: mp.Value
+    stop_flag: sc.Synchronized
 
 @dataclass
 class CollectorStatistics:
@@ -45,7 +45,7 @@ def run_collector(
         data_queue: mp.Queue,
         updater_queue: mp.Queue,
         updater_queue_maxsize: int,
-        stop_flag: mp.Value,
+        stop_flag,  # mp.Value
         info_queue: mp.Queue,
         save_state: bool,
         save_state_after_seconds: int,
@@ -65,7 +65,7 @@ def run_collector(
     if only_generate_buffer:
         collector_cfg.validation_percentage = 0
     # buffer
-    buffer_cfg = buffer_config_from_game(game, collector_cfg.buffer_size, trainer_cfg.single_sbr_temperature)
+    buffer_cfg = buffer_config_from_game(game, collector_cfg.buffer_size)
     buffer = ReplayBuffer(buffer_cfg, game_cfg=game_cfg)
     if prev_run_dir is not None and collector_cfg.quick_start_buffer_path is not None:
         raise ValueError(f"It is not possible to specify both prev run dir and quick start buffer")

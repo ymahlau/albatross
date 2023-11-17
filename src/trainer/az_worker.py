@@ -23,12 +23,12 @@ from src.supervised.annealer import TemperatureAnnealer
 from src.trainer.config import WorkerConfig, AlphaZeroTrainerConfig
 from src.trainer.policy_eval import PolicyEvalType
 from src.trainer.utils import send_obj_to_queue
-
+import multiprocessing.sharedctypes as sc
 
 @dataclass
 class WorkerStatistics:
-    step_counter: mp.Value
-    episode_counter: mp.Value
+    step_counter: sc.Synchronized
+    episode_counter: sc.Synchronized
     search_time_sum: float = 0
     idle_time_sum: float = 0
     data_conv_time_sum: float = 0
@@ -47,15 +47,15 @@ def run_worker(
         worker_id: int,
         trainer_cfg: AlphaZeroTrainerConfig,
         data_queue: mp.Queue,
-        stop_flag: mp.Value,
+        stop_flag: sc.Synchronized,
         info_queue: mp.Queue,
-        step_counter: mp.Value,
-        episode_counter: mp.Value,
-        error_counter: mp.Value,
-        input_rdy_arr: mp.Array,
-        output_rdy_arr: mp.Array,
-        input_arr: mp.Array,
-        output_arr: mp.Array,
+        step_counter: sc.Synchronized,
+        episode_counter: sc.Synchronized,
+        error_counter: sc.Synchronized,
+        input_rdy_arr,  # mp.Array
+        output_rdy_arr,  # mp.Array
+        input_arr,  # mp.Array
+        output_arr,  # mp.Array
         cpu_list: Optional[list[int]],
         seed: int,
         debug: bool = False,
@@ -66,8 +66,8 @@ def run_worker(
     # initialization
     search = get_search_from_config(worker_cfg.search_cfg)
     if hasattr(search, "backup_func"):
-        if hasattr(search.backup_func, "error_counter"):
-            search.backup_func.error_counter = error_counter
+        if hasattr(search.backup_func, "error_counter"): # type: ignore
+            search.backup_func.error_counter = error_counter # type: ignore
     if not isinstance(search.eval_func, InferenceServerEvalFunc):
         raise ValueError(f"Worker needs Inference Server Evaluation Function")
     game = get_game_from_config(trainer_cfg.game_cfg)
@@ -116,7 +116,7 @@ def run_worker(
             episode_step_counter = num_random_steps
             # init
             game_list, value_list, reward_list, policy_list = [], [], [], []
-            temp_list: Optional[list[list[float]]] = []
+            temp_list: list[list[float]] = []
             # do search and send results
             while not game.is_terminal() and not stop_flag.value:
                 if debug:
@@ -131,8 +131,8 @@ def run_worker(
                         cur_temp_list = [temperature for _ in range(game_cfg.num_players)]
                     else:
                         cur_temp_list = [a(time_passed) for a in annealer_list]
-                    temp_list.append(cur_temp_list)
-                    search.set_temperatures(cur_temp_list)
+                    temp_list.append(cur_temp_list) # type: ignore
+                    search.set_temperatures(cur_temp_list) # type: ignore
                 # do the search
                 values, action_probs, info = search(
                     game=game,
@@ -176,7 +176,7 @@ def run_worker(
             if game_list:
                 data_conv_time_start = time.time()
                 if annealer_list is None:
-                    temp_list = None
+                    temp_list = None # type: ignore
                 sample = convert_training_data(game_list, value_list, reward_list, policy_list, trainer_cfg, temp_list)
                 stats.data_conv_time_sum += time.time() - data_conv_time_start
                 idle_time_start = time.time()
@@ -186,7 +186,7 @@ def run_worker(
             if len(stats.episode_len_list) == trainer_cfg.logger_cfg.worker_episode_bucket_size:
                 time_passed = (time.time() - stats.process_start_time) / 60
                 temps = None if not annealer_list else [a(time_passed) for a in annealer_list]
-                send_info(stats, info_queue, stop_flag, temps)
+                send_info(stats, info_queue, stop_flag, temps) # type: ignore
                 if stop_flag.value:
                     break
     except KeyboardInterrupt:
@@ -208,6 +208,8 @@ def make_step(
     exp_action_probs = np.zeros_like(action_probs)
     for player_idx, player in enumerate(game.players_at_turn()):
         # compute q-values given uniform enemy
+        if search.root is None:
+            raise Exception("search root is None")
         q_vals = compute_q_values(node=search.root, player=player, action_probs=filtered_uniform)
         q_arr = np.asarray(q_vals, dtype=float)
         # softmax action selection
@@ -239,7 +241,7 @@ def add_search_time(stats: WorkerStatistics, info: SearchInfo):
 def send_info(
         stats: WorkerStatistics,
         info_queue: mp.Queue,
-        stop_flag: mp.Value,
+        stop_flag: sc.Synchronized,
         temps: Optional[list[float]],
 ):
     full_time = time.time() - stats.last_info_time
@@ -313,12 +315,14 @@ def convert_training_data(
         for symmetry in sims:
             temp_obs_input = None
             if trainer_cfg.temperature_input:
+                if temperature_list is None:
+                    raise Exception("temperature list is None")
                 if trainer_cfg.single_sbr_temperature:
                     temp_obs_input = [temperature_list[counter][0]]
                 else:
                     temp_obs_input = temperature_list[counter]
             # shape (num_players_at_turn, *obs_shape)
-            obs, perm, inverse_perm = game.get_obs(symmetry=symmetry, temperatures=temp_obs_input)
+            obs, perm, _ = game.get_obs(symmetry=symmetry, temperatures=temp_obs_input)
             # apply permutation to action probs
             perm_action = apply_permutation(action_probs, perm)
             # iterate players

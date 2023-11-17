@@ -9,12 +9,12 @@ import multiprocessing as mp
 from src.trainer.utils import send_obj_to_queue
 
 import queue as q
-
+import multiprocessing.sharedctypes as sc
 
 def run_distributor(
         in_queue: mp.Queue,
         net_queue_list: list[mp.Queue],
-        stop_flag: mp.Value,
+        stop_flag: sc.Synchronized,
         info_queue: mp.Queue,
         max_queue_size: int,
         info_bucket_size: int,

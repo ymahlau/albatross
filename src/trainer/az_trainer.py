@@ -102,6 +102,8 @@ class AlphaZeroTrainer:
             gpu_idx = 0 if self.cfg.updater_cfg.use_gpu else None
             cpu_list_updater = None
             if self.cfg.restrict_cpu and self.cfg.max_cpu_updater is not None:
+                if available_cpu_list is None:
+                    raise Exception("This should never happen")
                 cpu_list_updater = available_cpu_list[cpu_counter:cpu_counter + self.cfg.max_cpu_updater]
                 cpu_counter += self.cfg.max_cpu_updater
             seed_updater = random.randint(0, int(1e6))
@@ -126,6 +128,8 @@ class AlphaZeroTrainer:
         if not self.cfg.only_generate_buffer:
             cpu_list_eval = None
             if self.cfg.restrict_cpu and self.cfg.max_cpu_evaluator is not None:
+                if available_cpu_list is None:
+                    raise Exception("This should never happen")
                 cpu_list_eval = available_cpu_list[cpu_counter:cpu_counter+self.cfg.max_cpu_evaluator]
                 cpu_counter += self.cfg.max_cpu_evaluator
             seed_evaluator = random.randint(0, 2 ** 32 - 1)
@@ -146,6 +150,8 @@ class AlphaZeroTrainer:
         for worker_id in range(self.cfg.num_worker):
             cpu_list_worker = None
             if self.cfg.restrict_cpu and self.cfg.max_cpu_worker is not None:
+                if available_cpu_list is None:
+                    raise Exception("This should never happen")
                 cpu_list_worker = available_cpu_list[cpu_counter:cpu_counter + self.cfg.max_cpu_worker]
             seed_worker = random.randint(0, 2 ** 32 - 1)
             worker_per_server = int(self.cfg.num_worker / self.cfg.num_inference_server)
@@ -170,13 +176,15 @@ class AlphaZeroTrainer:
             p = mp.Process(target=run_worker, kwargs=kwargs_worker)
             p.start()
             process_list.append(p)
-        if self.cfg.restrict_cpu:
+        if cpu_counter is not None and self.cfg.max_cpu_worker is not None:
             cpu_counter += self.cfg.max_cpu_worker
         # inference server
         for inference_id in range(self.cfg.num_inference_server):
             inference_net_queue = mp.Queue(maxsize=self.cfg.distributor_out_qsize)
             cpu_list_inference = None
             if self.cfg.restrict_cpu and self.cfg.max_cpu_inference_server is not None:
+                if available_cpu_list is None:
+                    raise Exception("This should never happen")
                 cpu_list_inference = available_cpu_list[cpu_counter:cpu_counter + self.cfg.max_cpu_inference_server]
             gpu_idx = inference_id + self.cfg.updater_cfg.use_gpu
             kwargs_inference = {
@@ -198,11 +206,13 @@ class AlphaZeroTrainer:
             process_list.append(p)
             dist_out_queue_list.append(inference_net_queue)
             queue_list.append(inference_net_queue)
-        if self.cfg.restrict_cpu:
+        if self.cfg.max_cpu_inference_server is not None:
             cpu_counter += self.cfg.max_cpu_inference_server
         # cpu list for distributor, collector, saver and logger
         cpu_list_ldsc = None
         if self.cfg.restrict_cpu and self.cfg.max_cpu_log_dist_save_collect is not None:
+            if available_cpu_list is None:
+                    raise Exception("This should never happen")
             cpu_list_ldsc = available_cpu_list[cpu_counter:cpu_counter + self.cfg.max_cpu_log_dist_save_collect]
             cpu_counter += self.cfg.max_cpu_log_dist_save_collect
         # start distributor
@@ -301,5 +311,5 @@ class AlphaZeroTrainer:
         if self.cfg.prev_run_idx is None:
             raise ValueError("Cannot continue training without information about the previous run index")
         if isinstance(self.cfg.prev_run_dir, str):
-            self.cfg.prev_run_dir = Path(self.cfg.prev_run_dir)
+            self.cfg.prev_run_dir = self.cfg.prev_run_dir
         self._train()

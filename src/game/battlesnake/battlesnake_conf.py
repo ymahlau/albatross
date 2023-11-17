@@ -2,10 +2,8 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 from src.game.game import GameConfig
-from src.game.battlesnake.battlesnake_enc import BattleSnakeEncodingConfig, SimpleBattleSnakeEncodingConfig, \
-    bs_encoding_config_from_structured
-from src.game.battlesnake.battlesnake_rewards import BattleSnakeRewardConfig, StandardBattleSnakeRewardConfig, \
-    reward_config_from_structured
+from src.game.battlesnake.battlesnake_enc import BattleSnakeEncodingConfig, SimpleBattleSnakeEncodingConfig
+from src.game.battlesnake.battlesnake_rewards import BattleSnakeRewardConfig, StandardBattleSnakeRewardConfig
 
 
 @dataclass

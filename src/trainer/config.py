@@ -99,7 +99,7 @@ class AlphaZeroTrainerConfig:
 
     max_batch_size: int
     max_eval_per_worker: int  # maximum number of observation needing evaluation in a single process at a time
-    net_cfg: Optional[NetworkConfig] = None
+    net_cfg: NetworkConfig
 
     num_worker: int = 1
     num_inference_server: int = 1

@@ -23,12 +23,12 @@ from src.misc.utils import set_seed
 from src.network.initialization import get_network_from_config, get_network_from_file
 from src.trainer.config import EvaluatorConfig, AlphaZeroTrainerConfig
 from src.trainer.utils import wait_for_obj_from_queue, send_obj_to_queue
-
+import multiprocessing.sharedctypes as sc
 
 def run_evaluator(
         trainer_cfg: AlphaZeroTrainerConfig,
         net_queue: mp.Queue,
-        stop_flag: mp.Value,
+        stop_flag: sc.Synchronized,
         info_queue: mp.Queue,
         cpu_list: Optional[list[int]],  # only works on linux
         prev_run_dir: Optional[Path],
@@ -49,6 +49,8 @@ def run_evaluator(
     # initialization
     game = get_game_from_config(game_cfg)
     # network
+    if net_cfg is None:
+        raise Exception("Network config is None")
     net = get_network_from_config(net_cfg)
     if prev_run_dir is not None:
         net = get_network_from_file(prev_run_dir / 'fixed_time_models' / f'm_{prev_run_idx}.pt')
@@ -59,8 +61,8 @@ def run_evaluator(
     # value player, use 2x temperature due to double sampling (weighting and sampling)
     value_agent_cfg = SBRFixedDepthAgentConfig()
     if trainer_cfg.temperature_input:
-        value_agent_cfg.search_cfg.eval_func_cfg.temperature_input = True
-        value_agent_cfg.search_cfg.eval_func_cfg.single_temperature = trainer_cfg.single_sbr_temperature
+        value_agent_cfg.search_cfg.eval_func_cfg.temperature_input = True # type: ignore
+        value_agent_cfg.search_cfg.eval_func_cfg.single_temperature = trainer_cfg.single_sbr_temperature # type: ignore
     value_agent = SearchAgent(value_agent_cfg)
     value_agent.replace_net(net)
     value_agent.set_temperatures([12.5 for _ in range(game.num_players)])
@@ -114,7 +116,7 @@ def run_evaluator(
                 input_dict={}
             )
             # policy evaluation
-            if net_cfg.predict_policy:
+            if policy_agent is not None:
                 last_eval_time = time.time()
                 results_pol, episode_lengths_pol = do_evaluation(
                     game=game,
@@ -162,7 +164,7 @@ def run_evaluator(
             net.load_state_dict(maybe_state_dict)
             net.eval()
             value_agent.replace_net(net)
-            if net_cfg.predict_policy:
+            if policy_agent is not None:
                 policy_agent.replace_net(net)
     except KeyboardInterrupt:
         print('Detected KeyboardInterrupt in Evaluation process\n', flush=True)
@@ -173,7 +175,7 @@ def run_evaluator(
 def generate_msg_and_print(
         evaluator_cfg: EvaluatorConfig,
         results: list[list[float]],
-        episode_lengths: list[list[float]],
+        episode_lengths: list[list[int]],
         is_value: bool,
         time_played_min: float,
         eval_time: float,

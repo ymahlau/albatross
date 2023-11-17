@@ -9,12 +9,12 @@ import torch.multiprocessing as mp
 
 from src.misc.replay_buffer import ReplayBuffer, BufferInputSample
 from src.network import Network
-
+import multiprocessing.sharedctypes as sc
 
 def send_obj_to_queue(
         obj: Any,
         queue: mp.Queue,
-        stop_flag: mp.Value,
+        stop_flag: sc.Synchronized,
 ) -> None:
     while not stop_flag.value:
         try:
@@ -39,7 +39,7 @@ def get_latest_obj_from_queue(
 
 def wait_for_obj_from_queue(
         queue: mp.Queue,
-        stop_flag: mp.Value,
+        stop_flag: sc.Synchronized,
         timeout: float = 1,
 ) -> Optional[Any]:
     obj = None
@@ -66,7 +66,7 @@ def register_exit_function(net: Network, name: str):
 def receive_data_to_buffer(
         data_queue: mp.Queue,
         buffer: ReplayBuffer,
-        stop_flag: mp.Value,
+        stop_flag: sc.Synchronized,
 ) -> int:
     num_samples = 0
     while not data_queue.empty():

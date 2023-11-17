@@ -48,10 +48,6 @@ def layers_per_enemy(cfg: BattleSnakeEncodingConfig) -> int:
     return result
 
 
-def bs_encoding_config_from_structured(cfg) -> BattleSnakeEncodingConfig:
-    return BattleSnakeEncodingConfig(**cfg)
-
-
 # Standard Mode #####################################################
 @dataclass
 class SimpleBattleSnakeEncodingConfig(BattleSnakeEncodingConfig):

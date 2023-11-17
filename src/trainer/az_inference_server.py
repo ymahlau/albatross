@@ -15,7 +15,7 @@ from src.trainer.config import AlphaZeroTrainerConfig
 import multiprocessing as mp
 
 from src.trainer.utils import get_latest_obj_from_queue
-
+import multiprocessing.sharedctypes as sc
 
 @dataclass
 class InferenceServerStats:
@@ -25,12 +25,12 @@ class InferenceServerStats:
 def run_inference_server(
         trainer_cfg: AlphaZeroTrainerConfig,
         net_queue: mp.Queue,
-        stop_flag: mp.Value,
+        stop_flag: sc.Synchronized,
         info_queue: mp.Queue,
-        input_rdy_arr: mp.Array,
-        output_rdy_arr: mp.Array,
-        input_arr: mp.Array,
-        output_arr: mp.Array,
+        input_rdy_arr,
+        output_rdy_arr,
+        input_arr,
+        output_arr,
         cpu_list: Optional[list[int]],
         gpu_idx: Optional[int],
         prev_run_dir: Optional[Path],
@@ -42,6 +42,8 @@ def run_inference_server(
     inf_cfg = trainer_cfg.inf_cfg
     # load initial network
     net_cfg = trainer_cfg.net_cfg
+    if net_cfg is None:
+        raise Exception("Network config is None")
     net = get_network_from_config(net_cfg)
     if prev_run_dir is not None and not trainer_cfg.init_new_network_params:
         model_path = prev_run_dir / 'fixed_time_models' / f'm_{prev_run_idx}.pt'

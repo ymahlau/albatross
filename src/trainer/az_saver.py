@@ -10,12 +10,12 @@ import multiprocessing as mp
 from src.network.initialization import get_network_from_config
 from src.trainer.config import AlphaZeroTrainerConfig
 from src.trainer.utils import send_obj_to_queue, get_latest_obj_from_queue
-
+import multiprocessing.sharedctypes as sc
 
 def run_saver(
         trainer_cfg: AlphaZeroTrainerConfig,
         net_queue: mp.Queue,
-        stop_flag: mp.Value,
+        stop_flag: sc.Synchronized,
         info_queue: mp.Queue,
         cpu_list: Optional[list[int]],
 ):
