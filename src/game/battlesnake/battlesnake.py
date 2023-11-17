@@ -23,7 +23,7 @@ class BattleSnakeGame(Game):
     def __init__(
             self,
             cfg: BattleSnakeConfig,
-            state_p: Optional[ct.POINTER(Struct)] = None
+            state_p = None  # Optional[ct.POINTER(Struct)],
     ):
         super().__init__(cfg)
         self.is_closed = False
@@ -96,8 +96,9 @@ class BattleSnakeGame(Game):
             food_pos_p = np_arr.ctypes.data_as(ct.POINTER(ct.c_int))
         # hazards, we need to transpose because cpp uses flattened array (this is more efficient)
         hazard_arr = np.zeros(shape=(self.cfg.h, self.cfg.w), dtype=bool)
-        for hazard_tile in self.cfg.init_hazards:
-            hazard_arr[hazard_tile[1], hazard_tile[0]] = True
+        if self.cfg.init_hazards is not None:
+            for hazard_tile in self.cfg.init_hazards:
+                hazard_arr[hazard_tile[1], hazard_tile[0]] = True
         hazards_p = hazard_arr.ctypes.data_as(ct.POINTER(ct.c_bool))
         # c++ call
         self.state_p = CPP_LIB.lib.init_cpp(
@@ -284,7 +285,10 @@ class BattleSnakeGame(Game):
         body_len = CPP_LIB.lib.snake_body_length_cpp(self.state_p, player)
         res_arr = np.zeros(shape=(body_len, 2), dtype=ct.c_int)
         CPP_LIB.lib.snake_pos_cpp(self.state_p, player, res_arr.ctypes.data_as(ct.POINTER(ct.c_int)))
-        return list(map(tuple, res_arr))
+        res_list = []
+        for idx in range(res_arr.shape[0]):
+            res_list.append((res_arr[idx, 0], res_arr[idx, 1]))
+        return res_list
 
     def all_player_pos(self) -> dict[int, list[tuple[int, int]]]:
         if self.is_closed:
@@ -618,8 +622,9 @@ class BattleSnakeGame(Game):
         food_pos_p = np_arr.ctypes.data_as(ct.POINTER(ct.c_int))
         # hazards, we need to transpose because cpp uses flattened array (this is more efficient)
         hazard_arr = np.zeros(shape=(self.cfg.h, self.cfg.w), dtype=bool)
-        for hazard_tile in self.cfg.init_hazards:
-            hazard_arr[hazard_tile[1], hazard_tile[0]] = True
+        if self.cfg.init_hazards is not None:
+            for hazard_tile in self.cfg.init_hazards:
+                hazard_arr[hazard_tile[1], hazard_tile[0]] = True
         hazards_p = hazard_arr.ctypes.data_as(ct.POINTER(ct.c_bool))
         self.state_p = CPP_LIB.lib.init_cpp(
             self.cfg.w,

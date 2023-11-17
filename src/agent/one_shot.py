@@ -33,7 +33,7 @@ class RandomAgent(Agent):
             player: int,
             time_limit: Optional[float] = None,
             iterations: Optional[int] = None,
-            save_probs: Optional[mp.Array] = None,
+            save_probs = None,  # mp.Array
             options: Optional[dict[str, Any]] = None,
     ) -> tuple[np.ndarray, dict[str, Any]]:
         probs = np.ones(shape=(game.num_players_at_turn(), game.cfg.num_actions,), dtype=float)
@@ -60,7 +60,7 @@ class LegalRandomAgent(Agent):
             player: int,
             time_limit: Optional[float] = None,
             iterations: Optional[int] = None,
-            save_probs: Optional[mp.Array] = None,
+            save_probs = None,  # mp.Array
             options: Optional[dict[str, Any]] = None,
     ) -> tuple[np.ndarray, dict[str, Any]]:
         if not isinstance(game, BattleSnakeGame):
@@ -118,13 +118,15 @@ class NetworkAgent(Agent):
             player: int,
             time_limit: float,
             iterations: Optional[int] = None,
-            save_probs: Optional[mp.Array] = None,
+            save_probs = None,  # mp.Array
             options: Optional[dict[str, Any]] = None,
     ) -> tuple[np.ndarray, dict[str, Any]]:
         # observation of game env
         symmetry = None if self.cfg.random_symmetry else 0
         temp_obs_input = None
         if self.cfg.temperature_input and self.cfg.single_temperature:
+            if self.temperatures is None:
+                raise Exception("Temperatures is None")
             temp_obs_input = [self.temperatures[0]]
         elif self.cfg.temperature_input and not self.cfg.single_temperature:
             temp_obs_input = self.temperatures
@@ -136,7 +138,7 @@ class NetworkAgent(Agent):
         obs = torch.tensor(obs, dtype=torch.float32).to(self.device)
         # forward pass
         out_tensor = self.net(obs).cpu().detach()
-        log_actions = self.net.retrieve_policy(out_tensor).cpu()
+        log_actions = self.net.retrieve_policy_tensor(out_tensor).cpu()
         action_probs = torch.nn.functional.softmax(log_actions, dim=-1).numpy()
         perm_probs = apply_permutation(action_probs, inv_perm)
         # filter and sample
@@ -166,7 +168,7 @@ class BCNetworkAgent(Agent):
             player: int,
             time_limit: float,
             iterations: Optional[int] = None,
-            save_probs: Optional[mp.Array] = None,
+            save_probs = None,  # mp.Array
             options: Optional[dict[str, Any]] = None,
     ) -> tuple[np.ndarray, dict[str, Any]]:
         if not isinstance(game, OvercookedGame):
@@ -174,6 +176,8 @@ class BCNetworkAgent(Agent):
         if self.net is None:
             raise Exception(f"Need network to act")
         # get bc probs
+        if game.env is None:
+            raise Exception("game.env is None")
         flat_obs = game.env.featurize_state_mdp(game.env.state)
         flat_arr = torch.tensor(np.asarray(flat_obs), dtype=torch.float32)
         net_out = self.net(flat_arr).cpu().detach().numpy()

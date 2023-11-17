@@ -25,7 +25,6 @@ def get_game_from_config(game_cfg: GameConfig) -> Game:
 def buffer_config_from_game(
         game: Game,
         capacity: int,
-        single_temperature: bool,
 ) -> ReplayBufferConfig:
     buffer_cfg = ReplayBufferConfig(
         obs_shape=game.get_obs_shape(),

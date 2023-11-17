@@ -23,9 +23,9 @@ class GreedyHumanOvercookedAgentConfig(AgentConfig):
     overcooked_layout: str
     name: str = field(default="Greedy Human Overcooked")
     high_level_sampling: bool = False  # sample from high level goals
-    high_level_temperature: float = 1
+    high_level_temperature: int = 1
     low_level_sampling: bool = False  # sample from low level goals
-    low_level_temperature: float = 1
+    low_level_temperature: int = 1
 
 class GreedyHumanOvercookedAgent(Agent):
     def __init__(self, cfg: GreedyHumanOvercookedAgentConfig):
@@ -74,7 +74,7 @@ class GreedyHumanOvercookedAgent(Agent):
             player: int,
             time_limit: Optional[float] = None,
             iterations: Optional[int] = None,
-            save_probs: Optional[mp.Array] = None,
+            save_probs = None,  # mp.Array
             options: Optional[dict[str, Any]] = None,
     ) -> tuple[np.ndarray, dict[str, Any]]:
         if not isinstance(game, OvercookedGame):
@@ -85,6 +85,8 @@ class GreedyHumanOvercookedAgent(Agent):
         self.proxy_agent1.set_mdp(self.gridworld)
         self.proxy_agent1.set_agent_index(1)
         # we can use player instead of player index, because overcooked has only two players
+        if game.env is None:
+            raise Exception("game.env is None")
         if player == 0:
             action_overcooked, _ = self.proxy_agent0.action(game.env.state)
         else:

@@ -22,6 +22,8 @@ class SelectionFunc(ABC):
         if node.is_fully_explored():
             raise ValueError("It is probably an error to call selection function in fully explored subtree")
         joint_actions = self._select_actions(node)
+        if node.children is None:
+            raise Exception("Node does not have children, this should never happen")
         if joint_actions not in node.children:
             raise Exception(f"Selected actions which are not in children: {joint_actions}")
         return joint_actions
@@ -155,9 +157,9 @@ class Exp3SelectionFunc(SelectionFunc):
 
     def _select_actions(self, node: Node) -> tuple[int, ...]:
         if "norm_value_sum" not in node.info:
-            node.info["norm_value_sum"]: dict[tuple[int, int], float] = defaultdict(lambda: 0)  # key (player, action)
+            node.info["norm_value_sum"] = defaultdict(lambda: 0)  # key (player, action)
         if "action_prob_sum" not in node.info:
-            node.info["action_prob_sum"]: dict[tuple[int, int], float] = defaultdict(lambda: 0)  # key (player, action)
+            node.info["action_prob_sum"] = defaultdict(lambda: 0)  # key (player, action)
         action_list = []
         prob_list = []
         for player_idx, player in enumerate(node.game.players_at_turn()):
@@ -180,8 +182,8 @@ class Exp3SelectionFunc(SelectionFunc):
             prob_list.append(cur_probs[cur_action_idx])
             for action_idx, action in enumerate(available_actions):
                 node.info["action_prob_sum"][player, action] += exploit[action_idx]
-        node.info["last_probs"]: list[float] = prob_list
-        node.info["last_actions"]: list[int] = action_list
+        node.info["last_probs"] = prob_list
+        node.info["last_actions"] = action_list
         return tuple(action_list)
 
 
@@ -215,9 +217,9 @@ class RegretMatchingSelectionFunc(SelectionFunc):
 
     def _select_actions(self, node: Node) -> tuple[int, ...]:
         if "regret" not in node.info:
-            node.info["regret"]: dict[tuple[int, int], float] = defaultdict(lambda: 0)  # key (player, action)
+            node.info["regret"] = defaultdict(lambda: 0)  # key (player, action)
         if "action_prob_sum" not in node.info:
-            node.info["action_prob_sum"]: dict[tuple[int, int], float] = defaultdict(lambda: 0)  # key (player, action)
+            node.info["action_prob_sum"] = defaultdict(lambda: 0)  # key (player, action)
         if self.cfg.informed_exp and "net_action_probs" not in node.info:
             raise ValueError(f"Need network action probs for informed selection")
         action_list = []
@@ -240,7 +242,7 @@ class RegretMatchingSelectionFunc(SelectionFunc):
             action_list.append(cur_action)
             for action_idx, action in enumerate(available_actions):
                 node.info["action_prob_sum"][player, action] += probs[action_idx] - (self.cfg.random_prob / num_actions)
-        node.info["last_actions"]: list[int] = action_list
+        node.info["last_actions"] = action_list
         return tuple(action_list)
 
 

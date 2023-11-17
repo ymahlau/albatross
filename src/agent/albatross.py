@@ -70,7 +70,7 @@ class AlbatrossAgent(Agent):
             player: int,
             time_limit: Optional[float] = None,
             iterations: Optional[int] = None,
-            save_probs: Optional[mp.Array] = None,
+            save_probs = None,  # mp.Array
             options: Optional[dict[str, Any]] = None,
     ) -> tuple[np.ndarray, dict[str, Any]]:
         # observe last actions taken
@@ -89,6 +89,8 @@ class AlbatrossAgent(Agent):
             # parse last actions for temperature estimation
             last_actions = game.get_last_action()
             for p_idx, p in enumerate(self.last_player_at_turn):
+                if last_actions is None:
+                    raise Exception(f"Last action is None")
                 action_idx = self.last_available_actions[p].index(last_actions[p_idx])
                 self.enemy_actions[p].append(action_idx)
             # do mle for all enemies
@@ -173,6 +175,8 @@ class AlbatrossAgent(Agent):
         # compute q from root
         q_dict: dict[int, list[float]] = {}
         for p in game.players_at_turn():
+            if self.proxy_search.root is None:
+                raise Exception("Proxy Search root is None")
             q_dict[p] = compute_q_values(self.proxy_search.root, p, action_probs)
         return q_dict
 
@@ -195,7 +199,6 @@ class AlbatrossAgent(Agent):
                 temperature_input=True,
                 single_temperature=True,
                 init_temperatures=temperatures,
-                obs_temperature_input=True,
             ),
             backup_func_cfg=LogitBackupConfig(
                 num_iterations=100,

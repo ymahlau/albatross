@@ -5,6 +5,7 @@ from src.agent import AgentConfig
 from src.agent.one_shot import RandomAgentConfig
 from src.agent.search_agent import AreaControlSearchAgentConfig
 from src.game.game import GameConfig
+from src.game.values import UtilityNorm
 from src.network import NetworkConfig
 from src.search import SearchConfig
 from src.supervised.annealer import TemperatureAnnealingConfig
@@ -44,7 +45,7 @@ class UpdaterConfig:
     # cuda
     use_gpu: bool = False
     gradient_max_norm: Optional[float] = 1.0
-    zero_sum_loss: bool = False
+    utility_loss: UtilityNorm = UtilityNorm.NONE
     mse_policy_loss: bool = False
 
 

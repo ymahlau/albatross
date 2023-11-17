@@ -9,6 +9,7 @@ import numpy as np
 import multiprocessing as mp
 
 from src.game.initialization import get_game_from_config
+from src.game.values import UtilityNorm
 from src.misc.utils import set_seed
 from src.network.initialization import get_network_from_config
 from src.search.initialization import get_search_from_config
@@ -261,7 +262,7 @@ class AlphaZeroTrainer:
             'only_generate_buffer': self.cfg.only_generate_buffer,
             'prev_run_dir': Path(self.cfg.prev_run_dir) if self.cfg.prev_run_dir is not None else None,
             'seed': seed_collector,
-            'grouped_sampling': self.cfg.updater_cfg.zero_sum_loss,
+            'grouped_sampling': self.cfg.updater_cfg.utility_loss != UtilityNorm.NONE,
         }
         p = mp.Process(target=run_collector, kwargs=kwargs_collector)
         p.start()

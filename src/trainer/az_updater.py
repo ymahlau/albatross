@@ -1,4 +1,5 @@
 import math
+import multiprocessing.sharedctypes as sc
 import os
 import pickle
 import queue as q
@@ -15,11 +16,13 @@ import torch.multiprocessing as mp
 
 from src.game.game import GameConfig
 from src.game.initialization import get_game_from_config
+from src.game.values import UtilityNorm
 from src.misc.replay_buffer import BufferOutputSample
 from src.misc.utils import set_seed
 from src.network import Network
 from src.network.initialization import get_network_from_config, get_network_from_file
-from src.supervised.loss import compute_value_loss, compute_policy_loss, compute_length_loss, compute_zero_sum_loss
+from src.supervised.annealer import TemperatureAnnealer
+from src.supervised.loss import compute_utility_loss, compute_value_loss, compute_policy_loss
 from src.supervised.optim import get_optim_from_config
 from src.trainer.config import UpdaterConfig, LoggerConfig, AlphaZeroTrainerConfig
 from src.trainer.utils import send_obj_to_queue, wait_for_obj_from_queue
@@ -27,7 +30,7 @@ from src.trainer.utils import send_obj_to_queue, wait_for_obj_from_queue
 
 @dataclass
 class UpdaterStatistics:
-    update_counter: mp.Value
+    update_counter: sc.Synchronized
     updates_since_info: int = 0
     updates_since_distribution: int = 0
     last_info_time: float = time.time()
@@ -35,7 +38,7 @@ class UpdaterStatistics:
     value_losses: list[float] = field(default_factory=lambda: [])
     policy_losses: list[float] = field(default_factory=lambda: [])
     length_losses: list[float] = field(default_factory=lambda: [])
-    zero_sum_losses: list[float] = field(default_factory=lambda: [])
+    utility_losses: list[float] = field(default_factory=lambda: [])
     losses: list[float] = field(default_factory=lambda: [])
     idle_time_sum: float = 0
     backward_time_sum: float = 0
@@ -51,18 +54,18 @@ class UpdaterStatistics:
 @dataclass
 class UpdaterEssentials:
     net: Network
-    optim: torch.optim
+    optim: torch.optim.Optimizer
     device: torch.device
-    annealer: torch.optim.lr_scheduler
+    annealer: TemperatureAnnealer
 
 
 def run_updater(
         trainer_cfg: AlphaZeroTrainerConfig,
         data_in_queue: mp.Queue,
         net_queue_out: mp.Queue,
-        stop_flag: mp.Value,
+        stop_flag: sc.Synchronized,
         info_queue: mp.Queue,
-        update_counter: mp.Value,
+        update_counter: sc.Synchronized,
         save_state_after_seconds: int,
         cpu_list: Optional[list[int]],
         gpu_idx: Optional[int],
@@ -80,9 +83,11 @@ def run_updater(
     # torch.set_num_threads(1)
     # os.environ["OMP_NUM_THREADS"] = "1"
     set_seed(seed)
-    if updater_cfg.zero_sum_loss and game_cfg.num_players != 2:
-        raise ValueError(f"Can only use zero-sum loss with two players")
+    if updater_cfg.utility_loss != UtilityNorm.NONE and game_cfg.num_players != 2:
+        raise ValueError(f"Can only use utility loss with two players")
     # initialization
+    if net_cfg is None:
+        raise Exception("Network config is None")
     net = get_network_from_config(net_cfg)
     if prev_run_dir is not None and not trainer_cfg.init_new_network_params:
         model_path = prev_run_dir / 'fixed_time_models' / f'm_{prev_run_idx}.pt'
@@ -104,6 +109,8 @@ def run_updater(
             mode=trainer_cfg.compile_mode,
             fullgraph=True,
         )
+    if not isinstance(net, Network):  # just for type checking
+        raise Exception(f"Nework is: {net}")
     print(f"{net.num_params()=}", flush=True)
     info_queue.put_nowait({"Network Parameter": net.num_params()})
     # optimizer
@@ -192,7 +199,7 @@ def log_info(
         essentials: UpdaterEssentials,
         logger_cfg: LoggerConfig,
         info_queue: mp.Queue,
-        stop_flag: mp.Value,
+        stop_flag: sc.Synchronized,
         net_queue_out: mp.Queue,
 ):
     # time usage
@@ -226,12 +233,12 @@ def log_info(
         msg_data['updater_policy_median_loss'] = np.median(stats.policy_losses).item()
         msg_data['updater_policy_max_loss'] = max(stats.policy_losses)
         msg_data['updater_policy_min_loss'] = max(stats.policy_losses)
-    if stats.zero_sum_losses:
-        msg_data['updater_zerosum_avg_loss'] = sum(stats.zero_sum_losses) / logger_cfg.updater_bucket_size
-        msg_data['updater_zerosum_std_loss'] = np.std(stats.zero_sum_losses).item()
-        msg_data['updater_zerosum_median_loss'] = np.median(stats.zero_sum_losses).item()
-        msg_data['updater_zerosum_max_loss'] = max(stats.zero_sum_losses)
-        msg_data['updater_zerosum_min_loss'] = max(stats.zero_sum_losses)
+    if stats.utility_losses:
+        msg_data['updater_zerosum_avg_loss'] = sum(stats.utility_losses) / logger_cfg.updater_bucket_size
+        msg_data['updater_zerosum_std_loss'] = np.std(stats.utility_losses).item()
+        msg_data['updater_zerosum_median_loss'] = np.median(stats.utility_losses).item()
+        msg_data['updater_zerosum_max_loss'] = max(stats.utility_losses)
+        msg_data['updater_zerosum_min_loss'] = max(stats.utility_losses)
     if full_time > 0:
         msg_data['updates_per_min'] = logger_cfg.updater_bucket_size * 60 / full_time
     if stats.norm_n > 0:
@@ -252,7 +259,7 @@ def log_info(
     stats.value_losses = []
     stats.policy_losses = []
     stats.length_losses = []
-    stats.zero_sum_losses = []
+    stats.utility_losses = []
     stats.losses = []
     # send message
     idle_time_start = time.time()
@@ -265,22 +272,24 @@ def perform_update(
         stats: UpdaterStatistics,
         updater_cfg: UpdaterConfig,
         data_in_queue: mp.Queue,
-        stop_flag: mp.Value,
+        stop_flag: sc.Synchronized,
 ):
     # sample data
     idle_time_start = time.time()
-    maybe_sample: BufferOutputSample = wait_for_obj_from_queue(data_in_queue, stop_flag)
+    maybe_sample = wait_for_obj_from_queue(data_in_queue, stop_flag)
+    if not isinstance(maybe_sample, BufferOutputSample):
+        raise Exception(f"Got unknown item from queue: {maybe_sample}")
     stats.idle_time_sum += time.time() - idle_time_start
     if maybe_sample is None:
         return
     # compute loss and update
     essentials.optim.zero_grad()
     loss_time_start = time.time()
-    value_loss, policy_loss, zero_sum_loss = compute_loss(
+    value_loss, policy_loss, utility_loss = compute_loss(
         sample=maybe_sample,
         net=essentials.net,
         device=essentials.device,
-        use_zero_sum_loss=updater_cfg.zero_sum_loss,
+        utility_loss=updater_cfg.utility_loss,
         mse_policy_loss=updater_cfg.mse_policy_loss,
     )
     stats.loss_time_sum += time.time() - loss_time_start
@@ -288,12 +297,12 @@ def perform_update(
     loss = value_loss
     if essentials.net.cfg.predict_policy:
         loss += policy_loss
-    if updater_cfg.zero_sum_loss:
-        loss += zero_sum_loss
+    if updater_cfg.utility_loss != UtilityNorm.NONE:
+        loss += utility_loss
     loss.backward()
     # clip gradient norm
     if updater_cfg.gradient_max_norm is not None:
-        norm = torch.nn.utils.clip_grad_norm_(
+        norm = torch.nn.utils.clip_grad.clip_grad_norm_(
             parameters=essentials.net.parameters(),
             max_norm=updater_cfg.gradient_max_norm,
             error_if_nonfinite=True,
@@ -311,10 +320,10 @@ def perform_update(
     # update stats
     stats.losses += [loss.cpu().item()]
     stats.value_losses += [value_loss.cpu().item()]
-    if essentials.net.cfg.predict_policy:
+    if policy_loss is not None:
         stats.policy_losses += [policy_loss.cpu().item()]
-    if updater_cfg.zero_sum_loss:
-        stats.zero_sum_losses += [zero_sum_loss.cpu().item()]
+    if utility_loss is not None:
+        stats.utility_losses += [utility_loss.cpu().item()]
     stats.update_counter.value += 1
     stats.updates_since_distribution += 1
     stats.updates_since_info += 1
@@ -325,26 +334,26 @@ def compute_loss(
         sample: BufferOutputSample,
         net: Network,
         device: torch.device,
-        use_zero_sum_loss: bool,
+        utility_loss: UtilityNorm,
         mse_policy_loss: bool,
-) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+) -> tuple[torch.Tensor, Optional[torch.Tensor], Optional[torch.Tensor]]:
     inputs = torch.from_numpy(sample.obs).to(device).float()
     values = torch.from_numpy(sample.values).to(device).float()
     policies = torch.from_numpy(sample.policies).to(device).float()
     outputs = net(inputs)
-    val_output = net.retrieve_value(outputs).unsqueeze(-1)
+    val_output = net.retrieve_value_tensor(outputs).unsqueeze(-1)
     val_loss = compute_value_loss(val_output, values)
     action_loss, zero_sum_loss = None, None
     if net.cfg.predict_policy:
-        action_output = net.retrieve_policy(outputs)
+        action_output = net.retrieve_policy_tensor(outputs)
         action_loss = compute_policy_loss(action_output, policies, mse_policy_loss)
-    if use_zero_sum_loss:
-        zero_sum_loss = compute_zero_sum_loss(val_output)
+    if utility_loss != UtilityNorm.NONE:
+        zero_sum_loss = compute_utility_loss(val_output, utility_loss)
     return val_loss, action_loss, zero_sum_loss
 
 
 def save_optim_state(
-        optimizer: torch.optim,
+        optimizer: torch.optim.Optimizer,
         game_cfg: GameConfig,
         state_save_dir: Path,
 ) -> None:

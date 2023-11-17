@@ -267,7 +267,7 @@ class ResNetConfig7x7Large(ResNetConfig):
 class ResNetConfig7x7New(ResNetConfig):
     layer_specs: list[list[int]] = field(default_factory=lambda: default_7x7_large)
     lff_features: bool = field(default=True)
-    lff_feature_expansion: bool = field(default=27)
+    lff_feature_expansion: int = field(default=27)
     policy_head_cfg: HeadConfig = field(
         default_factory=lambda: HeadConfig(num_layers=1, final_activation=ActivationType.NONE)
     )
@@ -291,7 +291,7 @@ best_7x7 = [
 class ResNetConfig7x7Best(ResNetConfig):
     layer_specs: list[list[int]] = field(default_factory=lambda: best_7x7)
     lff_features: bool = field(default=False)
-    lff_feature_expansion: bool = field(default=27)
+    lff_feature_expansion: int = field(default=27)
     policy_head_cfg: HeadConfig = field(
         default_factory=lambda: HeadConfig(num_layers=1, final_activation=ActivationType.NONE)
     )
@@ -337,7 +337,7 @@ class ResNetConfig11x11(ResNetConfig):
     predict_policy: bool = field(default=True)
     layer_specs: list[list[int]] = field(default_factory=lambda: default_centered_11x11)
     lff_features: bool = field(default=False)
-    lff_feature_expansion: bool = field(default=27)
+    lff_feature_expansion: int = field(default=27)
     policy_head_cfg: HeadConfig = field(
         default_factory=lambda: HeadConfig(num_layers=1, final_activation=ActivationType.NONE)
     )

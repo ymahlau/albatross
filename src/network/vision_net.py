@@ -73,6 +73,8 @@ class VisionNetwork(Network, ABC):
             output_size=1,
         )
         if self.cfg.predict_policy:
+            if self.cfg.policy_head_cfg is None:
+                raise Exception("Policy head config is None")
             self.policy_head = head_from_cfg(
                 self.cfg.policy_head_cfg,
                 input_size=self.latent_size,
@@ -169,13 +171,13 @@ class VisionNetwork(Network, ABC):
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 # nn.init.kaiming_normal_(m.weight, mode='fan_out')
-                nn.init.orthogonal_(m.weight, gain=math.sqrt(2))
+                nn.init.orthogonal_(m.weight, gain=math.sqrt(2)) # type: ignore
                 if m.bias is not None:
                     nn.init.zeros_(m.bias)
             elif isinstance(m, InvariantConvolution):
                 for weight_tensor in m.w:
                     # nn.init.kaiming_normal_(weight_tensor, mode='fan_out')
-                    nn.init.orthogonal_(weight_tensor, gain=math.sqrt(2))
+                    nn.init.orthogonal_(weight_tensor, gain=math.sqrt(2)) # type: ignore
                 if m.bias_params is not None:
                     nn.init.zeros_(m.bias_params)
             elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm, nn.LayerNorm, nn.InstanceNorm2d)):
@@ -185,9 +187,9 @@ class VisionNetwork(Network, ABC):
             elif isinstance(m, LearnedFourierFeatures):
                 # iso initialization
                 nn.init.normal_(m.layer.weight, 0, m.scale / m.in_features)
-                nn.init.normal_(m.layer.bias, 0, 1)
+                nn.init.normal_(m.layer.bias, 0, 1) # type: ignore
                 if m.sin_cos:
-                    nn.init.zeros_(m.layer.bias)
+                    nn.init.zeros_(m.layer.bias) # type: ignore
             elif isinstance(m, nn.Linear):
                 nn.init.orthogonal_(m.weight)
                 if m.bias is not None:
@@ -197,7 +199,6 @@ class VisionNetwork(Network, ABC):
     def backbone(self, x: torch.Tensor) -> torch.Tensor:
         raise NotImplementedError()
 
-    @abstractmethod
     @cached_property
     def latent_size(self) -> int:
         raise NotImplementedError()

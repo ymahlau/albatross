@@ -26,14 +26,16 @@ def plot_filled_std_curves(
     if std is not None:
         upper = mean + std
         lower = mean - std
-    if min_val is not None:
+    if min_val is not None and lower is not None and upper is not None:
         mean = np.maximum(mean, min_val)
         lower = np.maximum(lower, min_val)
         upper = np.maximum(upper, min_val)
-    if max_val is not None:
+    if max_val is not None and lower is not None and upper is not None:
         mean = np.minimum(mean, max_val)
         upper = np.minimum(upper, max_val)
         lower = np.minimum(lower, max_val)
+    if upper is None or lower is None:
+        raise Exception("This should never happen")
     plt.plot(x, upper, color=lighter_color, alpha=alpha)
     plt.plot(x, lower, color=lighter_color, alpha=alpha)
     plt.fill_between(x, lower, upper, color=lighter_color, alpha=alpha)

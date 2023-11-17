@@ -28,8 +28,8 @@ class LearnedFourierFeatures(nn.Module):
         self.use_conv = self.conv_block is not None
         self.scale = scale
         layer_out_features = self.out_features // 2 if self.sin_cos else self.out_features
-        if self.use_conv:
-            self.layer = conv_block(in_features, layer_out_features, kernel_size=1, stride=1, bias=True)
+        if self.conv_block is not None:
+            self.layer = self.conv_block(in_features, layer_out_features, kernel_size=1, stride=1, bias=True)
         else:
             self.layer = nn.Linear(in_features, layer_out_features, bias=True)
         self.layer.requires_grad_(trainable)

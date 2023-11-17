@@ -12,7 +12,6 @@ class BattleSnakeRewardType(Enum):
 
 @dataclass
 class BattleSnakeRewardConfig:
-    reward_type: BattleSnakeRewardType
     living_reward: float = 0.0
     terminal_reward: float = 1.0
 
@@ -33,7 +32,7 @@ class BattleSnakeRewardFunction(ABC):
 
 @dataclass
 class StandardBattleSnakeRewardConfig(BattleSnakeRewardConfig):
-    reward_type: BattleSnakeRewardType = field(default=BattleSnakeRewardType.STANDARD)
+    pass
 
 class BattleSnakeRewardFunctionStandard(BattleSnakeRewardFunction):
     def __init__(self, cfg: StandardBattleSnakeRewardConfig):
@@ -68,7 +67,7 @@ class BattleSnakeRewardFunctionStandard(BattleSnakeRewardFunction):
 
 @dataclass
 class KillBattleSnakeRewardConfig(BattleSnakeRewardConfig):
-    reward_type: BattleSnakeRewardType = field(default=BattleSnakeRewardType.KILL)
+    pass
 
 class BattleSnakeRewardFunctionKill(BattleSnakeRewardFunction):
     """
@@ -138,7 +137,6 @@ class BattleSnakeRewardFunctionKill(BattleSnakeRewardFunction):
 
 @dataclass
 class CooperationBattleSnakeRewardConfig(BattleSnakeRewardConfig):
-    reward_type: BattleSnakeRewardType = field(default=BattleSnakeRewardType.COOP)
     living_reward: float = field(default=0.02)
     terminal_reward: float = -0.5
 
@@ -166,21 +164,11 @@ class BattleSnakeRewardFunctionCooperation(BattleSnakeRewardFunction):
 
 
 def get_battlesnake_reward_func_from_cfg(cfg: BattleSnakeRewardConfig) -> BattleSnakeRewardFunction:
-    if cfg.reward_type == BattleSnakeRewardType.STANDARD or cfg.reward_type == BattleSnakeRewardType.STANDARD.value:
+    if isinstance(cfg, StandardBattleSnakeRewardConfig):
         return BattleSnakeRewardFunctionStandard(cfg)
-    elif cfg.reward_type == BattleSnakeRewardType.KILL or cfg.reward_type == BattleSnakeRewardType.KILL.value:
+    elif isinstance(cfg, KillBattleSnakeRewardConfig):
         return BattleSnakeRewardFunctionKill(cfg)
-    elif cfg.reward_type == BattleSnakeRewardType.COOP or cfg.reward_type == BattleSnakeRewardType.COOP.value:
+    elif isinstance(cfg, CooperationBattleSnakeRewardConfig):
         return BattleSnakeRewardFunctionCooperation(cfg)
-    else:
-        raise ValueError(f"Unknown reward function type: {cfg}")
-
-def reward_config_from_structured(cfg) -> BattleSnakeRewardConfig:
-    if cfg.reward_type == BattleSnakeRewardType.STANDARD or cfg.reward_type == BattleSnakeRewardType.STANDARD.value:
-        return StandardBattleSnakeRewardConfig(**cfg)
-    elif cfg.reward_type == BattleSnakeRewardType.KILL or cfg.reward_type == BattleSnakeRewardType.KILL.value:
-        return KillBattleSnakeRewardConfig(**cfg)
-    elif cfg.reward_type == BattleSnakeRewardType.COOP or cfg.reward_type == BattleSnakeRewardType.COOP.value:
-        return CooperationBattleSnakeRewardConfig(**cfg)
     else:
         raise ValueError(f"Unknown reward function type: {cfg}")

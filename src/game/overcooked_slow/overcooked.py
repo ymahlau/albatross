@@ -40,7 +40,6 @@ class OvercookedGame(Game):
     ):
         super().__init__(cfg)
         self.cfg = cfg
-        self.gridworld = gridworld
         rew_shape_dict = None
         if self.cfg.mep_reproduction_setting:
             rew_shape_dict = {
@@ -56,6 +55,8 @@ class OvercookedGame(Game):
                 cfg.overcooked_layout,
                 rew_shaping_params=rew_shape_dict,
             )
+        else:
+            self.gridworld = gridworld
         self.env = env
         if env is None:
             self.env = OvercookedEnv.from_mdp(self.gridworld, horizon=self.cfg.horizon, info_level=1)
@@ -77,12 +78,17 @@ class OvercookedGame(Game):
         # step
         a0_converted = Action.ALL_ACTIONS[actions[0]]
         a1_converted = Action.ALL_ACTIONS[actions[1]]
+        if self.env is None:
+            raise Exception("self.env is None")
         _, single_reward, done, info = self.env.step((a0_converted, a1_converted))
         self.obs_save = None
         if self.cfg.mep_eval_setting:
             r = np.asarray([single_reward, single_reward], dtype=float)
             return r, done, {}
-        full_reward = single_reward + info['shaped_r_by_agent'][0] + info['shaped_r_by_agent'][1]
+        r1, r2 =  info['shaped_r_by_agent'][0], info['shaped_r_by_agent'][1]
+        if not isinstance(r1, float) or not isinstance(r2, float):
+            raise Exception("Wrong reward format in official overcooked implementation")
+        full_reward = single_reward + r1 + r2
         # divide reward by horizon for estimate of maximum possible reward
         reward_arr = np.asarray([full_reward, full_reward], dtype=float)
         # additional reward not mentioned in paper for starting to cook

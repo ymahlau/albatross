@@ -55,7 +55,7 @@ class SearchAgent(Agent):
             player: int,
             time_limit: Optional[float] = None,
             iterations: Optional[int] = None,
-            save_probs: Optional[mp.Array] = None,
+            save_probs = None,  # mp.Array
             options: Optional[dict[str, Any]] = None,
     ) -> tuple[np.ndarray, dict[str, Any]]:
         if self.cfg.deterministic:
@@ -65,7 +65,7 @@ class SearchAgent(Agent):
             cpy_cfg.food_spawn_chance = 0
             state = game.get_state()
             game = get_game_from_config(cpy_cfg)
-            game.set_state(state)
+            game.set_state(state) # type: ignore
         player_idx = game.players_at_turn().index(player)
         values, action_probs, search_info = self.search(
             game=game,
@@ -163,7 +163,7 @@ class LookaheadAgent(Agent):
             player: int,
             time_limit: Optional[float] = None,
             iterations: Optional[int] = None,
-            save_probs: Optional[mp.Array] = None,
+            save_probs = None,  # mp.Array
             options: Optional[dict[str, Any]] = None,
     ) -> tuple[np.ndarray, dict[str, Any]]:
         # network action probs
@@ -171,6 +171,8 @@ class LookaheadAgent(Agent):
         # obs input
         temp_obs_input = None
         if self.cfg.temperature_input and self.cfg.single_temperature:
+            if self.temperatures is None:
+                raise Exception("self.temperatures is None")
             temp_obs_input = [self.temperatures[0]]
         elif self.cfg.temperature_input and not self.cfg.single_temperature:
             temp_obs_input = self.temperatures
@@ -178,7 +180,7 @@ class LookaheadAgent(Agent):
         # forward pass
         obs = torch.tensor(obs, dtype=torch.float32).to(self.device)
         net_out = self.net(obs)
-        log_actions = self.net.retrieve_policy(net_out).cpu()
+        log_actions = self.net.retrieve_policy_tensor(net_out).cpu()
         net_probs = torch.nn.functional.softmax(log_actions, dim=-1).detach().numpy()
         filtered_net_probs = filter_illegal_and_normalize(net_probs, game)
         if save_probs is not None:
@@ -238,6 +240,8 @@ class DoubleSearchAgent(Agent):
         self.search2 = get_search_from_config(cfg.search_cfg_2)
         self.device = torch.device(self.cfg.device_str)
         net2 = get_network_from_file(self.cfg.net_path_2)
+        if net2.cfg.game_cfg is None:
+            raise Exception("Game config of net2 is None")
         temp_game = get_game_from_config(net2.cfg.game_cfg)
         net2 = net2.eval().to(self.device)
         if self.cfg.compile_model_2:
@@ -249,7 +253,7 @@ class DoubleSearchAgent(Agent):
             )
             temp_obs, _, _ = temp_game.get_obs()
             net2(torch.tensor(temp_obs, dtype=torch.float32).to(self.device))
-        self.search2.replace_net(net2)
+        self.search2.replace_net(net2) # type: ignore
 
     def _act(
             self,
@@ -257,7 +261,7 @@ class DoubleSearchAgent(Agent):
             player: int,
             time_limit: Optional[float] = None,
             iterations: Optional[int] = None,
-            save_probs: Optional[mp.Array] = None,
+            save_probs = None,  # mp.Array
             options: Optional[dict[str, Any]] = None,
     ) -> tuple[np.ndarray, dict[str, Any]]:
         if self.cfg.deterministic:
@@ -267,7 +271,7 @@ class DoubleSearchAgent(Agent):
             cpy_cfg.food_spawn_chance = 0
             state = game.get_state()
             game = get_game_from_config(cpy_cfg)
-            game.set_state(state)
+            game.set_state(state) # type: ignore
         player_idx = game.players_at_turn().index(player)
         if game.num_players_at_turn() > 2:
             values, action_probs, search_info = self.search(

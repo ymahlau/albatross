@@ -38,6 +38,8 @@ class EquilibriumData:
 static_experiment_cfg: Optional[LogitSolverExperimentConfig] = None
 
 def solve_nfg(cfg: NormalFormConfig, temperature: float, game_id: int):
+    if static_experiment_cfg is None:
+        raise Exception("Static experiment config is None")
     if game_id % 100 == 0:
         print(f"{datetime.now()} - {game_id=}", flush=True)
     aa = [list(range(static_experiment_cfg.num_actions)) for _ in range(static_experiment_cfg.num_player)]

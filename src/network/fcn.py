@@ -11,7 +11,7 @@ class FCN(nn.Module):
     def __init__(
             self,
             input_size: int,
-            hidden_size: int,
+            hidden_size: Optional[int],
             output_size: int,
             num_layer: int,
             activation_type: ActivationType,
@@ -25,6 +25,8 @@ class FCN(nn.Module):
         if num_layer == 1:
             self.linear = nn.Linear(input_size, output_size, bias=True)
         else:
+            if hidden_size is None:
+                raise Exception("Need hidden size for fcn with multpiple layers")
             self.dropout_p = dropout_p
             self.use_dropout = self.dropout_p > 0
             if self.use_dropout:

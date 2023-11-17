@@ -1,3 +1,4 @@
+from functools import cached_property
 import itertools
 from dataclasses import dataclass, field
 from typing import Optional, Any
@@ -11,34 +12,23 @@ from src.game.game import Game, GameConfig
 @dataclass(kw_only=True)
 class NormalFormConfig(GameConfig):
     ja_dict: dict[tuple[int, ...], tuple[float, ...]]
-    aa_dict: Optional[dict[int, list[int]]] = None  # filled automatically
-    num_actions: Optional[int] = None  # filled automatically
-    num_players: Optional[int] = None  # filled automatically
-
-    def __post_init__(self):
-        self._validate_cfg()
-
-    def _validate_cfg(self):
+    num_players: int = field(default=-1)  # filled automatically
+    num_actions: int = field(default=-1)
+    
+    def __post__init___(self):
         self.num_players = len(list(self.ja_dict.keys())[0])
-        self.aa_dict: dict[int, list[int]] = {
-            p: [] for p in range(self.num_players)
-        }
-        # construct available actions for all players
-        for ja, ja_vals in self.ja_dict.items():
-            for p_idx, a in enumerate(ja):
-                if a not in self.aa_dict[p_idx]:
-                    self.aa_dict[p_idx].append(a)
-        # check if whole cartesian product is given in dictionary
-        ja_keys = list(itertools.product(*[self.aa_dict[p] for p in range(self.num_players)]))
-        for ja_k in ja_keys:
-            if ja_k not in self.ja_dict:
-                raise ValueError(f"Expected joint action {ja_k} in dict")
-        # fill max num actions
         max_a = -2
         for p in range(self.num_players):
             if max(self.aa_dict[p]) > max_a:
-                max_a = max(self.aa_dict[p])
+                max_a = max(self.aa_dict[p])        
         self.num_actions = max_a + 1
+        
+    @cached_property
+    def aa_dict(self) -> dict[int, list[int]]:
+        return {
+            p: [] for p in range(self.num_players)
+        }
+
 
 class NormalFormGame(Game):
     def __init__(self, cfg: NormalFormConfig):

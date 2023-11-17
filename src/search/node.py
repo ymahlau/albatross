@@ -31,10 +31,14 @@ class Node:
         self.rewards: Optional[np.ndarray] = None
         if game is None and parent is not None:
             self.game: Game = parent.game.get_copy()
+            if last_actions is None:
+                raise Exception("Last actions is None")
             rewards, done, info = self.game.step(last_actions)
             self.rewards = rewards
         else:
             # init game state
+            if game is None:
+                raise Exception("game is None")
             self.game: Game = game
             # root has no additional rewards, no previous action or state
             self.rewards = np.zeros((self.game.num_players,), dtype=float)
@@ -63,6 +67,8 @@ class Node:
             return True
         if self.is_leaf():  # non-terminal leafs are by definition not fully explored
             return False
+        if self.children is None:
+            raise Exception("This should never happen")
         if self.num_children_fully_explored > len(self.children):
             raise Exception("Cannot have more fully explored children than actual children")
         return self.num_children_fully_explored == len(self.children)
@@ -72,27 +78,39 @@ class Node:
         if self.is_leaf():
             raise Exception("Cannot compute action values for leaf node")
         result_dict = {}
+        if self.children is None:
+            raise Exception("Children are None")
         for joint_action, child in self.children.items():
             if child.visits > 0:
                 result_dict[joint_action] = child.backward_estimate_zero_fill()
             else:
+                if child.rewards is None:
+                    raise Exception("child rewards are None")
                 result_dict[joint_action] = self.discount * child.rewards
         return result_dict
 
     def backward_estimate_zero_fill(self) -> np.ndarray:
         # value of node from the viewpoint of the previous game state
         if self.is_terminal():
+            if self.rewards is None:
+                raise Exception("Nodes rewards are None")
             return self.discount * self.rewards
         if self.visits == 0:
             return np.zeros_like(self.value_sum, dtype=float)
+        if self.rewards is None:
+            raise Exception("Nodes rewards are None")
         return self.discount * (self.rewards + self.value_sum / self.visits)
 
     def backward_estimate(self) -> np.ndarray:
         # value of node from the viewpoint of the previous game state
         if self.is_terminal():
+            if self.rewards is None:
+                raise Exception("Nodes rewards are None")
             return self.discount * self.rewards
         if self.visits == 0:
             raise Exception(f"Cannot compute backward estimate on unvisited node")
+        if self.rewards is None:
+            raise Exception("Nodes rewards are None")
         return self.discount * (self.rewards + self.value_sum / self.visits)
 
     def forward_estimate(self) -> np.ndarray:

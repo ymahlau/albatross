@@ -152,6 +152,8 @@ class Game(ABC):
         return player in self.players_alive()
 
     def get_last_actions(self) -> tuple[int, ...]:
+        if self._last_actions is None:
+            raise Exception("Last actions is None, probably because it is the start of the game.")
         return self._last_actions
 
     def set_last_actions(self, last_actions: Optional[tuple[int, ...]]):

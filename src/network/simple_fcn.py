@@ -21,6 +21,8 @@ class SimpleNetwork(Network):
     def __init__(self, cfg: SimpleNetworkConfig):
         super().__init__(cfg)
         self.cfg = cfg
+        if self.cfg.game_cfg is None:
+            raise Exception("Game config is None")
         self.game = get_game_from_config(self.cfg.game_cfg)
         self.fcn = FCN(
             input_size=self.game.get_obs_shape()[0],

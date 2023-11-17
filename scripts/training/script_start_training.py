@@ -217,7 +217,7 @@ def start_training_from_structured_configs():
         updates_until_distribution=50,
         optim_cfg=optim_cfg,
         use_gpu=False,
-        zero_sum_loss=True,
+        utility_loss=UtilityNorm.FULL_COOP,
         mse_policy_loss=True,
     )
     logger_cfg = LoggerConfig(

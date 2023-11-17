@@ -1,5 +1,7 @@
 import torch
 
+from src.game.values import UtilityNorm
+
 
 def compute_value_loss(
         value_pred: torch.Tensor,
@@ -45,13 +47,24 @@ def compute_length_loss(
     return loss
 
 
-def compute_zero_sum_loss(
+def compute_utility_loss(
         value_output: torch.Tensor,
+        utility_norm: UtilityNorm,
 ) -> torch.Tensor:
-    n = value_output.shape[0]
-    if n % 2 != 0:
-        raise ValueError(f"Value output needs even shape for zero-sum loss")
-    p1_vals = value_output[:int(n/2)]
-    p2_vals = value_output[int(n/2):]
-    loss = torch.nn.functional.mse_loss(p1_vals, -p2_vals)
+    if utility_norm == UtilityNorm.NONE:
+        raise ValueError("Cannot compute utility loss without utility type")
+    if utility_norm == UtilityNorm.ZERO_SUM:
+        n = value_output.shape[0]
+        if n % 2 != 0:
+            raise ValueError(f"Value output needs even shape for zero-sum loss")
+        p1_vals = value_output[:int(n/2)]
+        p2_vals = value_output[int(n/2):]
+        loss = torch.nn.functional.mse_loss(p1_vals, -p2_vals)
+    else: # fully cooperative
+        n = value_output.shape[0]
+        if n % 2 != 0:
+            raise ValueError(f"Fully coop loss regularization currenly only implemented for 2 players")
+        p1_vals = value_output[:int(n/2)]
+        p2_vals = value_output[int(n/2):]
+        loss = torch.nn.functional.mse_loss(p1_vals, p2_vals)
     return loss

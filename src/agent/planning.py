@@ -84,13 +84,13 @@ class AStarAgent(Agent):
             player: int,
             time_limit: Optional[float] = None,
             iterations: Optional[int] = None,
-            save_probs: Optional[mp.Array] = None,
+            save_probs = None,  # mp.Array
             options: Optional[dict[str, Any]] = None,
     ) -> tuple[np.ndarray, dict[str, Any]]:
         if not isinstance(game, BattleSnakeGame):
             raise ValueError("A*-Agent can only operate in Battlesnake Game")
         if game.num_food() == 0:
-            ra = random.choice(game.available_actions(player))
+            ra = np.asarray(random.choice(game.available_actions(player)))
             return ra, {}
         # gather snake positions
         blocked_pos = np.zeros(shape=(game.cfg.w, game.cfg.h), dtype=bool)
@@ -112,6 +112,8 @@ class AStarAgent(Agent):
         results: list[tuple[bool, int, int]] = []
         found_food = False
         # do the search for all food pos
+        if start_pos is None:
+            raise Exception("Start position is None")
         for food_idx in range(food_pos.shape[0]):
             cur_res = AStarAgent._a_star_search(
                 start_field=start_pos,

@@ -44,6 +44,8 @@ class BackupFunc(ABC):
         # update decoupled player-action visits and player-action values if child is given. key is (player, action).
         if child is not None:
             for idx, player in enumerate(node.game.players_at_turn()):
+                if child.last_actions is None:
+                    raise Exception("Child does not have last actions")
                 node.player_action_value_sum[(player, child.last_actions[idx])] += values[player]
                 node.player_action_visits[(player, child.last_actions[idx])] += 1
         # update node stats
@@ -110,7 +112,7 @@ class StandardBackupFunc(BackupFunc):
             values: Optional[np.ndarray],
             options: Optional[dict[str, Any]] = None,
             backup_values: Optional[dict[str, Any]] = None,
-    ) -> tuple[np.ndarray, Optional[np.ndarray], Optional[dict[str, Any]]]:
+    ) -> tuple[Optional[np.ndarray], Optional[np.ndarray], Optional[dict[str, Any]]]:
         if node.is_fully_explored():
             # it does not make sense to consider fully explored subtrees since action probs and values would be skewed
             raise ValueError("Cannot use Standard Backup with optimization of fully explored subtrees")
@@ -173,7 +175,7 @@ class NashBackupFunc(BackupFunc):
     """
     Computes backup value and action by solving for a nash equilibrium.
     """
-    def __init__(self, cfg: NashBackupConfig, error_counter: Optional[mp.Value] = None):
+    def __init__(self, cfg: NashBackupConfig, error_counter = None):
         super().__init__(cfg)
         self.cfg = cfg
         self.error_counter = error_counter
@@ -204,7 +206,7 @@ class NashBackupFunc(BackupFunc):
             joint_action_list=joint_action_list,
             joint_action_value_arr=joint_action_value_arr,
             use_cpp=self.cfg.use_cpp,
-        )
+        ) # type: ignore
         # convert result to proper data format
         all_values = np.zeros(shape=(node.game.num_players,), dtype=float)
         action_probs = np.zeros(shape=(node.game.num_players_at_turn(), node.game.num_actions))

@@ -193,7 +193,7 @@ class MobileNetV3(VisionNetwork):
                 exp_planes=exp_planes,
                 out_planes=out_planes,
                 kernel_size=kernel_size,
-                use_se=use_se,
+                use_se=bool(use_se),
                 stride=stride,
                 norm_type=self.cfg.norm_type,
                 activation_type=self.cfg.activation_type,
@@ -330,7 +330,7 @@ incumbent_7x7 = [
 class MobileNetConfig7x7Incumbent(MobileNetConfig):
     layer_specs: list[list[int]] = field(default_factory=lambda: incumbent_7x7)
     lff_features: bool = field(default=False)
-    lff_feature_expansion: bool = field(default=27)
+    lff_feature_expansion: int = field(default=27)
     policy_head_cfg: HeadConfig = field(
         default_factory=lambda: HeadConfig(num_layers=1, final_activation=ActivationType.NONE)
     )
@@ -358,7 +358,7 @@ class MobileNetConfig11x11Extrapolated(MobileNetConfig):
     predict_game_len: bool = field(default=False)
     layer_specs: list[list[int]] = field(default_factory=lambda: extrapolated_11x11)
     lff_features: bool = field(default=True)
-    lff_feature_expansion: bool = field(default=27)
+    lff_feature_expansion: int = field(default=27)
     policy_head_cfg: HeadConfig = field(
         default_factory=lambda: HeadConfig(num_layers=1, final_activation=ActivationType.NONE)
     )
@@ -378,7 +378,7 @@ overcooked_cramped = [
 class MobileNetConfigOvercookedCramped(MobileNetConfig):
     layer_specs: list[list[int]] = field(default_factory=lambda: overcooked_cramped)
     lff_features: bool = field(default=False)
-    lff_feature_expansion: bool = field(default=27)
+    lff_feature_expansion: int = field(default=27)
     policy_head_cfg: HeadConfig = field(
         default_factory=lambda: HeadConfig(num_layers=1, final_activation=ActivationType.NONE)
     )
@@ -399,7 +399,7 @@ extrapolated_5x5 = [
 class MobileNetConfig5x5Extrapolated(MobileNetConfig):
     layer_specs: list[list[int]] = field(default_factory=lambda: extrapolated_5x5)
     lff_features: bool = field(default=True)
-    lff_feature_expansion: bool = field(default=27)
+    lff_feature_expansion: int = field(default=27)
     policy_head_cfg: HeadConfig = field(
         default_factory=lambda: HeadConfig(num_layers=1, final_activation=ActivationType.NONE)
     )
@@ -420,7 +420,7 @@ overcooked_asym_adv = [
 class MobileNetConfigOvercookedAsymmetricAdvantage(MobileNetConfig):
     layer_specs: list[list[int]] = field(default_factory=lambda: overcooked_asym_adv)
     lff_features: bool = field(default=False)
-    lff_feature_expansion: bool = field(default=27)
+    lff_feature_expansion: int = field(default=27)
     policy_head_cfg: HeadConfig = field(
         default_factory=lambda: HeadConfig(num_layers=1, final_activation=ActivationType.NONE)
     )
@@ -440,7 +440,7 @@ overcooked_coord_ring = [
 class MobileNetConfigOvercookedCoordinationRing(MobileNetConfig):
     layer_specs: list[list[int]] = field(default_factory=lambda: overcooked_coord_ring)
     lff_features: bool = field(default=False)
-    lff_feature_expansion: bool = field(default=27)
+    lff_feature_expansion: int = field(default=27)
     policy_head_cfg: HeadConfig = field(
         default_factory=lambda: HeadConfig(num_layers=1, final_activation=ActivationType.NONE)
     )
@@ -460,7 +460,7 @@ overcooked_forced_coord = [
 class MobileNetConfigOvercookedForcedCoordination(MobileNetConfig):
     layer_specs: list[list[int]] = field(default_factory=lambda: overcooked_forced_coord)
     lff_features: bool = field(default=False)
-    lff_feature_expansion: bool = field(default=27)
+    lff_feature_expansion: int = field(default=27)
     policy_head_cfg: HeadConfig = field(
         default_factory=lambda: HeadConfig(num_layers=1, final_activation=ActivationType.NONE)
     )
@@ -481,7 +481,7 @@ overcooked_counter_circuit = [
 class MobileNetConfigOvercookedCounterCircuit(MobileNetConfig):
     layer_specs: list[list[int]] = field(default_factory=lambda: overcooked_counter_circuit)
     lff_features: bool = field(default=False)
-    lff_feature_expansion: bool = field(default=27)
+    lff_feature_expansion: int = field(default=27)
     policy_head_cfg: HeadConfig = field(
         default_factory=lambda: HeadConfig(num_layers=1, final_activation=ActivationType.NONE)
     )

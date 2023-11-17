@@ -9,7 +9,11 @@ from src.game.overcooked.config import OvercookedGameConfig
 
 
 class OvercookedGame(Game):
-    def __init__(self, cfg: OvercookedGameConfig, state_p: Optional[ct.POINTER(Struct)] = None):
+    def __init__(
+        self, 
+        cfg: OvercookedGameConfig, 
+        state_p = None,  # Optional[ct.POINTER(Struct)]
+        ):
         super().__init__(cfg)
         self.cfg = cfg
         # state pointer

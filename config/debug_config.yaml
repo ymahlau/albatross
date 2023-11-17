@@ -250,7 +250,10 @@ data:
           weight_decay: 0.0001
       updates_until_distribution: 50
       use_gpu: false
-      zero_sum_loss: true
+      utility_loss:
+        __module__: src.game.values
+        __name__: UtilityNorm
+        value: FULL_COOP
   updater_in_qsize: 100
   updater_out_qsize: 10
   validator_data_qsize: 100

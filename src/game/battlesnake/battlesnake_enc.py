@@ -1,26 +1,26 @@
-from dataclasses import dataclass, field, MISSING
+from dataclasses import dataclass, field
 
 
-@dataclass
+@dataclass(kw_only=True)
 class BattleSnakeEncodingConfig:
-    include_current_food: bool = MISSING
-    include_next_food: bool = MISSING
-    include_board: bool = MISSING
-    include_number_of_turns: bool = MISSING
-    compress_enemies: bool = MISSING  # enemies share their encoding layers
-    include_snake_body_as_one_hot: bool = MISSING
-    include_snake_body: bool = MISSING
-    include_snake_head: bool = MISSING
-    include_snake_tail: bool = MISSING
-    include_snake_health: bool = MISSING
-    include_snake_length: bool = MISSING
-    include_distance_map: bool = MISSING
-    flatten: bool = MISSING  # return everything as a flattened 1D-Array
-    centered: bool = MISSING
-    include_area_control: bool = MISSING
-    include_food_distance: bool = MISSING
-    include_hazards: bool = MISSING
-    include_tail_distance: bool = MISSING
+    include_current_food: bool
+    include_next_food: bool
+    include_board: bool
+    include_number_of_turns: bool
+    compress_enemies: bool # enemies share their encoding layers
+    include_snake_body_as_one_hot: bool
+    include_snake_body: bool
+    include_snake_head: bool
+    include_snake_tail: bool
+    include_snake_health: bool
+    include_snake_length: bool
+    include_distance_map: bool
+    flatten: bool  # return everything as a flattened 1D-Array
+    centered: bool
+    include_area_control: bool
+    include_food_distance: bool
+    include_hazards: bool
+    include_tail_distance: bool
     include_num_food_on_board: bool = False
     temperature_input: bool = False
     single_temperature_input: bool = True

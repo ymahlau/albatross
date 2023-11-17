@@ -30,6 +30,8 @@ class Network(nn.Module, ABC):
         if cfg.game_cfg is None:
             raise ValueError("Cannot initialize Network without game config (need observation shape)")
         self.cfg = cfg
+        if self.cfg.game_cfg is None:
+            raise Exception("Game Config is None")
         self.game = get_game_from_config(self.cfg.game_cfg)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -52,6 +54,8 @@ class Network(nn.Module, ABC):
     def output_size(self) -> int:
         output_size = 1
         if self.cfg.predict_policy:
+            if self.cfg.game_cfg is None:
+                raise Exception("Game config is None")
             output_size += self.cfg.game_cfg.num_actions
         return output_size
 
@@ -70,7 +74,7 @@ class Network(nn.Module, ABC):
         print('Successfully Loaded Model from existing Checkpoint!', flush=True)
 
     @staticmethod
-    def retrieve_value(output_tensor: Union[np.ndarray, torch.Tensor]) -> Union[np.ndarray, torch.Tensor]:
+    def retrieve_value(output_tensor: np.ndarray) -> np.ndarray:
         """
         Args:
             output_tensor (): Output of the forward function
@@ -79,16 +83,19 @@ class Network(nn.Module, ABC):
         """
         value = output_tensor[..., -1]
         # sanity checks
-        if isinstance(value, np.ndarray):
-            if not np.any(np.isfinite(value)) or np.any(np.isnan(value)):
-                raise Exception(f"Network value output contains invalid numbers: {value}")
-        elif isinstance(value, torch.Tensor):
-            if not torch.any(torch.isfinite(value)) or torch.any(torch.isnan(value)):
-                raise Exception(f"Network value output contains invalid numbers: {value}")
+        if not np.any(np.isfinite(value)) or np.any(np.isnan(value)):
+            raise Exception(f"Network value output contains invalid numbers: {value}")
+        return value
+    
+    @staticmethod
+    def retrieve_value_tensor(output_tensor: torch.Tensor) -> torch.Tensor:
+        value = output_tensor[..., -1]
+        if not torch.any(torch.isfinite(value)) or torch.any(torch.isnan(value)):
+            raise Exception(f"Network value output contains invalid numbers: {value}")
         return value
 
     @staticmethod
-    def retrieve_policy(output_tensor: Union[np.ndarray, torch.Tensor]) -> Union[np.ndarray, torch.Tensor]:
+    def retrieve_policy(output_tensor: np.ndarray) -> np.ndarray:
         """
         Args:
             output_tensor (): Output of the forward function
@@ -96,12 +103,15 @@ class Network(nn.Module, ABC):
             the actions part of the output
         """
         actions = output_tensor[..., 0:-1]
-        if isinstance(actions, np.ndarray):
-            if not np.any(np.isfinite(actions)) or np.any(np.isnan(actions)):
-                raise Exception(f"Network action output contains invalid numbers: {actions}")
-        elif isinstance(actions, torch.Tensor):
-            if not torch.any(torch.isfinite(actions)) or torch.any(torch.isnan(actions)):
-                raise Exception(f"Network action output contains invalid numbers: {actions}")
+        if not np.any(np.isfinite(actions)) or np.any(np.isnan(actions)):
+            raise Exception(f"Network action output contains invalid numbers: {actions}")
+        return actions
+    
+    @staticmethod
+    def retrieve_policy_tensor(output_tensor: torch.Tensor) -> torch.Tensor:
+        actions = output_tensor[..., 0:-1]
+        if not torch.any(torch.isfinite(actions)) or torch.any(torch.isnan(actions)):
+            raise Exception(f"Network action output contains invalid numbers: {actions}")
         return actions
 
     def __del__(self):

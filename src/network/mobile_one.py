@@ -181,6 +181,8 @@ class MobileOneBlock(nn.Module):
             bias=True
         )
         self.reparam_conv.weight.data = kernel
+        if self.reparam_conv.bias is None:
+            raise Exception("bias is None")
         self.reparam_conv.bias.data = bias
 
         # Delete un-used branches
@@ -205,8 +207,7 @@ class MobileOneBlock(nn.Module):
             kernel_scale, bias_scale = self._fuse_bn_tensor(self.rbr_scale)
             # Pad scale branch kernel to match conv branch kernel size.
             pad = self.kernel_size // 2
-            kernel_scale = torch.nn.functional.pad(kernel_scale,
-                                                   [pad, pad, pad, pad])
+            kernel_scale = torch.nn.functional.pad(kernel_scale, [pad, pad, pad, pad])
 
         # get weights and bias of skip branch
         kernel_identity = 0

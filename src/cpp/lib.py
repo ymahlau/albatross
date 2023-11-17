@@ -245,7 +245,7 @@ class CPPLibrary:
     def get_area_control(
             self,
             num_snakes: int,
-            state_p: ct.POINTER(Struct),
+            state_p,  # ct.POINTER(Struct)
             weight: float,
             food_weight: float,
             hazard_weight: float,
@@ -350,7 +350,7 @@ class CPPLibrary:
             available_actions: list[list[int]],  # maps player(index of player_at_turn) to available actions
             joint_action_list: list[tuple[int, ...]],
             joint_action_value_arr: np.ndarray,  # shape (num_joint_actions, num_player_at_turn)
-            error_counter: Optional[mp.Value] = None,
+            error_counter = None,  # mp.Array
     ) -> tuple[list[float], list[np.ndarray]]:
         # number of players and actions
         num_player = len(available_actions)

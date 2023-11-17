@@ -20,18 +20,20 @@ def apply_utility_norm(
             raise ValueError(f"Invalid array shape for zero sum norm: {values.shape}")
         avg = np.average(values, axis=-1)
         if len(values.shape) == 1:
-            norm = values - avg
+            norm_arr = values - avg
         elif len(values.shape) == 2:
-            norm = values - avg[:, np.newaxis]
+            norm_arr = values - avg[:, np.newaxis]
         else:
             raise ValueError(f"Invalid array shape for zero sum norm: {values.shape}")
-        return norm
+        return norm_arr
     elif norm == UtilityNorm.FULL_COOP:
         avg = np.average(values, axis=-1)
         if len(values.shape) == 1:
-            norm = np.ones_like(values) * avg
+            norm_arr = np.ones_like(values) * avg
         elif len(values.shape) == 2:
-            norm = np.ones_like(values) * avg[:, np.newaxis]
-        return norm
+            norm_arr = np.ones_like(values) * avg[:, np.newaxis]
+        else:
+            raise ValueError(f"Invalid array shape for fully coop norm: {values.shape}")
+        return norm_arr
     else:
         raise ValueError(f"Invalid norm type: {norm}")

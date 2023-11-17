@@ -14,6 +14,8 @@ def play_overcooked_example():
     path = Path(__file__).parent.parent.parent / 'outputs' / 'm_21.pt'
     net = get_network_from_file(path)
     game_cfg = net.cfg.game_cfg
+    if game_cfg is None:
+        raise Exception()
     game = get_game_from_config(game_cfg)
     
     

@@ -50,6 +50,8 @@ class FlatNet(Network, ABC):
             output_size=1
         )
         if self.cfg.predict_policy:
+            if self.cfg.policy_head_cfg is None:
+                raise Exception("Policy head config is None")
             self.policy_head = head_from_cfg(
                 cfg=self.cfg.policy_head_cfg,
                 input_size=self.latent_size,
@@ -65,9 +67,9 @@ class FlatNet(Network, ABC):
             elif isinstance(m, LearnedFourierFeatures):
                 # iso initialization
                 nn.init.normal_(m.layer.weight, 0, m.scale / m.in_features)
-                nn.init.normal_(m.layer.bias, 0, 1)
+                nn.init.normal_(m.layer.bias, 0, 1) # type: ignore
                 if m.sin_cos:
-                    nn.init.zeros_(m.layer.bias)
+                    nn.init.zeros_(m.layer.bias) # type: ignore
             elif isinstance(m, nn.Linear):
                 nn.init.orthogonal_(m.weight)
                 if m.bias is not None:
@@ -94,7 +96,6 @@ class FlatNet(Network, ABC):
     def backbone(self, x: torch.Tensor) -> torch.Tensor:
         raise NotImplementedError()
 
-    @abstractmethod
     @cached_property
     def latent_size(self) -> int:
         raise NotImplementedError()

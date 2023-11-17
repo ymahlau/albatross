@@ -42,7 +42,7 @@ class Search(ABC):
             game: Game,
             time_limit: Optional[float] = None,  # runtime limit in seconds
             iterations: Optional[int] = None,  # iteration limit
-            save_probs: Optional[mp.Array] = None,  # int value, to which current belief of best action is saved
+            save_probs = None,  # mp.Value, int value, to which current belief of best action is saved
             save_player_idx: Optional[int] = None,  # idx of player, whose action probs should be saved
             options: Optional[dict[str, Any]] = None,
     ) -> tuple[np.ndarray, np.ndarray, SearchInfo]:
@@ -77,7 +77,7 @@ class Search(ABC):
             game: Game,
             time_limit: Optional[float] = None,  # runtime limit in seconds
             iterations: Optional[int] = None,  # iteration limit
-            save_probs: Optional[mp.Array] = None,  # int value, to which current belief of best action is saved
+            save_probs = None,  # mp.Value, int value, to which current belief of best action is saved
             save_player_idx: Optional[int] = None,  # idx of player, whose action probs should be saved
             options: Optional[dict[str, Any]] = None,
     ) -> tuple[np.ndarray, np.ndarray, SearchInfo]:
@@ -91,17 +91,17 @@ class Search(ABC):
 
     def set_temperatures(self, temperatures: list[float]):
         if hasattr(self, "backup_func"):
-            if hasattr(self.backup_func, "temperatures"):
-                self.backup_func.temperatures = temperatures
-            if hasattr(self.backup_func, "temperature"):
-                self.backup_func.temperature = temperatures[0]
-            if isinstance(self.backup_func, ExploitOtherBackupFunc):
-                if hasattr(self.backup_func.backup_func, "temperatures"):
-                    self.backup_func.backup_func.temperatures = temperatures
-                if hasattr(self.backup_func.backup_func, "temperature"):
-                    self.backup_func.backup_func.temperature = temperatures[0]
+            if hasattr(self.backup_func, "temperatures"): # type: ignore
+                self.backup_func.temperatures = temperatures # type: ignore
+            if hasattr(self.backup_func, "temperature"): # type: ignore
+                self.backup_func.temperature = temperatures[0] # type: ignore
+            if isinstance(self.backup_func, ExploitOtherBackupFunc): # type: ignore
+                if hasattr(self.backup_func.backup_func, "temperatures"): # type: ignore
+                    self.backup_func.backup_func.temperatures = temperatures # type: ignore
+                if hasattr(self.backup_func.backup_func, "temperature"): # type: ignore
+                    self.backup_func.backup_func.temperature = temperatures[0] # type: ignore
         if hasattr(self.eval_func, "temperatures"):
-            self.eval_func.temperatures = temperatures
+            self.eval_func.temperatures = temperatures # type: ignore
         if isinstance(self.eval_func, EnemyExploitationEvalFunc):
             self.eval_func.player_eval_func.temperatures = temperatures
             self.eval_func.temperatures = temperatures
@@ -137,6 +137,8 @@ class Search(ABC):
         info.extract_time_ratio /= full_time
         info.expansion_time_ratio /= full_time
         info.other_time_ratio /= full_time
+        if self.root is None:
+            raise Exception("Root is None")
         info.fully_explored = self.root.is_fully_explored()
         return info
 

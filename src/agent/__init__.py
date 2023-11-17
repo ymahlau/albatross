@@ -9,7 +9,7 @@ import torch
 
 from src.game.game import Game
 from src.network import Network
-
+import multiprocessing.sharedctypes as sc
 
 @dataclass
 class AgentConfig(ABC):
@@ -30,7 +30,7 @@ class Agent(ABC):
             player: int,
             time_limit: Optional[float] = None,
             iterations: Optional[int] = None,
-            save_probs: Optional[mp.Array] = None,
+            save_probs = None,  # mp.Array
             options: Optional[dict[str, Any]] = None,
             single_temperature: Optional[bool] = None,
     ) -> tuple[np.ndarray, dict[str, Any]]:  # returns action probabilities and info
@@ -57,7 +57,7 @@ class Agent(ABC):
             player: int,
             time_limit: Optional[float] = None,
             iterations: Optional[int] = None,
-            save_probs: Optional[mp.Array] = None,
+            save_probs = None,  # mp.Array
             options: Optional[dict[str, Any]] = None,
     ) -> tuple[np.ndarray, dict[str, Any]]:
         raise NotImplementedError()
@@ -65,19 +65,19 @@ class Agent(ABC):
     def replace_net(self, net: Network):
         self.net = net
         if hasattr(self, 'search'):
-            self.search.replace_net(net)
+            self.search.replace_net(net) # type: ignore
 
     def replace_device(self, device: torch.device):
         self.device = device
         if self.net is not None:
             self.net = self.net.to(device)
         if hasattr(self, 'search'):
-            self.search.replace_device(device)
+            self.search.replace_device(device) # type: ignore
 
     def set_temperatures(self, temperatures: list[float]):
         self.temperatures = temperatures
         if hasattr(self, "search"):
-            self.search.set_temperatures(temperatures)
+            self.search.set_temperatures(temperatures) # type: ignore
 
     def reset_episode(self):
         """
