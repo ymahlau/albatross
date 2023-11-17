@@ -253,7 +253,7 @@ data:
       utility_loss:
         __module__: src.game.values
         __name__: UtilityNorm
-        value: FULL_COOP
+        value: NONE
   updater_in_qsize: 100
   updater_out_qsize: 10
   validator_data_qsize: 100
@@ -323,7 +323,7 @@ data:
               utility_norm:
                 __module__: src.game.values
                 __name__: UtilityNorm
-                value: FULL_COOP
+                value: NONE
       search_iterations: 1
       temperature: 1
       use_symmetries: true

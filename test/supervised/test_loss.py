@@ -2,9 +2,10 @@ import unittest
 
 import numpy as np
 import torch
+from src.game.values import UtilityNorm
 
 from src.misc.replay_buffer import ReplayBufferConfig, ReplayBuffer, BufferInputSample
-from src.supervised.loss import compute_zero_sum_loss
+from src.supervised.loss import compute_utility_loss
 
 
 class TestLoss(unittest.TestCase):
@@ -32,8 +33,8 @@ class TestLoss(unittest.TestCase):
         buffer.put(data1)
         buffer.put(data2)
         sample = buffer.sample(4, grouped=True)
-        loss = compute_zero_sum_loss(torch.tensor(sample.values))
+        loss = compute_utility_loss(torch.tensor(sample.values), UtilityNorm.ZERO_SUM)
         self.assertGreater(loss.item(), 0)
         sample2 = buffer.sample(8, grouped=True)
-        loss2 = compute_zero_sum_loss(torch.tensor(sample2.values))
+        loss2 = compute_utility_loss(torch.tensor(sample2.values), UtilityNorm.ZERO_SUM)
         self.assertAlmostEqual(10, loss2.item(), places=5)

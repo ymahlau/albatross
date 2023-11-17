@@ -117,7 +117,7 @@ def start_training_from_structured_configs():
     # backup_func_cfg = StandardBackupConfig()
     # backup_func_cfg = Exp3BackupConfig()
     # backup_func_cfg = RegretMatchingBackupConfig(avg_backup=True)
-    extraction_func_cfg = SpecialExtractConfig(utility_norm=UtilityNorm.FULL_COOP)
+    extraction_func_cfg = SpecialExtractConfig(utility_norm=UtilityNorm.NONE)
     # extraction_func_cfg = StandardExtractConfig()
     # extraction_func_cfg = MeanPolicyExtractConfig()
     # extraction_func_cfg = PolicyExtractConfig()
@@ -217,7 +217,7 @@ def start_training_from_structured_configs():
         updates_until_distribution=50,
         optim_cfg=optim_cfg,
         use_gpu=False,
-        utility_loss=UtilityNorm.FULL_COOP,
+        utility_loss=UtilityNorm.NONE,
         mse_policy_loss=True,
     )
     logger_cfg = LoggerConfig(
