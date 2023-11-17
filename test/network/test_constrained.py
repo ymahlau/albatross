@@ -1,6 +1,8 @@
 import time
 import unittest
 
+import torch
+
 from src.game.battlesnake.bootcamp.test_envs_3x3 import perform_choke_2_player
 from src.game.initialization import get_game_from_config
 from src.network.initialization import get_network_from_config
@@ -24,7 +26,7 @@ class TestConstrained(unittest.TestCase):
         out_list = []
         for symmetry in range(8):
             obs, _, _, = game.get_obs(symmetry)
-            out = net(obs)
+            out = net(torch.tensor(obs))
             out_list.append(out)
         for out in out_list[1:]:
             for player in range(2):
@@ -44,7 +46,7 @@ class TestConstrained(unittest.TestCase):
         out_list = []
         for symmetry in range(8):
             obs, _, _, = game.get_obs(symmetry)
-            out = net(obs)
+            out = net(torch.tensor(obs))
             out_list.append(out)
         for out in out_list[1:]:
             for player in range(2):
@@ -65,7 +67,7 @@ class TestConstrained(unittest.TestCase):
         # no export
         start_train = time.time()
         for _ in range(num_samples):
-            out = net(obs)
+            out = net(torch.tensor(obs))
         train_time = time.time() - start_train
         print(f"{train_time=}")
         # with export

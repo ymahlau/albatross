@@ -86,7 +86,8 @@ class OvercookedGame(Game):
             r = np.asarray([single_reward, single_reward], dtype=float)
             return r, done, {}
         r1, r2 =  info['shaped_r_by_agent'][0], info['shaped_r_by_agent'][1]
-        if not isinstance(r1, float) or not isinstance(r2, float):
+        if (not isinstance(r1, int) or not isinstance(r2, int)) and \
+            (not isinstance(r1, float) or not isinstance(r2, float)):
             raise Exception("Wrong reward format in official overcooked implementation")
         full_reward = single_reward + r1 + r2
         # divide reward by horizon for estimate of maximum possible reward

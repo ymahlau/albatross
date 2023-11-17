@@ -1,6 +1,8 @@
 import time
 import unittest
 
+import torch
+
 from src.game.battlesnake.battlesnake import BattleSnakeGame
 from src.game.battlesnake.battlesnake_conf import BattleSnakeConfig
 from src.game.battlesnake.bootcamp.test_envs_11x11 import survive_on_11x11
@@ -27,7 +29,7 @@ class TestResNet(unittest.TestCase):
         )
         net = get_network_from_config(net_conf)
         in_tensor, _, _ = game.get_obs()
-        out = net(in_tensor)
+        out = net(torch.tensor(in_tensor))
         self.assertEqual(2, len(out.shape))
         self.assertEqual(4, out.shape[0])
         self.assertEqual(5, out.shape[1])
@@ -46,7 +48,7 @@ class TestResNet(unittest.TestCase):
         )
         net = get_network_from_config(net_conf)
         in_tensor, _, _ = game.get_obs()
-        out = net(in_tensor)
+        out = net(torch.tensor(in_tensor))
         self.assertEqual(2, len(out.shape))
         self.assertEqual(4, out.shape[0])
         self.assertEqual(5, out.shape[1])
@@ -57,7 +59,7 @@ class TestResNet(unittest.TestCase):
         net = get_network_from_config(net_cfg)
         game = get_game_from_config(game_cfg)
         obs, _, _, = game.get_obs()
-        out = net(obs)
+        out = net(torch.tensor(obs))
         self.assertEqual(2, len(out.shape))
         self.assertEqual(1, out.shape[1])
         value = net.retrieve_value(out)
@@ -79,7 +81,7 @@ class TestResNet(unittest.TestCase):
         )
         net = get_network_from_config(net_conf)
         in_tensor, _, _ = game.get_obs()
-        out = net(in_tensor)
+        out = net(torch.tensor(in_tensor))
         self.assertEqual(2, len(out.shape))
         self.assertEqual(4, out.shape[0])
         self.assertEqual(5, out.shape[1])
@@ -99,7 +101,7 @@ class TestResNet(unittest.TestCase):
         )
         net = get_network_from_config(net_conf)
         in_tensor, _, _ = game.get_obs()
-        out = net(in_tensor)
+        out = net(torch.tensor(in_tensor))
         self.assertEqual(2, len(out.shape))
         self.assertEqual(4, out.shape[0])
         self.assertEqual(5, out.shape[1])
@@ -112,7 +114,7 @@ class TestResNet(unittest.TestCase):
         net = get_network_from_config(net_conf)
         print(f"{net.num_params()=}")
         in_tensor, _, _ = game.get_obs()
-        out = net(in_tensor)
+        out = net(torch.tensor(in_tensor))
         print(f"{out=}")
         self.assertEqual(2, len(out.shape))
         self.assertEqual(2, out.shape[0])
@@ -126,7 +128,7 @@ class TestResNet(unittest.TestCase):
         net = get_network_from_config(net_conf)
         print(f"{net.num_params()=}")
         in_tensor, _, _ = game.get_obs()
-        out = net(in_tensor)
+        out = net(torch.tensor(in_tensor))
         print(f"{out=}")
         self.assertEqual(2, len(out.shape))
         self.assertEqual(2, out.shape[0])
@@ -147,7 +149,7 @@ class TestResNet(unittest.TestCase):
         )
         net = get_network_from_config(net_conf)
         in_tensor, _, _ = game.get_obs()
-        out = net(in_tensor)
+        out = net(torch.tensor(in_tensor))
         self.assertEqual(2, len(out.shape))
         self.assertEqual(4, out.shape[0])
         self.assertEqual(5, out.shape[1])
@@ -164,7 +166,7 @@ class TestResNet(unittest.TestCase):
         net = get_network_from_config(net_conf)
         print(f"{net.num_params()=}")
         in_tensor, _, _ = game.get_obs()
-        out = net(in_tensor)
+        out = net(torch.tensor(in_tensor))
         self.assertEqual(2, len(out.shape))
         self.assertEqual(2, out.shape[0])
         self.assertEqual(5, out.shape[1])
@@ -184,6 +186,6 @@ class TestResNet(unittest.TestCase):
         n = 10
         start_time = time.time()
         for _ in range(n):
-            out = net(in_tensor)
+            out = net(torch.tensor(in_tensor))
         end_time = time.time()
         print(f"{(end_time - start_time) / n=}")

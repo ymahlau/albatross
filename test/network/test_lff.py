@@ -1,5 +1,7 @@
 import unittest
 
+import torch
+
 from src.game.battlesnake.bootcamp.test_envs_3x3 import perform_choke_2_player
 from src.game.initialization import get_game_from_config
 from src.network.initialization import get_network_from_config
@@ -21,7 +23,7 @@ class TestLearnedFourierFeatures(unittest.TestCase):
         game = get_game_from_config(game_cfg)
 
         obs, _, _, = game.get_obs()
-        out = net(obs)
+        out = net(torch.tensor(obs))
 
         self.assertEqual(2, len(out.shape))
         self.assertEqual(5, out.shape[1])

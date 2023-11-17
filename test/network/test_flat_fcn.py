@@ -28,7 +28,7 @@ class TestFCN(unittest.TestCase):
         fcn_conf.game_cfg = gc
         net = get_network_from_config(fcn_conf)
         in_tensor, _, _ = game.get_obs()
-        out = net(in_tensor)
+        out = net(torch.tensor(in_tensor))
         self.assertEqual(2, len(out.shape))
         self.assertEqual(4, out.shape[0])
         self.assertEqual(5, out.shape[1])

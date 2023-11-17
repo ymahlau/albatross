@@ -1,6 +1,8 @@
 import time
 import unittest
 
+import torch
+
 from src.game.battlesnake.battlesnake import BattleSnakeGame
 from src.game.battlesnake.bootcamp.test_envs_11x11 import survive_on_11x11
 from src.game.battlesnake.bootcamp.test_envs_3x3 import perform_choke_2_player
@@ -25,7 +27,7 @@ class TestMobileNet(unittest.TestCase):
         net = get_network_from_config(net_cfg)
         print(f"{net.num_params()=}")
         in_tensor, _, _ = game.get_obs()
-        out = net(in_tensor)
+        out = net(torch.tensor(in_tensor))
         self.assertEqual(2, len(out.shape))
         self.assertEqual(2, out.shape[0])
         self.assertEqual(5, out.shape[1])
@@ -37,7 +39,7 @@ class TestMobileNet(unittest.TestCase):
         net = get_network_from_config(net_cfg)
         print(f"{net.num_params()=}")
         in_tensor, _, _ = game.get_obs()
-        out = net(in_tensor)
+        out = net(torch.tensor(in_tensor))
         self.assertEqual(2, len(out.shape))
         self.assertEqual(2, out.shape[0])
         self.assertEqual(5, out.shape[1])
@@ -52,11 +54,11 @@ class TestMobileNet(unittest.TestCase):
         in_tensor, _, _ = game.get_obs()
         # mobile
         mobile_start = time.time()
-        net(in_tensor)
+        net(torch.tensor(in_tensor))
         mobile_time = time.time() - mobile_start
         # resnet
         resnet_start = time.time()
-        resnet(in_tensor)
+        resnet(torch.tensor(in_tensor))
         resnet_time = time.time() - resnet_start
         print(f"{mobile_time=}")
         print(f"{resnet_time=}")
@@ -71,7 +73,7 @@ class TestMobileNet(unittest.TestCase):
         print(f"{net.num_params()=}")
         # mobile
         mobile_start = time.time()
-        net(in_tensor)
+        net(torch.tensor(in_tensor))
         mobile_time = time.time() - mobile_start
         print(f"{mobile_time=}")
 
@@ -85,7 +87,7 @@ class TestMobileNet(unittest.TestCase):
         print(f"{net.num_params()=}")
         # mobile
         mobile_start = time.time()
-        out = net(in_tensor)
+        out = net(torch.tensor(in_tensor))
         mobile_time = time.time() - mobile_start
         print(f"{mobile_time=}")
 
@@ -101,11 +103,11 @@ class TestMobileNet(unittest.TestCase):
         print(f"{resnet.num_params()=}")
         # mobile
         mobile_start = time.time()
-        net(in_tensor)
+        net(torch.tensor(in_tensor))
         mobile_time = time.time() - mobile_start
         # resnet
         resnet_start = time.time()
-        resnet(in_tensor)
+        resnet(torch.tensor(in_tensor))
         resnet_time = time.time() - resnet_start
         print(f"{mobile_time=}")
         print(f"{resnet_time=}")
@@ -120,7 +122,7 @@ class TestMobileNet(unittest.TestCase):
         print(f"{net.num_params()=}")
         # mobile
         mobile_start = time.time()
-        net(in_tensor)
+        net(torch.tensor(in_tensor))
         mobile_time = time.time() - mobile_start
         print(f"{mobile_time=}")
 
@@ -135,7 +137,7 @@ class TestMobileNet(unittest.TestCase):
         # mobile
         mobile_start = time.time()
         for _ in range(10):
-            net(in_tensor)
+            net(torch.tensor(in_tensor))
         mobile_time = time.time() - mobile_start
         print(f"{mobile_time/10=}")
 
@@ -150,7 +152,7 @@ class TestMobileNet(unittest.TestCase):
         # mobile
         mobile_start = time.time()
         for _ in range(10):
-            net(in_tensor)
+            net(torch.tensor(in_tensor))
         mobile_time = time.time() - mobile_start
         print(f"{mobile_time/10=}")
 
@@ -162,7 +164,7 @@ class TestMobileNet(unittest.TestCase):
         net = get_network_from_config(net_conf)
         print(f"{net.num_params()=}")
         in_tensor, _, _ = game.get_obs()
-        out = net(in_tensor)
+        out = net(torch.tensor(in_tensor))
         print(f"{out=}")
         self.assertEqual(2, len(out.shape))
         self.assertEqual(2, out.shape[0])
@@ -176,7 +178,7 @@ class TestMobileNet(unittest.TestCase):
         net = get_network_from_config(net_conf)
         print(f"{net.num_params()=}")
         in_tensor, _, _ = game.get_obs()
-        out = net(in_tensor)
+        out = net(torch.tensor(in_tensor))
         print(f"{out=}")
 
     def test_mobile_overcooked_asym(self):
@@ -187,6 +189,6 @@ class TestMobileNet(unittest.TestCase):
         net = get_network_from_config(net_conf)
         print(f"{net.num_params()=}")
         in_tensor, _, _ = game.get_obs()
-        out = net(in_tensor)
+        out = net(torch.tensor(in_tensor))
         print(f"{out=}")
 

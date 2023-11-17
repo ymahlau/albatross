@@ -28,10 +28,8 @@ class CollectorEssentials:
 class CollectorStatistics:
     samples_since_info: int = 0
     samples_since_info_buffer: int = 0
-    samples_since_info_val: int = 0
     full_sample_counter: int = 0
     full_sample_counter_buffer: int = 0
-    full_sample_counter_val: int = 0
     last_info_time: float = time.time()
     last_sample_info: float = time.time()
     last_save_buffer_time: float = time.time()
@@ -205,10 +203,8 @@ def log_info(
         'updater_in_qsize': essentials.updater_queue.qsize(),
         'full_sample_counter': stats.full_sample_counter,
         'full_sample_counter_buffer': stats.full_sample_counter_buffer,
-        'full_sample_counter_val': stats.full_sample_counter_val,
         'samples_per_min': stats.samples_since_info * 60 / full_time,
         'samples_per_min_buffer': stats.samples_since_info_buffer * 60 / full_time,
-        'samples_per_min_val': stats.samples_since_info_val * 60 / full_time,
     }
     if stats.samples_since_info_buffer > 0:
         time_diff = time.time() - stats.last_sample_info
@@ -220,7 +216,6 @@ def log_info(
     stats.idle_time_sum = 0
     stats.samples_since_info = 0
     stats.samples_since_info_buffer = 0
-    stats.samples_since_info_val = 0
     stats.last_info_time = time.time()
     # send message
     send_obj_to_queue(msg_data, essentials.info_queue, essentials.stop_flag)

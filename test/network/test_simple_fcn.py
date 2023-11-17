@@ -1,5 +1,7 @@
 import unittest
 
+import torch
+
 from src.game.initialization import get_game_from_config
 from src.game.overcooked_slow.layouts import CrampedRoomOvercookedSlowConfig
 from src.network.initialization import get_network_from_config
@@ -16,7 +18,7 @@ class TestSimpleFCN(unittest.TestCase):
         obs, _, _ = game.get_obs()
         print(obs.shape)
 
-        net_out = net(obs)
+        net_out = net(torch.tensor(obs))
         print(net_out)
 
 

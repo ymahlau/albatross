@@ -70,7 +70,7 @@ class TestHazards(unittest.TestCase):
         for i in range(3):
             game.step((UP, UP))
             game.render()
-        enc = game.get_obs(0)[0].numpy()
+        enc = game.get_obs(0)[0]
         print(enc.shape)
 
     def test_hazard_legal_actions(self):

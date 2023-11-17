@@ -614,7 +614,6 @@ class TestStep(unittest.TestCase):
 
     def test_3x3_random_spawning(self):
         for num_snakes in range(1, 9):
-            CPP_LIB.num_players = None
             gc = BattleSnakeConfig(w=3, h=3, num_players=num_snakes)
             env = BattleSnakeGame(gc)
             env.render()

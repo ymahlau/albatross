@@ -19,7 +19,7 @@ class TestMobileOneNetwork(unittest.TestCase):
         print(f"{net.num_params()=}")
 
         obs, _, _ = game.get_obs()
-        net_out = net(obs)
+        net_out = net(torch.tensor(obs))
         self.assertEqual(2, len(net_out.shape))
         self.assertEqual(2, net_out.shape[0])
         self.assertEqual(5, net_out.shape[1])
@@ -32,7 +32,7 @@ class TestMobileOneNetwork(unittest.TestCase):
         print(f"{net.num_params()=}")
 
         obs, _, _ = game.get_obs()
-        net_out = net(obs)
+        net_out = net(torch.tensor(obs))
         self.assertEqual(2, len(net_out.shape))
         self.assertEqual(2, net_out.shape[0])
         self.assertEqual(5, net_out.shape[1])
@@ -45,10 +45,10 @@ class TestMobileOneNetwork(unittest.TestCase):
         print(f"{net.num_params()=}")
 
         obs, _, _ = game.get_obs()
-        net_out: torch.Tensor = net(obs)
+        net_out: torch.Tensor = net(torch.tensor(obs))
 
         new_net = reparameterize_model(net)
-        new_net_out: torch.Tensor = new_net(obs)
+        new_net_out: torch.Tensor = new_net(torch.tensor(obs))
 
         self.assertTrue(torch.all(torch.abs(net_out - new_net_out) < 0.001).item())
 
@@ -61,6 +61,6 @@ class TestMobileOneNetwork(unittest.TestCase):
         print(f"{net.num_params()=}")
 
         obs, _, _ = game.get_obs()
-        net_out = net(obs)
+        net_out = net(torch.tensor(obs))
         print(f"{net_out=}")
         self.assertEqual(2, net_out.shape[0])

@@ -34,19 +34,6 @@ def compute_policy_loss(
     return loss
 
 
-def compute_length_loss(
-        length_pred: torch.Tensor,
-        length_target: torch.Tensor,
-) -> torch.Tensor:
-    if len(length_pred.shape) != len(length_target.shape):
-        raise ValueError(f"Invalid value shapes: {length_pred.shape=}, {length_target.shape=}")
-    for i in range(len(length_pred.shape)):
-        if length_pred.shape[i] != length_target.shape[i]:
-            raise ValueError(f"Invalid value shapes: {length_pred.shape=}, {length_target.shape=}")
-    loss = torch.nn.functional.mse_loss(length_pred, length_target)
-    return loss
-
-
 def compute_utility_loss(
         value_output: torch.Tensor,
         utility_norm: UtilityNorm,

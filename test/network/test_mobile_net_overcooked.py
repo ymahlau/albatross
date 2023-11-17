@@ -1,5 +1,7 @@
 import unittest
 
+import torch
+
 from src.game.initialization import get_game_from_config
 from src.game.overcooked_slow.layouts import CrampedRoomOvercookedSlowConfig, AsymmetricAdvantageOvercookedSlowConfig, \
     CoordinationRingOvercookedSlowConfig, ForcedCoordinationOvercookedSlowConfig, CounterCircuitOvercookedSlowConfig
@@ -18,7 +20,7 @@ class TestMobileNetOvercooked(unittest.TestCase):
         net = get_network_from_config(net_cfg)
         print(f"{net.num_params()}")
         obs, _, _ = game.get_obs()
-        net_out = net(obs)
+        net_out = net(torch.tensor(obs))
         self.assertEqual(2, obs.shape[0])
 
     def test_asymmetric_adv(self):
@@ -31,7 +33,7 @@ class TestMobileNetOvercooked(unittest.TestCase):
         net = get_network_from_config(net_cfg)
         print(f"{net.num_params()}")
         obs, _, _ = game.get_obs()
-        net_out = net(obs)
+        net_out = net(torch.tensor(obs))
         print(f"{net_out=}")
         self.assertEqual(2, obs.shape[0])
 
@@ -45,7 +47,7 @@ class TestMobileNetOvercooked(unittest.TestCase):
         net = get_network_from_config(net_cfg)
         print(f"{net.num_params()}")
         obs, _, _ = game.get_obs()
-        net_out = net(obs)
+        net_out = net(torch.tensor(obs))
         print(f"{net_out=}")
         self.assertEqual(2, obs.shape[0])
 
@@ -59,7 +61,7 @@ class TestMobileNetOvercooked(unittest.TestCase):
         net = get_network_from_config(net_cfg)
         print(f"{net.num_params()}")
         obs, _, _ = game.get_obs()
-        net_out = net(obs)
+        net_out = net(torch.tensor(obs))
         print(f"{net_out=}")
         self.assertEqual(2, obs.shape[0])
 
@@ -73,6 +75,6 @@ class TestMobileNetOvercooked(unittest.TestCase):
         net = get_network_from_config(net_cfg)
         print(f"{net.num_params()}")
         obs, _, _ = game.get_obs()
-        net_out = net(obs)
+        net_out = net(torch.tensor(obs))
         print(f"{net_out=}")
         self.assertEqual(2, obs.shape[0])

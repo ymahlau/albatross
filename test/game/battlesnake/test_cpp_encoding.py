@@ -364,7 +364,6 @@ class TestEncodingCPP(unittest.TestCase):
         init_snake_len = [3, 6]
         gc = BattleSnakeConfig(num_players=2, w=3, h=3, init_snake_pos=init_snake_pos, init_snake_len=init_snake_len,
                                init_food_pos=[], ec=BestBattleSnakeEncodingConfig(), min_food=0)
-        gc.ec.use_relative_length = True
         gc.ec.include_tail_distance = True
         game = BattleSnakeGame(gc)
         game.render()
@@ -372,7 +371,7 @@ class TestEncodingCPP(unittest.TestCase):
         ac, fd, td, rt, rf = r["area_control"], r["food_distance"], r["tail_distance"], r["tail_reachable"], \
             r["food_reachable"]
         print(ac)
-        enc = game.get_obs(0)[0].numpy()
+        enc = game.get_obs(0)[0]
         print(enc.shape)
 
     def test_centered_4_player(self):
@@ -380,12 +379,12 @@ class TestEncodingCPP(unittest.TestCase):
         game = BattleSnakeGame(gc)
         game.render()
 
-        enc = game.get_obs(0)[0].numpy()
+        enc = game.get_obs(0)[0]
         print(enc.shape)
 
         game.step((UP, UP, UP, UP))
         game.render()
-        enc = game.get_obs(0)[0].numpy()
+        enc = game.get_obs(0)[0]
         print(enc.shape)
 
     def test_tail_distance_encoding(self):
@@ -397,7 +396,7 @@ class TestEncodingCPP(unittest.TestCase):
                                ec=BestBattleSnakeEncodingConfig())
         gc.ec.include_tail_distance = True
         game = BattleSnakeGame(gc)
-        enc = game.get_obs(0)[0].numpy()
+        enc = game.get_obs(0)[0]
         print(enc.shape)
 
     def test_num_food_on_board(self):
