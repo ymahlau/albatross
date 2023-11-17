@@ -28,6 +28,7 @@ data:
       eval_rate_sec: 10
       num_episodes: 50
       prevent_draw: true
+      save_checkpoints: false
       temperature: 1
   game_cfg:
     __module__: src.game.overcooked.config
@@ -108,7 +109,7 @@ data:
       name: null
       project_name: battlesnake_rl_test
       updater_bucket_size: 100
-      wandb_mode: online
+      wandb_mode: offline
       worker_episode_bucket_size: 25
   max_batch_size: 200
   max_cpu_evaluator: 1
@@ -208,6 +209,7 @@ data:
     __module__: src.trainer.config
     __name__: SaverConfig
     data:
+      save_all_checkpoints: false
       save_interval_sec: 30
   single_sbr_temperature: true
   temperature_input: false
@@ -254,6 +256,7 @@ data:
         __module__: src.game.values
         __name__: UtilityNorm
         value: NONE
+      value_reg_loss_factor: 0.01
   updater_in_qsize: 100
   updater_out_qsize: 10
   validator_data_qsize: 100

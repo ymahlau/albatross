@@ -158,12 +158,12 @@ def start_training_from_structured_configs():
         anneal_cfgs=None,
         # anneal_cfgs=[TemperatureAnnealingConfig(
         #     init_temp=0,
-        #     end_times_min=[0.1],
-        #     anneal_temps=[10],
-        #     anneal_types=[AnnealingType.LINEAR],
-        #     cyclic=True,
-        # )],
-        # anneal_cfgs=[TemperatureAnnealingConfig(
+		#     end_times_min=[0.1],
+		#     anneal_temps=[10],
+		#     anneal_types=[AnnealingType.LINEAR],
+		#     cyclic=True,
+		# )],
+		# anneal_cfgs=[TemperatureAnnealingConfig(
         #     init_temp=1,
         #     end_times_min=[0.2 * (PHI ** i)],
         #     anneal_temps=[10],
@@ -219,6 +219,7 @@ def start_training_from_structured_configs():
         use_gpu=False,
         utility_loss=UtilityNorm.NONE,
         mse_policy_loss=True,
+        value_reg_loss_factor=0.01,
     )
     logger_cfg = LoggerConfig(
         project_name="battlesnake_rl_test",

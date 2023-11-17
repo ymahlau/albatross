@@ -22,7 +22,7 @@ def run_saver(
     net_cfg = trainer_cfg.net_cfg
     saver_cfg = trainer_cfg.saver_cfg
     model_folder: Path = Path(os.getcwd()) / 'fixed_time_models'
-    if not Path.exists(model_folder):
+    if not Path.exists(model_folder) and saver_cfg.save_all_checkpoints:
         model_folder.mkdir(parents=True, exist_ok=True)
     save_counter: int = 0
     last_save_time = time.time()
@@ -46,7 +46,10 @@ def run_saver(
                     print(f"Warning, Saver did not receive model...", flush=True)
                 else:
                     net.load_state_dict(maybe_state_dict)
-                    net.save(model_folder / f"m_{save_counter}.pt")
+                    # save
+                    net.save(model_folder.parent / 'latest.pt')
+                    if saver_cfg.save_all_checkpoints:
+                        net.save(model_folder / f"m_{save_counter}.pt")
                     msg = {"save_counter": save_counter}
                     send_obj_to_queue(msg, info_queue, stop_flag)
                     save_counter += 1

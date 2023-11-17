@@ -37,7 +37,6 @@ class UpdaterStatistics:
     last_save_state_time: float = time.time()
     value_losses: list[float] = field(default_factory=lambda: [])
     policy_losses: list[float] = field(default_factory=lambda: [])
-    length_losses: list[float] = field(default_factory=lambda: [])
     utility_losses: list[float] = field(default_factory=lambda: [])
     losses: list[float] = field(default_factory=lambda: [])
     idle_time_sum: float = 0
@@ -54,6 +53,7 @@ class UpdaterStatistics:
 @dataclass
 class UpdaterEssentials:
     net: Network
+    target_net: Network
     optim: torch.optim.Optimizer
     device: torch.device
     annealer: TemperatureAnnealer
@@ -89,9 +89,11 @@ def run_updater(
     if net_cfg is None:
         raise Exception("Network config is None")
     net = get_network_from_config(net_cfg)
+    target_net = get_network_from_config(net_cfg)
     if prev_run_dir is not None and not trainer_cfg.init_new_network_params:
         model_path = prev_run_dir / 'fixed_time_models' / f'm_{prev_run_idx}.pt'
         net = get_network_from_file(model_path)
+        target_net = get_network_from_file(model_path)
     game = get_game_from_config(game_cfg)
     # cuda
     if updater_cfg.use_gpu:
@@ -99,8 +101,8 @@ def run_updater(
         device = torch.device('cuda' if gpu_idx is None else f'cuda:{gpu_idx}')
     else:
         device = torch.device('cpu')
-    net = net.to(device)
-    net = net.train()
+    net = net.to(device).train()
+    target_net = target_net.to(device).train()
     # compile
     if trainer_cfg.compile_model:
         net = torch.compile(
@@ -109,7 +111,15 @@ def run_updater(
             mode=trainer_cfg.compile_mode,
             fullgraph=True,
         )
+        target_net = torch.compile(
+            model=target_net,
+            dynamic=False,
+            mode=trainer_cfg.compile_mode,
+            fullgraph=True,
+        )
     if not isinstance(net, Network):  # just for type checking
+        raise Exception(f"Nework is: {net}")
+    if not isinstance(target_net, Network):  # just for type checking
         raise Exception(f"Nework is: {net}")
     print(f"{net.num_params()=}", flush=True)
     info_queue.put_nowait({"Network Parameter": net.num_params()})
@@ -123,7 +133,7 @@ def run_updater(
             optim.load_state_dict(optim_state_dict)
         else:
             print(f"{datetime.now()} - WARNING: Cannot load optimizer from previous run directory ........", flush=True)
-    essentials = UpdaterEssentials(net=net, optim=optim, device=device, annealer=annealer)
+    essentials = UpdaterEssentials(net=net, target_net=target_net, optim=optim, device=device, annealer=annealer)
     stats = UpdaterStatistics(update_counter=update_counter)
     # restrict cpus
     pid = os.getpid()
@@ -258,7 +268,6 @@ def log_info(
     stats.updates_since_info = 0
     stats.value_losses = []
     stats.policy_losses = []
-    stats.length_losses = []
     stats.utility_losses = []
     stats.losses = []
     # send message
@@ -285,7 +294,7 @@ def perform_update(
     # compute loss and update
     essentials.optim.zero_grad()
     loss_time_start = time.time()
-    value_loss, policy_loss, utility_loss = compute_loss(
+    value_loss, val_output, policy_loss, utility_loss = compute_loss(
         sample=maybe_sample,
         net=essentials.net,
         device=essentials.device,
@@ -336,7 +345,7 @@ def compute_loss(
         device: torch.device,
         utility_loss: UtilityNorm,
         mse_policy_loss: bool,
-) -> tuple[torch.Tensor, Optional[torch.Tensor], Optional[torch.Tensor]]:
+) -> tuple[torch.Tensor, torch.Tensor, Optional[torch.Tensor], Optional[torch.Tensor]]:
     inputs = torch.from_numpy(sample.obs).to(device).float()
     values = torch.from_numpy(sample.values).to(device).float()
     policies = torch.from_numpy(sample.policies).to(device).float()
@@ -349,7 +358,7 @@ def compute_loss(
         action_loss = compute_policy_loss(action_output, policies, mse_policy_loss)
     if utility_loss != UtilityNorm.NONE:
         zero_sum_loss = compute_utility_loss(val_output, utility_loss)
-    return val_loss, action_loss, zero_sum_loss
+    return val_loss, val_output, action_loss, zero_sum_loss
 
 
 def save_optim_state(

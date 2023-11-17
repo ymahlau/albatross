@@ -44,7 +44,7 @@ def run_evaluator(
     # paths
     model_folder: Path = Path(os.getcwd()) / 'eval_models'
     # copy previous model to this directory
-    if not Path.exists(model_folder):
+    if not Path.exists(model_folder) and evaluator_cfg.save_checkpoints:
         model_folder.mkdir(parents=True, exist_ok=True)
     # initialization
     game = get_game_from_config(game_cfg)
@@ -146,7 +146,8 @@ def run_evaluator(
                 break
             # save model
             cur_model_path = model_folder / f"m_{eval_counter}.pt"
-            net.save(cur_model_path)
+            if evaluator_cfg.save_checkpoints:
+                net.save(cur_model_path)
             if stop_flag.value:
                 break
             # update counter

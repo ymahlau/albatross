@@ -24,6 +24,7 @@ class EvaluatorConfig:
         AreaControlSearchAgentConfig(),
     ])
     prevent_draw: bool = True
+    save_checkpoints: bool = False
 
 
 @dataclass
@@ -47,6 +48,7 @@ class UpdaterConfig:
     gradient_max_norm: Optional[float] = 1.0
     utility_loss: UtilityNorm = UtilityNorm.NONE
     mse_policy_loss: bool = False
+    value_reg_loss_factor: float = 0  # add value_output*factor to loss
 
 
 @dataclass
@@ -77,6 +79,7 @@ class WorkerConfig:
 @dataclass
 class SaverConfig:
     save_interval_sec: float = 6000
+    save_all_checkpoints: bool = False
 
 
 @dataclass

@@ -124,9 +124,10 @@ class TestOvercookedGame(unittest.TestCase):
         game_cfg = CrampedRoomOvercookedConfig()
         game = OvercookedGame(game_cfg)
         obs, _, _ = game.get_obs()
-        self.assertEqual(5, obs.shape[0])
+        self.assertEqual(2, obs.shape[0])
         self.assertEqual(5, obs.shape[1])
-        self.assertEqual(16, obs.shape[2])
+        self.assertEqual(5, obs.shape[2])
+        self.assertEqual(16, obs.shape[3])
 
     def test_equals(self):
         game_cfg = CrampedRoomOvercookedConfig()
