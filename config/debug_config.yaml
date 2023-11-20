@@ -58,7 +58,7 @@ data:
       cooking_time: 20
       flat_obs: false
       h: 4
-      horizon: 15
+      horizon: 20
       num_actions: 6
       num_players: 2
       reward_cfg:
@@ -97,7 +97,7 @@ data:
     __name__: InferenceServerConfig
     data:
       statistics_every_sec: 60
-      use_gpu: false
+      use_gpu: true
   info_qsize: 100
   init_new_network_params: false
   logger_cfg:
@@ -118,6 +118,7 @@ data:
   max_cpu_updater: 1
   max_cpu_worker: 2
   max_eval_per_worker: 400
+  merge_inference_update_gpu: true
   net_cfg:
     __module__: src.network.resnet
     __name__: OvercookedResNetConfig5x5
@@ -212,7 +213,7 @@ data:
       save_all_checkpoints: false
       save_interval_sec: 30
   single_sbr_temperature: true
-  temperature_input: false
+  temperature_input: true
   updater_cfg:
     __module__: src.trainer.config
     __name__: UpdaterConfig
@@ -242,6 +243,7 @@ data:
               - 1
               - 10
               init_temp: 0
+              sampling: false
           beta1: 0.9
           beta2: 0.99
           fused: false
@@ -251,7 +253,7 @@ data:
             value: ADAM_W
           weight_decay: 0.0001
       updates_until_distribution: 50
-      use_gpu: false
+      use_gpu: true
       utility_loss:
         __module__: src.game.values
         __name__: UtilityNorm
@@ -264,7 +266,21 @@ data:
     __module__: src.trainer.config
     __name__: WorkerConfig
     data:
-      anneal_cfgs: null
+      anneal_cfgs:
+      - __module__: src.supervised.annealer
+        __name__: TemperatureAnnealingConfig
+        data:
+          anneal_temps:
+          - 10
+          anneal_types:
+          - __module__: src.supervised.annealer
+            __name__: AnnealingType
+            value: COSINE
+          cyclic: true
+          end_times_min:
+          - 1
+          init_temp: 0
+          sampling: true
       exploration_prob: 0.5
       max_game_length: 8
       max_random_start_steps: 0
@@ -314,7 +330,7 @@ data:
               policy_prediction: true
               random_symmetry: false
               single_temperature: true
-              temperature_input: false
+              temperature_input: true
               utility_norm:
                 __module__: src.game.values
                 __name__: UtilityNorm

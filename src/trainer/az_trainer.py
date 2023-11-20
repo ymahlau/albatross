@@ -55,6 +55,8 @@ class AlphaZeroTrainer:
                     raise ValueError(f"Invalid number of annealing configs")
         if self.cfg.num_worker % self.cfg.num_inference_server != 0:
             raise ValueError(f"Number of workers needs to be divisible by number of inference server")
+        if self.cfg.merge_inference_update_gpu and self.cfg.num_inference_server > 1:
+            raise ValueError("Can only merge inference and updater gpu with a single inference server")
         # test if network and search config can be initialized
         if self.cfg.net_cfg is not None:
             _ = get_network_from_config(self.cfg.net_cfg)
@@ -186,7 +188,7 @@ class AlphaZeroTrainer:
                 if available_cpu_list is None:
                     raise Exception("This should never happen")
                 cpu_list_inference = available_cpu_list[cpu_counter:cpu_counter + self.cfg.max_cpu_inference_server]
-            gpu_idx = inference_id + self.cfg.updater_cfg.use_gpu
+            gpu_idx = inference_id if self.cfg.merge_inference_update_gpu else inference_id + self.cfg.updater_cfg.use_gpu
             kwargs_inference = {
                 'trainer_cfg': self.cfg,
                 'net_queue': inference_net_queue,

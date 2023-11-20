@@ -47,11 +47,11 @@ def start_training_from_structured_configs():
     Main method to start the training using dataclasses specified below
     """
 
-    temperature_input = False
+    temperature_input = True
     single_temperature = True
     # game
     # game_cfg = perform_choke_2_player(fully_connected=False, centered=True)
-    game_cfg = CrampedRoomOvercookedConfig(horizon=15)
+    game_cfg = CrampedRoomOvercookedConfig(horizon=20)
     # game_cfg = survive_on_7x7_4_player_royale()
     # game_cfg = perform_choke_5x5_4_player(centered=True)
     # game_cfg.all_actions_legal = False
@@ -155,14 +155,15 @@ def start_training_from_structured_configs():
     worker_cfg = WorkerConfig(
         search_cfg=search_cfg,
         policy_eval_cfg=policy_eval_cfg,
-        anneal_cfgs=None,
-        # anneal_cfgs=[TemperatureAnnealingConfig(
-        #     init_temp=0,
-		#     end_times_min=[0.1],
-		#     anneal_temps=[10],
-		#     anneal_types=[AnnealingType.LINEAR],
-		#     cyclic=True,
-		# )],
+        # anneal_cfgs=None,
+        anneal_cfgs=[TemperatureAnnealingConfig(
+            init_temp=0,
+		    end_times_min=[1],
+		    anneal_temps=[10],
+		    anneal_types=[AnnealingType.COSINE],
+		    cyclic=True,
+            sampling=True,
+		)],
 		# anneal_cfgs=[TemperatureAnnealingConfig(
         #     init_temp=1,
         #     end_times_min=[0.2 * (PHI ** i)],
@@ -216,7 +217,7 @@ def start_training_from_structured_configs():
     updater_cfg = UpdaterConfig(
         updates_until_distribution=50,
         optim_cfg=optim_cfg,
-        use_gpu=False,
+        use_gpu=True,
         utility_loss=UtilityNorm.NONE,
         mse_policy_loss=True,
         value_reg_loss_factor=0.01,
@@ -228,13 +229,13 @@ def start_training_from_structured_configs():
         id=0,
         updater_bucket_size=100,
         worker_episode_bucket_size=25,
-        wandb_mode='online',
+        wandb_mode='offline',
     )
     saver_cfg = SaverConfig(
         save_interval_sec=30,
     )
     inf_cfg = InferenceServerConfig(
-        use_gpu=False,
+        use_gpu=True,
     )
     trainer_cfg = AlphaZeroTrainerConfig(
         num_worker=2,  # IMPORTANT
@@ -269,6 +270,7 @@ def start_training_from_structured_configs():
         temperature_input=temperature_input,
         single_sbr_temperature=single_temperature,
         compile_model=False,
+        merge_inference_update_gpu=True,
     )
     # initialize yaml file and hydra
     print(os.getcwd())

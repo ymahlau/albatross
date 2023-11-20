@@ -1,6 +1,7 @@
 import math
 from dataclasses import dataclass, field
 from enum import Enum
+import random
 from typing import Optional
 
 import torch
@@ -22,6 +23,7 @@ class TemperatureAnnealingConfig:
     anneal_types: list[AnnealingType] = field(default_factory=lambda: [])
     end_times_min: list[float] = field(default_factory=lambda: [])
     cyclic: bool = False
+    sampling: bool = False
 
 class TemperatureAnnealer:
     """
@@ -39,6 +41,9 @@ class TemperatureAnnealer:
         self.n_phases = len(self.cfg.end_times_min)
 
     def __call__(self, time_passed_min: float):
+        # if sampling, draw random time between 0 and 1
+        if self.cfg.sampling:
+            time_passed_min = random.random()
         # if no scheduling specified, use const
         if not self.cfg.end_times_min:
             return self.cfg.init_temp
@@ -63,7 +68,7 @@ class TemperatureAnnealer:
                     phase_time = time_passed_min - start_time
                     phase_length = cur_end - start_time
                     break
-        if a_type is None:
+        if a_type is None or phase_time is None or start_temp is None or end_temp is None or phase_length is None:
             raise Exception(f"Unknown error occurred, this should never happen")
         # anneal function
         if a_type == AnnealingType.LINEAR or a_type == AnnealingType.LINEAR.value:

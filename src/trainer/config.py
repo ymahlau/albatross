@@ -128,3 +128,4 @@ class AlphaZeroTrainerConfig:
     save_state_after_seconds: int = 36000
     compile_model: bool = False
     compile_mode: str = 'reduce-overhead'  # Can also be max_autotune (currently does not work on rtx3090
+    merge_inference_update_gpu: bool = False  # updater and inference server use same gpu

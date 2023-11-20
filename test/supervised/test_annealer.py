@@ -75,8 +75,8 @@ class TestAnnealer(unittest.TestCase):
         end = 10
         times = np.linspace(start, end, resolution)
         cfg = TemperatureAnnealingConfig(
-            init_temp=1,
-            anneal_temps=[5],
+            init_temp=5,
+            anneal_temps=[1],
             anneal_types=[AnnealingType.COSINE],
             end_times_min=[4],
             cyclic=False,
