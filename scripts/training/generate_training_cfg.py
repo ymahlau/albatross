@@ -48,14 +48,16 @@ def generate_training_structured_configs():
     Main method to start the training using dataclasses specified below
     """
 
-    temperature_input = True
+    temperature_input = False
     single_temperature = True
     # game
     # game_cfg = perform_choke_2_player(fully_connected=False, centered=True)
-    game_cfg = CrampedRoomOvercookedConfig(horizon=20)
+    game_cfg = CrampedRoomOvercookedConfig(horizon=50)
     # game_cfg = survive_on_7x7_4_player_royale()
     # game_cfg = perform_choke_5x5_4_player(centered=True)
     # game_cfg.all_actions_legal = False
+    game_cfg.temperature_input = temperature_input
+    game_cfg.single_temperature_input = single_temperature
 
     # network
     eq_type = EquivarianceType.NONE
@@ -71,7 +73,7 @@ def generate_training_structured_configs():
     # net_cfg = EquivariantMobileNetConfig3x3(predict_game_len=True)
     # search
     # eval_func_cfg = NetworkEvalConfig(zero_sum_norm=ZeroSumNorm.LINEAR)
-    batch_size = 5000
+    batch_size = 10000
     # eval_func_cfg = NetworkEvalConfig(
     #     max_batch_size=batch_size,
     #     random_symmetry=False,
@@ -207,10 +209,10 @@ def generate_training_structured_configs():
         beta2=0.99,
     )
     collector_cfg = CollectorConfig(
-        buffer_size=int(1e4),
+        buffer_size=int(2e4),
         batch_size=batch_size,
         quick_start_buffer_path=None,
-        start_wait_n_samples=int(5e3),  # int(5e2),
+        start_wait_n_samples=int(2e4),  # int(5e2),
         # quick_start_buffer_path=Path(__file__).parent.parent.parent / 'buffer' / 'choke_1e3.pt',
         log_every_sec=20,
         validation_percentage=0.1,
@@ -221,7 +223,9 @@ def generate_training_structured_configs():
         use_gpu=True,
         utility_loss=UtilityNorm.FULL_COOP,
         mse_policy_loss=True,
-        value_reg_loss_factor=0.01,
+        value_reg_loss_factor=0.05,
+        policy_loss_factor=1,
+        utility_loss_factor=1,
     )
     logger_cfg = LoggerConfig(
         project_name="battlesnake_rl_test",
@@ -239,7 +243,7 @@ def generate_training_structured_configs():
         use_gpu=True,
     )
     trainer_cfg = AlphaZeroTrainerConfig(
-        num_worker=15,  # IMPORTANT
+        num_worker=40,  # IMPORTANT
         num_inference_server=1,
         save_state=False,
         save_state_after_seconds=30,

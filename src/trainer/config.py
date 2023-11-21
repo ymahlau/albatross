@@ -49,6 +49,8 @@ class UpdaterConfig:
     utility_loss: UtilityNorm = UtilityNorm.NONE
     mse_policy_loss: bool = False
     value_reg_loss_factor: float = 0  # add value_output*factor to loss
+    policy_loss_factor: float = 1
+    utility_loss_factor: float = 1
 
 
 @dataclass

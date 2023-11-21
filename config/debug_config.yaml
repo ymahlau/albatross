@@ -59,6 +59,7 @@ data:
       flat_obs: false
       h: 4
       horizon: 20
+      max_possible_reward: 18.285714285714285
       num_actions: 6
       num_players: 2
       reward_cfg:
@@ -106,19 +107,19 @@ data:
     data:
       buffer_gen: false
       id: 0
-      name: oc_first
+      name: null
       project_name: battlesnake_rl_test
-      updater_bucket_size: 1000
-      wandb_mode: online
+      updater_bucket_size: 100
+      wandb_mode: offline
       worker_episode_bucket_size: 25
   max_batch_size: 200
   max_cpu_evaluator: 1
-  max_cpu_inference_server: 2
+  max_cpu_inference_server: 1
   max_cpu_log_dist_save_collect: 1
-  max_cpu_updater: 2
-  max_cpu_worker: 11
+  max_cpu_updater: 1
+  max_cpu_worker: 2
   max_eval_per_worker: 400
-  merge_inference_update_gpu: false
+  merge_inference_update_gpu: true
   net_cfg:
     __module__: src.network.resnet
     __name__: OvercookedResNetConfig5x5
@@ -199,7 +200,7 @@ data:
             value: GROUP_NORM
           num_layers: 1
   num_inference_server: 1
-  num_worker: 15
+  num_worker: 2
   only_generate_buffer: false
   prev_run_dir: null
   prev_run_idx: null
@@ -252,12 +253,14 @@ data:
             __name__: OptimType
             value: ADAM_W
           weight_decay: 0.0001
+      policy_loss_factor: 1
       updates_until_distribution: 50
       use_gpu: true
       utility_loss:
         __module__: src.game.values
         __name__: UtilityNorm
         value: NONE
+      utility_loss_factor: 1
       value_reg_loss_factor: 0.01
   updater_in_qsize: 100
   updater_out_qsize: 10
@@ -342,10 +345,10 @@ data:
               utility_norm:
                 __module__: src.game.values
                 __name__: UtilityNorm
-                value: FULL_COOP
-      search_iterations: 2
+                value: NONE
+      search_iterations: 1
       temperature: 1
       use_symmetries: true
 hydra:
   run:
-    dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_oc_first
+    dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_None

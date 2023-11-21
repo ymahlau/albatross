@@ -12,8 +12,8 @@ from src.trainer.az_trainer import AlphaZeroTrainer, AlphaZeroTrainerConfig
 
 # @hydra.main(version_base=None, config_name='config', config_path=str(Path(__file__).parent / 'config_generated'))
 def main(cfg: AlphaZeroTrainerConfig):
-    torch.set_num_threads(1)
-    os.environ["OMP_NUM_THREADS"] = "1"
+    # torch.set_num_threads(1)
+    # os.environ["OMP_NUM_THREADS"] = "1"
     print(os.getcwd(), flush=True)
     print(OmegaConf.to_yaml(cfg), flush=True)
     cfg_dict = OmegaConf.to_container(cfg, resolve=True)

@@ -59,7 +59,7 @@ class OvercookedGame(Game):
         reward = CPP_LIB.lib.step_overcooked_cpp(self.state_p, action_p)
         self.reset_saved_properties()
         # compute return values
-        reward_arr = np.asarray([reward, reward], dtype=float)
+        reward_arr = np.asarray([reward, reward], dtype=float) / self.cfg.max_possible_reward
         done = self.turns_played >= self.cfg.horizon - 1  # turns played is only updated after the step
         return reward_arr, done, {}
 
@@ -127,7 +127,7 @@ class OvercookedGame(Game):
 
     def get_obs_shape(self, never_flatten=False) -> tuple[int, ...]:
         max_dim = max(self.cfg.h, self.cfg.w)
-        return max_dim, max_dim, 16
+        return max_dim, max_dim, 16 + self.cfg.temperature_input
 
     def get_obs(
             self, 
@@ -155,6 +155,8 @@ class OvercookedGame(Game):
                 if not single_temp and len(temperatures) != self.num_players:
                     raise ValueError(f"Invalid temperature length: {temperatures}")
                 temp_in = temperatures[0] if single_temp else temperatures[1 - player]
+            # scale temperature input to reasonable range
+            temp_in = temp_in / 10
             CPP_LIB.lib.construct_overcooked_encoding_cpp(
                 self.state_p,
                 arr_p,

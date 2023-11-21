@@ -38,6 +38,7 @@ class UpdaterStatistics:
     value_losses: list[float] = field(default_factory=lambda: [])
     policy_losses: list[float] = field(default_factory=lambda: [])
     utility_losses: list[float] = field(default_factory=lambda: [])
+    val_reg_losses: list[float] = field(default_factory=lambda: [])
     losses: list[float] = field(default_factory=lambda: [])
     idle_time_sum: float = 0
     backward_time_sum: float = 0
@@ -228,6 +229,11 @@ def log_info(
         'updater_value_median_loss': np.median(stats.value_losses).item(),
         'updater_value_max_loss': max(stats.value_losses),
         'updater_value_min_loss': min(stats.value_losses),
+        'updater_val_reg_avg_loss': sum(stats.val_reg_losses) / logger_cfg.updater_bucket_size,
+        'updater_val_reg_std_loss': np.std(stats.val_reg_losses).item(),
+        'updater_val_reg_median_loss': np.median(stats.val_reg_losses).item(),
+        'updater_val_reg_max_loss': max(stats.val_reg_losses),
+        'updater_val_reg_min_loss': min(stats.val_reg_losses),
         'updater_avg_loss': sum(stats.losses) / logger_cfg.updater_bucket_size,
         'updater_std_loss': np.std(stats.losses).item(),
         'updater_median_loss': np.median(stats.losses).item(),
@@ -269,6 +275,7 @@ def log_info(
     stats.value_losses = []
     stats.policy_losses = []
     stats.utility_losses = []
+    stats.val_reg_losses = []
     stats.losses = []
     # send message
     idle_time_start = time.time()
@@ -304,10 +311,14 @@ def perform_update(
     stats.loss_time_sum += time.time() - loss_time_start
     update_time_start = time.time()
     loss = value_loss
-    if essentials.net.cfg.predict_policy:
+    if policy_loss is not None:
+        policy_loss *= updater_cfg.policy_loss_factor
         loss += policy_loss
-    if updater_cfg.utility_loss != UtilityNorm.NONE:
+    if utility_loss is not None:
+        utility_loss *= updater_cfg.utility_loss_factor
         loss += utility_loss
+    val_reg_loss = updater_cfg.value_reg_loss_factor * torch.abs(val_output).mean()
+    loss += val_reg_loss
     loss.backward()
     # clip gradient norm
     if updater_cfg.gradient_max_norm is not None:
@@ -329,6 +340,7 @@ def perform_update(
     # update stats
     stats.losses += [loss.cpu().item()]
     stats.value_losses += [value_loss.cpu().item()]
+    stats.val_reg_losses += [val_reg_loss.cpu().item()]
     if policy_loss is not None:
         stats.policy_losses += [policy_loss.cpu().item()]
     if utility_loss is not None:

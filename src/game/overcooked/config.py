@@ -10,6 +10,9 @@ class OvercookedRewardConfig:
     soup_pickup: float
     soup_delivery: float
     start_cooking: float
+    
+    def single_cooking_reward(self):
+        return self.placement_in_pot * 3 + self.dish_pickup + self.start_cooking + self.soup_delivery
 
 
 @dataclass(kw_only=True)
@@ -18,6 +21,7 @@ class OvercookedGameConfig(GameConfig):
     start_pos: tuple[tuple[int, int, int], tuple[int, int, int]]  # x, y, orientation
     w: int
     h: int
+    max_possible_reward: float = field(default=-1)
     num_actions: int = field(default=6)
     num_players: int = field(default=2)
     reward_cfg: OvercookedRewardConfig = field(default_factory =lambda: OvercookedRewardConfig(
@@ -34,15 +38,12 @@ class OvercookedGameConfig(GameConfig):
     cooking_time: int = 20
 
 
-"""
-const int EMPTY_TILE = 0;
-const int COUNTER_TILE = 1;
-const int DISH_TILE = 2;
-const int ONION_TILE = 3;
-const int POT_TILE = 4;
-const int SERVING_TILE = 5;
-"""
-
+# const int EMPTY_TILE = 0;
+# const int COUNTER_TILE = 1;
+# const int DISH_TILE = 2;
+# const int ONION_TILE = 3;
+# const int POT_TILE = 4;
+# const int SERVING_TILE = 5;
 
 @dataclass
 class CrampedRoomOvercookedConfig(OvercookedGameConfig):
@@ -55,6 +56,10 @@ class CrampedRoomOvercookedConfig(OvercookedGameConfig):
         [1, 2, 1, 5, 1],
     ])
     start_pos: tuple[tuple[int, int, int], tuple[int, int, int]] = field(default_factory=lambda: ((1, 2, 0), (3, 1, 0)))
+    
+    def __post_init__(self):
+        single_cooking_reward = self.reward_cfg.single_cooking_reward()
+        self.max_possible_reward = single_cooking_reward
 
 
 @dataclass
