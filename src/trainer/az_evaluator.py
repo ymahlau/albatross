@@ -65,7 +65,7 @@ def run_evaluator(
         value_agent_cfg.search_cfg.eval_func_cfg.single_temperature = trainer_cfg.single_sbr_temperature # type: ignore
     value_agent = SearchAgent(value_agent_cfg)
     value_agent.replace_net(net)
-    value_agent.set_temperatures([12.5 for _ in range(game.num_players)])
+    value_agent.set_temperatures([5 for _ in range(game.num_players)])
     # policy player
     policy_agent = None
     if net.cfg.predict_policy:
@@ -74,7 +74,7 @@ def run_evaluator(
             policy_agent_cfg.temperature_input = True
             policy_agent_cfg.single_temperature = trainer_cfg.single_sbr_temperature
         policy_agent = get_agent_from_config(policy_agent_cfg)
-        policy_agent.set_temperatures([12.5 for _ in range(game.num_players)])
+        policy_agent.set_temperatures([5 for _ in range(game.num_players)])
         policy_agent.replace_net(net)
     # opponents
     opponent_list = []

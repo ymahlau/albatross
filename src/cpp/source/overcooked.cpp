@@ -373,10 +373,19 @@ void fill_layer_overcooked(float* arr, float value, int layer_id, int x_dim, int
     }
 }
 
-void construct_overcooked_encoding(OvercookedGameState* state, float* arr, int player){
+void construct_overcooked_encoding(
+        OvercookedGameState* state, 
+        float* arr, 
+        int player,
+        bool include_temperature,
+        float temperature
+){
     int x_dim = state->w;
     int y_dim = state->h;
     int z_dim = 16;
+    if (include_temperature){
+        z_dim += 1;
+    }
     int x_pad = 0;
     int y_pad = 0;
     if (x_dim != y_dim){
@@ -504,6 +513,11 @@ void construct_overcooked_encoding(OvercookedGameState* state, float* arr, int p
     // time step in environment: layer 15
     float time_remaining = (float) (state->horizon - state->turn) / (float) state->horizon;
     fill_layer_overcooked(arr, time_remaining, 15, x_dim, y_dim, z_dim);
+    // temperature: layer 16
+    if (include_temperature){
+        fill_layer_overcooked(arr, temperature, 16, x_dim, y_dim, z_dim);
+    }
+
 }
 
 

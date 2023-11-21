@@ -244,11 +244,11 @@ def log_info(
         msg_data['updater_policy_max_loss'] = max(stats.policy_losses)
         msg_data['updater_policy_min_loss'] = max(stats.policy_losses)
     if stats.utility_losses:
-        msg_data['updater_zerosum_avg_loss'] = sum(stats.utility_losses) / logger_cfg.updater_bucket_size
-        msg_data['updater_zerosum_std_loss'] = np.std(stats.utility_losses).item()
-        msg_data['updater_zerosum_median_loss'] = np.median(stats.utility_losses).item()
-        msg_data['updater_zerosum_max_loss'] = max(stats.utility_losses)
-        msg_data['updater_zerosum_min_loss'] = max(stats.utility_losses)
+        msg_data['updater_utility_avg_loss'] = sum(stats.utility_losses) / logger_cfg.updater_bucket_size
+        msg_data['updater_utility_std_loss'] = np.std(stats.utility_losses).item()
+        msg_data['updater_utility_median_loss'] = np.median(stats.utility_losses).item()
+        msg_data['updater_utility_max_loss'] = max(stats.utility_losses)
+        msg_data['updater_utility_min_loss'] = max(stats.utility_losses)
     if full_time > 0:
         msg_data['updates_per_min'] = logger_cfg.updater_bucket_size * 60 / full_time
     if stats.norm_n > 0:

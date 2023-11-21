@@ -13,6 +13,7 @@ logging_data/models
 outputs
 img
 a_data
+slurm/slurm-*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

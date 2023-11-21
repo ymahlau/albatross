@@ -420,8 +420,14 @@ extern "C" {
         char_overcooked_matrix(state, matrix);
     }
 
-    void construct_overcooked_encoding_cpp(OvercookedGameState* state, float* arr, int player){
-        construct_overcooked_encoding(state, arr, player);
+    void construct_overcooked_encoding_cpp(
+            OvercookedGameState* state, 
+            float* arr, 
+            int player, 
+            bool include_temperature,
+            float temperature
+    ){
+        construct_overcooked_encoding(state, arr, player, include_temperature, temperature);
     }
 
     bool equals_overcooked_cpp(OvercookedGameState* state, OvercookedGameState* other){

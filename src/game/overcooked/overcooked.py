@@ -129,8 +129,12 @@ class OvercookedGame(Game):
         max_dim = max(self.cfg.h, self.cfg.w)
         return max_dim, max_dim, 16
 
-    def get_obs(self, symmetry: Optional[int] = 0, temperatures: Optional[list[float]] = None,
-                single_temperature: Optional[bool] = None) -> tuple[
+    def get_obs(
+            self, 
+            symmetry: Optional[int] = 0, 
+            temperatures: Optional[list[float]] = None,
+            single_temperature: Optional[bool] = None
+    ) -> tuple[
         np.ndarray,
         dict[int, int],
         dict[int, int],
@@ -141,10 +145,22 @@ class OvercookedGame(Game):
         for player in range(2):
             arr = np.zeros(shape=self.get_obs_shape(), dtype=ct.c_float)
             arr_p = arr.ctypes.data_as(ct.POINTER(ct.c_float))
+            temp_in = 0
+            if self.cfg.temperature_input:
+                single_temp = self.cfg.single_temperature_input if single_temperature is None else single_temperature
+                if temperatures is None:
+                    raise ValueError(f"Need temperatures to generate encoding")
+                if single_temp and len(temperatures) != 1:
+                    raise ValueError(f"Cannot process multiple temperatures if single temperature input specified")
+                if not single_temp and len(temperatures) != self.num_players:
+                    raise ValueError(f"Invalid temperature length: {temperatures}")
+                temp_in = temperatures[0] if single_temp else temperatures[1 - player]
             CPP_LIB.lib.construct_overcooked_encoding_cpp(
                 self.state_p,
                 arr_p,
-                player
+                player,
+                self.cfg.temperature_input,
+                temp_in,
             )
             obs_list.append(arr)
         result = np.stack(obs_list, axis=0)

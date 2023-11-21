@@ -144,7 +144,7 @@ class NetworkAgent(Agent):
         # filter and sample
         player_idx = game.players_at_turn().index(player)
         filtered_probs = filter_illegal_and_normalize(perm_probs, game)[player_idx]
-        return filtered_probs, {}
+        return filtered_probs, {'values': self.net.retrieve_value_tensor(out_tensor).numpy()}
 
 @dataclass
 class BCNetworkAgentConfig(AgentConfig):
