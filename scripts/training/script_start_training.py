@@ -220,7 +220,7 @@ def start_training_from_structured_configs():
         use_gpu=True,
         utility_loss=UtilityNorm.NONE,
         mse_policy_loss=True,
-        value_reg_loss_factor=0.01,
+        value_reg_loss_factor=0.001,
     )
     logger_cfg = LoggerConfig(
         project_name="battlesnake_rl_test",
@@ -238,7 +238,7 @@ def start_training_from_structured_configs():
         use_gpu=True,
     )
     trainer_cfg = AlphaZeroTrainerConfig(
-        num_worker=2,  # IMPORTANT
+        num_worker=1,  # IMPORTANT
         num_inference_server=1,
         save_state=False,
         save_state_after_seconds=30,

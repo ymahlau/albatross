@@ -199,10 +199,10 @@ def generate_training_structured_configs():
     optim_cfg = OptimizerConfig(
         optim_type=OptimType.ADAM_W,
         anneal_cfg=TemperatureAnnealingConfig(
-            init_temp=0,
-            end_times_min=[10, 120],
-            anneal_temps=[1e-3, 1e-5],
-            anneal_types=[AnnealingType.LINEAR, AnnealingType.COSINE],
+            init_temp=1e-5,
+            end_times_min=[5, 15, 120],
+            anneal_temps=[1e-5, 1e-3, 1e-5],
+            anneal_types=[AnnealingType.CONST, AnnealingType.LINEAR, AnnealingType.COSINE],
         ),
         weight_decay=0.0001,
         beta1=0.9,
@@ -223,14 +223,14 @@ def generate_training_structured_configs():
         use_gpu=True,
         utility_loss=UtilityNorm.FULL_COOP,
         mse_policy_loss=True,
-        value_reg_loss_factor=0.05,
+        value_reg_loss_factor=0.001,
         policy_loss_factor=1,
         utility_loss_factor=1,
     )
     logger_cfg = LoggerConfig(
         project_name="battlesnake_rl_test",
         buffer_gen=False,
-        name='oc_first',
+        name=None,
         id=0,
         updater_bucket_size=int(1e3),
         worker_episode_bucket_size=25,

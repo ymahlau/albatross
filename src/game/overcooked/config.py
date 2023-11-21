@@ -21,7 +21,7 @@ class OvercookedGameConfig(GameConfig):
     start_pos: tuple[tuple[int, int, int], tuple[int, int, int]]  # x, y, orientation
     w: int
     h: int
-    max_possible_reward: float = field(default=-1)
+    reward_scaling_factor: float = field(default=1)
     num_actions: int = field(default=6)
     num_players: int = field(default=2)
     reward_cfg: OvercookedRewardConfig = field(default_factory =lambda: OvercookedRewardConfig(
@@ -56,10 +56,7 @@ class CrampedRoomOvercookedConfig(OvercookedGameConfig):
         [1, 2, 1, 5, 1],
     ])
     start_pos: tuple[tuple[int, int, int], tuple[int, int, int]] = field(default_factory=lambda: ((1, 2, 0), (3, 1, 0)))
-    
-    def __post_init__(self):
-        single_cooking_reward = self.reward_cfg.single_cooking_reward()
-        self.max_possible_reward = single_cooking_reward
+    reward_scaling_factor: float = field(default=0.1)
 
 
 @dataclass

@@ -59,7 +59,7 @@ class OvercookedGame(Game):
         reward = CPP_LIB.lib.step_overcooked_cpp(self.state_p, action_p)
         self.reset_saved_properties()
         # compute return values
-        reward_arr = np.asarray([reward, reward], dtype=float) / self.cfg.max_possible_reward
+        reward_arr = np.asarray([reward, reward], dtype=float) * self.cfg.reward_scaling_factor
         done = self.turns_played >= self.cfg.horizon - 1  # turns played is only updated after the step
         return reward_arr, done, {}
 
