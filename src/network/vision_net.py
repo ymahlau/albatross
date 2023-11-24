@@ -191,7 +191,7 @@ class VisionNetwork(Network, ABC):
                 if m.sin_cos:
                     nn.init.zeros_(m.layer.bias) # type: ignore
             elif isinstance(m, nn.Linear):
-                nn.init.orthogonal_(m.weight)
+                nn.init.orthogonal_(m.weight, gain=math.sqrt(2)) # type: ignore
                 if m.bias is not None:
                     nn.init.zeros_(m.bias)
 

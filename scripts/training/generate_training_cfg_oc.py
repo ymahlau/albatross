@@ -52,7 +52,7 @@ def generate_training_structured_configs():
     single_temperature = True
     # game
     # game_cfg = perform_choke_2_player(fully_connected=False, centered=True)
-    game_cfg = CrampedRoomOvercookedConfig(horizon=50)
+    game_cfg = CrampedRoomOvercookedConfig(horizon=400)
     # game_cfg = survive_on_7x7_4_player_royale()
     # game_cfg = perform_choke_5x5_4_player(centered=True)
     # game_cfg.all_actions_legal = False
@@ -87,6 +87,7 @@ def generate_training_structured_configs():
     #     max_batch_size=batch_size,
     # )
     eval_func_cfg = InferenceServerEvalConfig(
+        max_batch_size=batch_size,
         random_symmetry=False,
         temperature_input=temperature_input,
         single_temperature=single_temperature,
@@ -157,15 +158,15 @@ def generate_training_structured_configs():
     worker_cfg = WorkerConfig(
         search_cfg=search_cfg,
         policy_eval_cfg=policy_eval_cfg,
-        anneal_cfgs=None,
-        # anneal_cfgs=[TemperatureAnnealingConfig(
-        #     init_temp=0,
-		#     end_times_min=[1],
-		#     anneal_temps=[10],
-		#     anneal_types=[AnnealingType.COSINE],
-		#     cyclic=True,
-        #     sampling=True,
-		# )],
+        # anneal_cfgs=None,
+        anneal_cfgs=[TemperatureAnnealingConfig(
+            init_temp=0,
+		    end_times_min=[1],
+		    anneal_temps=[10],
+		    anneal_types=[AnnealingType.COSINE],
+		    cyclic=True,
+            sampling=True,
+		)],
 		# anneal_cfgs=[TemperatureAnnealingConfig(
         #     init_temp=1,
         #     end_times_min=[0.2 * (PHI ** i)],
@@ -199,7 +200,7 @@ def generate_training_structured_configs():
         optim_type=OptimType.ADAM_W,
         anneal_cfg=TemperatureAnnealingConfig(
             init_temp=1e-5,
-            end_times_min=[5, 15, 120],
+            end_times_min=[5, 60, 1440],
             anneal_temps=[1e-5, 1e-3, 1e-5],
             anneal_types=[AnnealingType.CONST, AnnealingType.LINEAR, AnnealingType.COSINE],
         ),
@@ -208,9 +209,9 @@ def generate_training_structured_configs():
         beta2=0.99,
     )
     collector_cfg = CollectorConfig(
-        buffer_size=int(5e4),
+        buffer_size=int(2e5),
         quick_start_buffer_path=None,
-        start_wait_n_samples=int(2e4),  # int(5e2),
+        start_wait_n_samples=int(1e5),  # int(5e2),
         # quick_start_buffer_path=Path(__file__).parent.parent.parent / 'buffer' / 'choke_1e3.pt',
         log_every_sec=20,
     )
@@ -219,9 +220,9 @@ def generate_training_structured_configs():
         optim_cfg=optim_cfg,
         use_gpu=True,
         utility_loss=UtilityNorm.FULL_COOP,
-        mse_policy_loss=False,
+        mse_policy_loss=True,
         value_reg_loss_factor=1e-4,
-        policy_loss_factor=0.2,
+        policy_loss_factor=10,
         utility_loss_factor=1,
     )
     logger_cfg = LoggerConfig(
@@ -240,10 +241,10 @@ def generate_training_structured_configs():
         use_gpu=True,
     )
     trainer_cfg = AlphaZeroTrainerConfig(
-        num_worker=40,  # IMPORTANT
-        num_inference_server=1,
+        num_worker=80,  # IMPORTANT
+        num_inference_server=3,
         save_state=False,
-        save_state_after_seconds=30,
+        save_state_after_seconds=600,
         net_cfg=net_cfg,
         game_cfg=game_cfg,
         updater_cfg=updater_cfg,
@@ -264,11 +265,11 @@ def generate_training_structured_configs():
         prev_run_idx=None,
         only_generate_buffer=False,
         restrict_cpu=True,  # only works on LINUX
-        max_cpu_updater=2,
-        max_cpu_worker=11,
+        max_cpu_updater=4,
+        max_cpu_worker=22,
         max_cpu_evaluator=1,
         max_cpu_log_dist_save_collect=1,
-        max_cpu_inference_server=2,
+        max_cpu_inference_server=6,
         temperature_input=temperature_input,
         single_sbr_temperature=single_temperature,
         compile_model=False,

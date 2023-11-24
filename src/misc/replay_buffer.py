@@ -129,7 +129,11 @@ class ReplayBuffer:
                 raise ValueError(f"grouped sampling not implemented for more than two players")
             if sample_size % 2 != 0:
                 raise ValueError(f"sample size needs to be even for grouped sampling")
-            sampled_idx = np.random.choice(math.floor(len(self) / 2), size=math.floor(sample_size / 2), replace=False)
+            max_idx = math.floor(len(self) / 2)
+            # vals = np.maximum(self.content.dc_val[:max_idx], 0) + (1 / len(self))
+            # probs = (vals / vals.sum())[:, 0]
+            # sampled_idx = np.random.choice(max_idx, size=math.floor(sample_size / 2), replace=False, p=probs)
+            sampled_idx = np.random.choice(max_idx, size=math.floor(sample_size / 2), replace=False)
             obs = np.stack([self.content.dc_obs[2 * sampled_idx], self.content.dc_obs[2 * sampled_idx + 1]])
             obs = np.reshape(obs, [2 * obs.shape[1], *self.cfg.obs_shape])
             values = np.stack([self.content.dc_val[2 * sampled_idx], self.content.dc_val[2 * sampled_idx + 1]])

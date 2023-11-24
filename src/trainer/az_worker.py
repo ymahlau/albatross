@@ -138,6 +138,8 @@ def run_worker(
                     game=game,
                     iterations=worker_cfg.search_iterations,
                 )
+                if values[0] > 1.2:
+                    print(f"{values[0]:.2f}, {values[1]:.2f}, {action_probs=}".replace("\n", ""), flush=True)
                 if debug:
                     print(f"{values=}")
                     print(f"{action_probs=}")

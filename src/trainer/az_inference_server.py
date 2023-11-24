@@ -84,6 +84,7 @@ def run_inference_server(
     input_np = input_np.reshape((n, *obs_shape))
     output_arr_np = np.frombuffer(output_arr, dtype=np.float32)
     output_arr_np = output_arr_np.reshape((n, out_shape))
+    start_phase = True
     # statistics
     stats = InferenceServerStats()
     # processing loop
@@ -97,6 +98,7 @@ def run_inference_server(
             if maybe_state_dict is not None:
                 net.load_state_dict(maybe_state_dict)
                 net = net.eval()
+                start_phase = False
             stats.load_time_sum += time.time() - load_time_start
             # get ready input data
             input_rdy_cpy = np.array(np.copy(input_rdy_np), dtype=bool)
@@ -106,23 +108,28 @@ def run_inference_server(
             obs_filtered = input_np[input_rdy_cpy]
             n = obs_filtered.shape[0]
             # forward pass for all encodings, but do not exceed max batch size
-            if n <= trainer_cfg.max_batch_size:
-                enc_tensor = torch.from_numpy(obs_filtered).to(device)
-                out_tensor_with_grad = net(enc_tensor)
-                out_tensor = out_tensor_with_grad.cpu().detach().float().numpy()
+            if start_phase:
+                out_tensor = torch.zeros(size=(n, net.output_size), dtype=torch.float32)
             else:
-                start_idx = 0
-                out_tensor_list = []
-                end_idx_list = list(range(trainer_cfg.max_batch_size, n, trainer_cfg.max_batch_size))
-                if end_idx_list[-1] < n:
-                    end_idx_list.append(n)
-                for end_idx in end_idx_list:
-                    enc_tensor = torch.from_numpy(obs_filtered[start_idx:end_idx]).to(device)
-                    out_tensor_part_with_grad = net(enc_tensor)
-                    out_tensor_part = out_tensor_part_with_grad.cpu().detach().numpy()
-                    out_tensor_list.append(out_tensor_part)
-                    start_idx = end_idx
-                out_tensor = np.concatenate(out_tensor_list, axis=0)
+                if n <= trainer_cfg.max_batch_size:
+                    enc_tensor = torch.from_numpy(obs_filtered).to(device)
+                    out_tensor_with_grad = net(enc_tensor)
+                    out_tensor = out_tensor_with_grad.cpu().detach().float().numpy()
+                else:
+                    start_idx = 0
+                    out_tensor_list = []
+                    end_idx_list = list(range(trainer_cfg.max_batch_size, n, trainer_cfg.max_batch_size))
+                    if end_idx_list[-1] < n:
+                        end_idx_list.append(n)
+                    for end_idx in end_idx_list:
+                        enc_tensor = torch.from_numpy(obs_filtered[start_idx:end_idx]).to(device)
+                        out_tensor_part_with_grad = net(enc_tensor)
+                        out_tensor_part = out_tensor_part_with_grad.cpu().detach().numpy()
+                        out_tensor_list.append(out_tensor_part)
+                        del out_tensor_part_with_grad
+                        del enc_tensor
+                        start_idx = end_idx
+                    out_tensor = np.concatenate(out_tensor_list, axis=0)
             # send output back to processes
             input_rdy_np[input_rdy_cpy] = 0
             output_arr_np[input_rdy_cpy] = out_tensor

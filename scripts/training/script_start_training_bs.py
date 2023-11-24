@@ -19,7 +19,6 @@ from src.game.values import UtilityNorm
 from src.misc.const import PHI
 from src.misc.serialization import serialize_dataclass
 from src.network.fcn import MediumHeadConfig
-from src.network.initialization import get_network_from_config
 from src.network.mobile_one import MobileOneConfig3x3
 from src.network.mobilenet_v3 import MobileNetConfig3x3, MobileNetConfig5x5
 from src.network.resnet import ResNetConfig3x3, ResNetConfig7x7Best, OvercookedResNetConfig5x5
@@ -43,7 +42,7 @@ from src.trainer.policy_eval import PolicyEvalType, PolicyEvalConfig
 from start_training import main
 
 
-def generate_training_structured_configs():
+def start_training_from_structured_configs():
     """
     Main method to start the training using dataclasses specified below
     """
@@ -51,29 +50,27 @@ def generate_training_structured_configs():
     temperature_input = False
     single_temperature = True
     # game
-    # game_cfg = perform_choke_2_player(fully_connected=False, centered=True)
-    game_cfg = CrampedRoomOvercookedConfig(horizon=50)
+    game_cfg = perform_choke_2_player(fully_connected=False, centered=True)
+    # game_cfg = CrampedRoomOvercookedConfig(horizon=20)
     # game_cfg = survive_on_7x7_4_player_royale()
     # game_cfg = perform_choke_5x5_4_player(centered=True)
     # game_cfg.all_actions_legal = False
-    game_cfg.temperature_input = temperature_input
-    game_cfg.single_temperature_input = single_temperature
 
     # network
     eq_type = EquivarianceType.NONE
-    # net_cfg = ResNetConfig3x3(predict_policy=True, eq_type=eq_type, lff_features=False)
+    net_cfg = ResNetConfig3x3(predict_policy=True, eq_type=eq_type, lff_features=False)
     # net_cfg = MobileNetConfig3x3(predict_policy=True, predict_game_len=False, eq_type=eq_type)
     # net_cfg = MobileOneConfig3x3(predict_policy=True, predict_game_len=False, eq_type=eq_type)
-    # net_cfg = MobileNetConfig5x5(predict_policy=True, predict_game_len=False, eq_type=eq_type)
+    # net_cfg = MobileNetConfig5x5(predict_policy=True, eq_type=eq_type)
     # net_cfg = ResNetConfig7x7Best()
-    net_cfg = OvercookedResNetConfig5x5(predict_policy=True, eq_type=eq_type, lff_features=False)
+    # net_cfg = OvercookedResNetConfig5x5(predict_policy=True, eq_type=eq_type, lff_features=False)
 
-    # net_cfg.value_head_cfg.final_activation = ActivationType.TANH
+    net_cfg.value_head_cfg.final_activation = ActivationType.TANH
 
     # net_cfg = EquivariantMobileNetConfig3x3(predict_game_len=True)
     # search
     # eval_func_cfg = NetworkEvalConfig(zero_sum_norm=ZeroSumNorm.LINEAR)
-    batch_size = 10000
+    batch_size = 200
     # eval_func_cfg = NetworkEvalConfig(
     #     max_batch_size=batch_size,
     #     random_symmetry=False,
@@ -101,7 +98,7 @@ def generate_training_structured_configs():
     # sel_func_cfg = UncertaintySelectionConfig(informed=True)
     # backup_func_cfg = NashBackupConfig()
     backup_func_cfg = LogitBackupConfig(
-        num_iterations=150,
+        num_iterations=100,
         init_temperatures=[10 for _ in range(game_cfg.num_players)],
         sbr_mode=SbrMode.NAGURNEY,
     )
@@ -119,7 +116,7 @@ def generate_training_structured_configs():
     # backup_func_cfg = StandardBackupConfig()
     # backup_func_cfg = Exp3BackupConfig()
     # backup_func_cfg = RegretMatchingBackupConfig(avg_backup=True)
-    extraction_func_cfg = SpecialExtractConfig(utility_norm=UtilityNorm.FULL_COOP)
+    extraction_func_cfg = SpecialExtractConfig(utility_norm=UtilityNorm.NONE)
     # extraction_func_cfg = StandardExtractConfig()
     # extraction_func_cfg = MeanPolicyExtractConfig()
     # extraction_func_cfg = PolicyExtractConfig()
@@ -173,11 +170,11 @@ def generate_training_structured_configs():
         #     anneal_types=[AnnealingType.LINEAR],
         #     cyclic=True
         # ) for i in range(game_cfg.num_players)],
-        search_iterations=2,
+        search_iterations=1,
         temperature=1,
         max_random_start_steps=0,
         use_symmetries=True,
-        quick_start=False,
+        quick_start=True,
         max_game_length=8,
         prevent_draw=False,
         exploration_prob=0.5,
@@ -193,24 +190,24 @@ def generate_training_structured_configs():
             # AreaControlSearchAgentConfig(),
             # CopyCatSearchAgentConfig()
         ],
-        prevent_draw=False,
+        prevent_draw=True,
     )
     optim_cfg = OptimizerConfig(
         optim_type=OptimType.ADAM_W,
         anneal_cfg=TemperatureAnnealingConfig(
-            init_temp=1e-5,
-            end_times_min=[5, 15, 120],
-            anneal_temps=[1e-5, 1e-3, 1e-5],
-            anneal_types=[AnnealingType.CONST, AnnealingType.LINEAR, AnnealingType.COSINE],
+            init_temp=0,
+            end_times_min=[1, 10],
+            anneal_temps=[1e-3, 1e-5],
+            anneal_types=[AnnealingType.LINEAR, AnnealingType.COSINE],
         ),
         weight_decay=0.0001,
         beta1=0.9,
         beta2=0.99,
     )
     collector_cfg = CollectorConfig(
-        buffer_size=int(5e4),
+        buffer_size=500,
         quick_start_buffer_path=None,
-        start_wait_n_samples=int(2e4),  # int(5e2),
+        start_wait_n_samples=500,  # int(5e2),
         # quick_start_buffer_path=Path(__file__).parent.parent.parent / 'buffer' / 'choke_1e3.pt',
         log_every_sec=20,
     )
@@ -218,29 +215,27 @@ def generate_training_structured_configs():
         updates_until_distribution=50,
         optim_cfg=optim_cfg,
         use_gpu=True,
-        utility_loss=UtilityNorm.FULL_COOP,
-        mse_policy_loss=False,
-        value_reg_loss_factor=1e-4,
-        policy_loss_factor=0.2,
-        utility_loss_factor=1,
+        utility_loss=UtilityNorm.NONE,
+        mse_policy_loss=True,
+        value_reg_loss_factor=0.001,
     )
     logger_cfg = LoggerConfig(
         project_name="battlesnake_rl_test",
         buffer_gen=False,
         name=None,
         id=0,
-        updater_bucket_size=int(1e3),
+        updater_bucket_size=100,
         worker_episode_bucket_size=25,
-        wandb_mode='online',
+        wandb_mode='offline',
     )
     saver_cfg = SaverConfig(
-        save_interval_sec=60,
+        save_interval_sec=30,
     )
     inf_cfg = InferenceServerConfig(
         use_gpu=True,
     )
     trainer_cfg = AlphaZeroTrainerConfig(
-        num_worker=40,  # IMPORTANT
+        num_worker=1,  # IMPORTANT
         num_inference_server=1,
         save_state=False,
         save_state_after_seconds=30,
@@ -264,15 +259,15 @@ def generate_training_structured_configs():
         prev_run_idx=None,
         only_generate_buffer=False,
         restrict_cpu=True,  # only works on LINUX
-        max_cpu_updater=2,
-        max_cpu_worker=11,
+        max_cpu_updater=1,
+        max_cpu_worker=2,
         max_cpu_evaluator=1,
         max_cpu_log_dist_save_collect=1,
-        max_cpu_inference_server=2,
+        max_cpu_inference_server=1,
         temperature_input=temperature_input,
         single_sbr_temperature=single_temperature,
         compile_model=False,
-        merge_inference_update_gpu=False,
+        merge_inference_update_gpu=True,
     )
     # initialize yaml file and hydra
     print(os.getcwd())
@@ -280,16 +275,20 @@ def generate_training_structured_configs():
     yaml_str = yaml.dump(exported_dict)
     # yaml_str = OmegaConf.to_yaml(trainer_cfg)
     yaml_str += 'hydra:\n  run:\n    dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_' + f'{logger_cfg.name}'
-    config_name = f'cfg_{logger_cfg.name}_{logger_cfg.id}'
+    config_name = 'debug_config'
     config_dir = Path(__file__).parent.parent.parent / 'config'
     cur_config_file = config_dir / f'{config_name}.yaml'
     with open(cur_config_file, 'w') as f:
         f.write(yaml_str)
-    net_cfg.game_cfg = game_cfg
-    net = get_network_from_config(net_cfg)
-    # trainer = AlphaZeroTrainer(trainer_cfg)
-    print(net.num_params())
+
+    sys.argv = [
+        'cmd',  # this is ignored
+        'hydra.job.chdir=True',
+        # ... other dynamically added parameters
+    ]
+    # hydra.main(version_base=None)(main)()
+    hydra.main(config_path=str(config_dir), config_name=config_name, version_base=None)(main)()
 
 
 if __name__ == '__main__':
-    generate_training_structured_configs()
+    start_training_from_structured_configs()

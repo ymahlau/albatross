@@ -14,7 +14,7 @@ from src.game.battlesnake.battlesnake import BattleSnakeGame
 from src.game.battlesnake.bootcamp.test_envs_3x3 import perform_choke_2_player
 from src.game.battlesnake.bootcamp.test_envs_5x5 import perform_choke_5x5_4_player
 from src.game.battlesnake.bootcamp.test_envs_7x7 import survive_on_7x7_4_player_royale
-from src.game.overcooked.config import CrampedRoomOvercookedConfig
+from src.game.overcooked.config import CrampedRoomOvercookedConfig, OneStateCrampedRoomOvercookedConfig, Simple2CrampedRoomOvercookedConfig, SimpleCrampedRoomOvercookedConfig, TwoStateCrampedRoomOvercookedConfig
 from src.game.values import UtilityNorm
 from src.misc.const import PHI
 from src.misc.serialization import serialize_dataclass
@@ -47,14 +47,15 @@ def start_training_from_structured_configs():
     Main method to start the training using dataclasses specified below
     """
 
-    temperature_input = True
+    temperature_input = False
     single_temperature = True
     # game
     # game_cfg = perform_choke_2_player(fully_connected=False, centered=True)
-    game_cfg = CrampedRoomOvercookedConfig(horizon=20)
+    # game_cfg = CrampedRoomOvercookedConfig(horizon=10)
     # game_cfg = survive_on_7x7_4_player_royale()
     # game_cfg = perform_choke_5x5_4_player(centered=True)
     # game_cfg.all_actions_legal = False
+    game_cfg = Simple2CrampedRoomOvercookedConfig()
 
     # network
     eq_type = EquivarianceType.NONE
@@ -65,12 +66,10 @@ def start_training_from_structured_configs():
     # net_cfg = ResNetConfig7x7Best()
     net_cfg = OvercookedResNetConfig5x5(predict_policy=True, eq_type=eq_type, lff_features=False)
 
-    net_cfg.value_head_cfg.final_activation = ActivationType.TANH
-
     # net_cfg = EquivariantMobileNetConfig3x3(predict_game_len=True)
     # search
     # eval_func_cfg = NetworkEvalConfig(zero_sum_norm=ZeroSumNorm.LINEAR)
-    batch_size = 200
+    batch_size = 3000
     # eval_func_cfg = NetworkEvalConfig(
     #     max_batch_size=batch_size,
     #     random_symmetry=False,
@@ -84,10 +83,11 @@ def start_training_from_structured_configs():
     #     max_batch_size=batch_size,
     # )
     eval_func_cfg = InferenceServerEvalConfig(
-        max_batch_size=batch_size,
         random_symmetry=False,
         temperature_input=temperature_input,
         single_temperature=single_temperature,
+        min_clip_value=-math.inf,
+        max_clip_value=math.inf,
     )
     
     
@@ -99,8 +99,8 @@ def start_training_from_structured_configs():
     # sel_func_cfg = UncertaintySelectionConfig(informed=True)
     # backup_func_cfg = NashBackupConfig()
     backup_func_cfg = LogitBackupConfig(
-        num_iterations=100,
-        init_temperatures=[10 for _ in range(game_cfg.num_players)],
+        num_iterations=150,
+        init_temperatures=[15 for _ in range(game_cfg.num_players)],
         sbr_mode=SbrMode.NAGURNEY,
     )
     # backup_func_cfg = EnemyExploitationBackupConfig(
@@ -117,7 +117,7 @@ def start_training_from_structured_configs():
     # backup_func_cfg = StandardBackupConfig()
     # backup_func_cfg = Exp3BackupConfig()
     # backup_func_cfg = RegretMatchingBackupConfig(avg_backup=True)
-    extraction_func_cfg = SpecialExtractConfig(utility_norm=UtilityNorm.NONE)
+    extraction_func_cfg = SpecialExtractConfig(utility_norm=UtilityNorm.FULL_COOP)
     # extraction_func_cfg = StandardExtractConfig()
     # extraction_func_cfg = MeanPolicyExtractConfig()
     # extraction_func_cfg = PolicyExtractConfig()
@@ -136,7 +136,7 @@ def start_training_from_structured_configs():
         backup_func_cfg=backup_func_cfg,
         extract_func_cfg=extraction_func_cfg,
         average_eval=False,
-        discount=0.95,
+        discount=0.99,
     )
     # search_cfg = SMOOSConfig(
     #     eval_func_cfg=eval_func_cfg,
@@ -155,15 +155,15 @@ def start_training_from_structured_configs():
     worker_cfg = WorkerConfig(
         search_cfg=search_cfg,
         policy_eval_cfg=policy_eval_cfg,
-        # anneal_cfgs=None,
-        anneal_cfgs=[TemperatureAnnealingConfig(
-            init_temp=0,
-		    end_times_min=[1],
-		    anneal_temps=[10],
-		    anneal_types=[AnnealingType.COSINE],
-		    cyclic=True,
-            sampling=True,
-		)],
+        anneal_cfgs=None,
+        # anneal_cfgs=[TemperatureAnnealingConfig(
+        #     init_temp=0,
+		#     end_times_min=[1],
+		#     anneal_temps=[10],
+		#     anneal_types=[AnnealingType.COSINE],
+		#     cyclic=True,
+        #     sampling=True,
+		# )],
 		# anneal_cfgs=[TemperatureAnnealingConfig(
         #     init_temp=1,
         #     end_times_min=[0.2 * (PHI ** i)],
@@ -175,13 +175,13 @@ def start_training_from_structured_configs():
         temperature=1,
         max_random_start_steps=0,
         use_symmetries=True,
-        quick_start=True,
+        quick_start=False,
         max_game_length=8,
         prevent_draw=False,
-        exploration_prob=0.5,
+        exploration_prob=0,
     )
     evaluator_cfg = EvaluatorConfig(
-        eval_rate_sec=10,
+        eval_rate_sec=20,
         num_episodes=50,
         temperature=1,
         enemy_iterations=100,
@@ -197,7 +197,7 @@ def start_training_from_structured_configs():
         optim_type=OptimType.ADAM_W,
         anneal_cfg=TemperatureAnnealingConfig(
             init_temp=0,
-            end_times_min=[1, 10],
+            end_times_min=[5, 40],
             anneal_temps=[1e-3, 1e-5],
             anneal_types=[AnnealingType.LINEAR, AnnealingType.COSINE],
         ),
@@ -206,21 +206,22 @@ def start_training_from_structured_configs():
         beta2=0.99,
     )
     collector_cfg = CollectorConfig(
-        buffer_size=500,
-        batch_size=batch_size,
+        buffer_size=20000,
         quick_start_buffer_path=None,
-        start_wait_n_samples=500,  # int(5e2),
+        start_wait_n_samples=20000,  # int(5e2),
         # quick_start_buffer_path=Path(__file__).parent.parent.parent / 'buffer' / 'choke_1e3.pt',
         log_every_sec=20,
-        validation_percentage=0.1,
     )
     updater_cfg = UpdaterConfig(
-        updates_until_distribution=50,
+        updates_until_distribution=5,
         optim_cfg=optim_cfg,
         use_gpu=True,
         utility_loss=UtilityNorm.NONE,
         mse_policy_loss=True,
-        value_reg_loss_factor=0.001,
+        policy_loss_factor=1,
+        value_reg_loss_factor=0,
+        utility_loss_factor=1,
+        
     )
     logger_cfg = LoggerConfig(
         project_name="battlesnake_rl_test",
@@ -229,7 +230,7 @@ def start_training_from_structured_configs():
         id=0,
         updater_bucket_size=100,
         worker_episode_bucket_size=25,
-        wandb_mode='offline',
+        wandb_mode='online',
     )
     saver_cfg = SaverConfig(
         save_interval_sec=30,
@@ -238,7 +239,7 @@ def start_training_from_structured_configs():
         use_gpu=True,
     )
     trainer_cfg = AlphaZeroTrainerConfig(
-        num_worker=1,  # IMPORTANT
+        num_worker=10,  # IMPORTANT
         num_inference_server=1,
         save_state=False,
         save_state_after_seconds=30,
@@ -263,7 +264,7 @@ def start_training_from_structured_configs():
         only_generate_buffer=False,
         restrict_cpu=True,  # only works on LINUX
         max_cpu_updater=1,
-        max_cpu_worker=2,
+        max_cpu_worker=10,
         max_cpu_evaluator=1,
         max_cpu_log_dist_save_collect=1,
         max_cpu_inference_server=1,

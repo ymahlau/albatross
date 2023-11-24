@@ -156,7 +156,6 @@ class InferenceServerEvalConfig(EvalFuncConfig):
     init_temperatures: Optional[list[float]] = None
     temperature_input: bool = False
     single_temperature: bool = True
-    max_batch_size: int = 128
     random_symmetry: bool = False
     min_clip_value: float = -1
     max_clip_value: float = 1

@@ -60,8 +60,6 @@ def run_collector(
     pid = os.getpid()
     state_save_dir = Path(os.getcwd()) / 'state'
     game = get_game_from_config(game_cfg)
-    if only_generate_buffer:
-        collector_cfg.validation_percentage = 0
     # buffer
     buffer_cfg = buffer_config_from_game(game, collector_cfg.buffer_size)
     buffer = ReplayBuffer(buffer_cfg, game_cfg=game_cfg)
@@ -101,7 +99,7 @@ def run_collector(
                     stop_flag.value = True
                     break
             # check if new data has arrived
-            receive_new_data(essentials, stats, collector_cfg)
+            receive_new_data(essentials, stats)
             if only_generate_buffer:
                 continue
             # maybe save optimizer state
@@ -114,7 +112,7 @@ def run_collector(
                 sample_data(
                     essentials=essentials,
                     stats=stats,
-                    batch_size=collector_cfg.batch_size,
+                    batch_size=trainer_cfg.max_batch_size,
                     updater_queue_maxsize=updater_queue_maxsize,
                     grouped_sampling=grouped_sampling,
                 )
@@ -146,7 +144,6 @@ def data_to_buffer(
 def receive_new_data(
         essentials: CollectorEssentials,
         stats: CollectorStatistics,
-        collector_cfg: CollectorConfig,
 ):
     buffer_time_start = time.time()
     num_samples = 0

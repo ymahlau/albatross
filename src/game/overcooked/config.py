@@ -18,7 +18,7 @@ class OvercookedRewardConfig:
 @dataclass(kw_only=True)
 class OvercookedGameConfig(GameConfig):
     board: list[list[int]]
-    start_pos: tuple[tuple[int, int, int], tuple[int, int, int]]  # x, y, orientation
+    start_pos: tuple[tuple[int, int, int, int], tuple[int, int, int, int]]  # x, y, orientation
     w: int
     h: int
     reward_scaling_factor: float = field(default=1)
@@ -29,7 +29,7 @@ class OvercookedGameConfig(GameConfig):
         dish_pickup=3,
         soup_pickup=5,
         soup_delivery=20,
-        start_cooking=0,
+        start_cooking=3,
     ))
     horizon: int = 400
     temperature_input: bool = False
@@ -55,8 +55,8 @@ class CrampedRoomOvercookedConfig(OvercookedGameConfig):
         [1, 0, 0, 0, 1],
         [1, 2, 1, 5, 1],
     ])
-    start_pos: tuple[tuple[int, int, int], tuple[int, int, int]] = field(default_factory=lambda: ((1, 2, 0), (3, 1, 0)))
-    reward_scaling_factor: float = field(default=0.1)
+    start_pos: tuple[tuple[int, int, int, int], tuple[int, int, int, int]] = field(default_factory=lambda: ((1, 2, 0, 0), (3, 1, 0, 0)))
+    reward_scaling_factor: float = field(default=0.5)
 
 
 @dataclass
@@ -70,7 +70,7 @@ class AsymmetricAdvantageOvercookedConfig(OvercookedGameConfig):
         [1, 0, 0, 0, 4, 0, 0, 0, 1],
         [1, 1, 1, 2, 1, 2, 1, 1, 1],
     ])
-    start_pos: tuple[tuple[int, int, int], tuple[int, int, int]] = field(default_factory=lambda: ((6, 2, 0), (1, 3, 0)))
+    start_pos: tuple[tuple[int, int, int, int], tuple[int, int, int, int]] = field(default_factory=lambda: ((6, 2, 0, 0), (1, 3, 0, 0)))
 
 
 @dataclass
@@ -84,7 +84,7 @@ class CoordinationRingOvercookedConfig(OvercookedGameConfig):
         [3, 0, 0, 0, 1],
         [1, 3, 5, 1, 1],
     ])
-    start_pos: tuple[tuple[int, int, int], tuple[int, int, int]] = field(default_factory=lambda: ((2, 1, 0), (1, 2, 0)))
+    start_pos: tuple[tuple[int, int, int, int], tuple[int, int, int, int]] = field(default_factory=lambda: ((2, 1, 0, 0), (1, 2, 0, 0)))
 
 
 @dataclass
@@ -98,7 +98,7 @@ class ForcedCoordinationOvercookedConfig(OvercookedGameConfig):
         [2, 0, 1, 0, 1],
         [1, 1, 1, 5, 1],
     ])
-    start_pos: tuple[tuple[int, int, int], tuple[int, int, int]] = field(default_factory=lambda: ((3, 1, 0), (1, 2, 0)))
+    start_pos: tuple[tuple[int, int, int, int], tuple[int, int, int, int]] = field(default_factory=lambda: ((3, 1, 0, 0), (1, 2, 0, 0)))
 
 
 @dataclass
@@ -112,4 +112,64 @@ class CounterCircuitOvercookedConfig(OvercookedGameConfig):
         [1, 0, 0, 0, 0, 0, 0, 1],
         [1, 1, 1, 3, 3, 1, 1, 1],
     ])
-    start_pos: tuple[tuple[int, int, int], tuple[int, int, int]] = field(default_factory=lambda: ((3, 3, 0), (3, 1, 0)))
+    start_pos: tuple[tuple[int, int, int, int], tuple[int, int, int, int]] = field(default_factory=lambda: ((3, 3, 0, 0), (3, 1, 0, 0)))
+
+
+@dataclass
+class OneStateCrampedRoomOvercookedConfig(OvercookedGameConfig):
+    w: int = field(default=5)
+    h: int = field(default=4)
+    horizon: int = field(default=1)
+    board: list[list[int]] = field(default_factory=lambda: [
+        [1, 1, 4, 1, 1],
+        [3, 0, 0, 0, 3],
+        [1, 0, 0, 0, 1],
+        [1, 2, 1, 5, 1],
+    ])
+    start_pos: tuple[tuple[int, int, int, int], tuple[int, int, int, int]] = field(default_factory=lambda: ((1, 2, 0, 0), (2, 1, 0, 1)))
+    reward_scaling_factor: float = field(default=0.5)
+
+
+@dataclass
+class TwoStateCrampedRoomOvercookedConfig(OvercookedGameConfig):
+    w: int = field(default=5)
+    h: int = field(default=4)
+    horizon: int = field(default=2)
+    board: list[list[int]] = field(default_factory=lambda: [
+        [1, 1, 4, 1, 1],
+        [3, 0, 0, 0, 3],
+        [1, 0, 0, 0, 1],
+        [1, 2, 1, 5, 1],
+    ])
+    start_pos: tuple[tuple[int, int, int, int], tuple[int, int, int, int]] = field(default_factory=lambda: ((1, 2, 0, 0), (2, 2, 0, 1)))
+    reward_scaling_factor: float = field(default=0.5)
+
+
+@dataclass
+class SimpleCrampedRoomOvercookedConfig(OvercookedGameConfig):
+    w: int = field(default=5)
+    h: int = field(default=4)
+    horizon: int = field(default=2)
+    board: list[list[int]] = field(default_factory=lambda: [
+        [1, 1, 4, 1, 1],
+        [3, 0, 0, 0, 3],
+        [1, 0, 0, 0, 1],
+        [1, 2, 1, 5, 1],
+    ])
+    start_pos: tuple[tuple[int, int, int, int], tuple[int, int, int, int]] = field(default_factory=lambda: ((2, 1, 0, 0), (2, 2, 0, 1)))
+    reward_scaling_factor: float = field(default=0.5)
+
+
+@dataclass
+class Simple2CrampedRoomOvercookedConfig(OvercookedGameConfig):
+    w: int = field(default=5)
+    h: int = field(default=4)
+    horizon: int = field(default=10)
+    board: list[list[int]] = field(default_factory=lambda: [
+        [1, 1, 4, 1, 1],
+        [3, 0, 0, 0, 3],
+        [1, 0, 0, 0, 1],
+        [1, 2, 1, 5, 1],
+    ])
+    start_pos: tuple[tuple[int, int, int, int], tuple[int, int, int, int]] = field(default_factory=lambda: ((1, 2, 0, 0), (3, 1, 2, 0)))
+    reward_scaling_factor: float = field(default=0.5)

@@ -56,11 +56,9 @@ class UpdaterConfig:
 @dataclass
 class CollectorConfig:
     buffer_size: int = int(1e3)
-    batch_size: int = 128
     quick_start_buffer_path: Optional[str] = None
     start_wait_n_samples: int = int(1e3)
     log_every_sec: int = 60
-    validation_percentage: float = 0  # percentage of samples directed to validation buffer
 
 
 @dataclass

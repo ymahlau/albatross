@@ -3,7 +3,7 @@ from functools import cached_property
 
 import torch
 
-from src.network.fcn import FCN, HeadConfig, SmallHeadConfig
+from src.network.fcn import FCN, HeadConfig, SmallHeadConfig, WideHeadConfig
 from src.network.flat_net import FlatNet, FlatNetworkConfig
 from src.network.utils import NormalizationType, ActivationType
 
@@ -47,5 +47,11 @@ class FlatFCN(FlatNet):
 class SmallFlatFCNConfig(FlatFCNetworkConfig):
     num_layer: int = field(default=1)
     hidden_size: int = field(default=128)
-    policy_head_cfg: HeadConfig = field(default_factory=lambda: SmallHeadConfig(num_layers=1))
-    value_head_cfg: HeadConfig = field(default_factory=lambda: SmallHeadConfig(num_layers=1))
+    policy_head_cfg: HeadConfig = field(default_factory=lambda: WideHeadConfig())
+    value_head_cfg: HeadConfig = field(default_factory=lambda: WideHeadConfig())
+
+
+@dataclass
+class WideHeadFCNConfig(FlatFCNetworkConfig):
+    policy_head_cfg: HeadConfig = field(default_factory=lambda: WideHeadConfig())
+    value_head_cfg: HeadConfig = field(default_factory=lambda: WideHeadConfig())

@@ -6,6 +6,7 @@ from enum import Enum
 from typing import Optional
 
 import numpy as np
+from imp_env.imp_env.owf_env import Struct_owf
 from imp_env.imp_env.struct_env import Struct
 
 from src.game.game import Game, GameConfig
@@ -18,16 +19,19 @@ class IMP_MODE(Enum):
 
 @dataclass(kw_only=True)
 class IMPConfig(GameConfig):
-    num_actions: int = field(default=-1)  # filled in post init
+    num_actions: int = field(default=3)
     imp_mode: IMP_MODE
     campaign_cost: bool
     temperature_input: bool = False
     single_temperature_input: bool = True
     
     def __post_init__(self):
-        self.num_actions = 2 if self.imp_mode == IMP_MODE.OWF else 3
-        if self.num_players not in [3, 5, 10, 50, 100]:
-            raise Exception(f"Invalid number of agents: {self.num_players}")
+        if self.imp_mode == IMP_MODE.OWF:
+            if self.num_players not in [2, 4, 10, 50, 100]:
+                raise Exception(f"Invalid number of agents: {self.num_players}")
+        else:
+            if self.num_players not in [3, 5, 10, 50, 100]:
+                raise Exception(f"Invalid number of agents: {self.num_players}")
 
 class IMPGame(Game):
     def __init__(self, cfg: IMPConfig, env=None, obs_shape_save: Optional[tuple[int, ...]] = None):
@@ -38,12 +42,12 @@ class IMPGame(Game):
             self.env = env
         elif self.cfg.imp_mode == IMP_MODE.OWF:
             imp_cfg =  {
-                "n_owt": 2,
+                "n_owt": int(self.cfg.num_players / 2),
                 "lev": 3,
                 "discount_reward": 1,
-                "campaign_cost": False
+                "campaign_cost": self.cfg.campaign_cost
             }
-            raise NotImplementedError()
+            self.env = Struct_owf(config=imp_cfg)
         else:
             corresponding_k = {3:1, 5:2, 10:5, 50:25, 100:50}
             imp_cfg = {
@@ -74,6 +78,7 @@ class IMPGame(Game):
     
     def _reset(self):
         self.env.reset()
+        self.done = False
     
     def close(self):
         pass
@@ -85,6 +90,7 @@ class IMPGame(Game):
         env2 = copy.deepcopy(self.env)
         cpy = IMPGame(self.cfg, env=env2, obs_shape_save=self.obs_shape_save)
         cpy.done = self.done
+        cpy.obs_shape_save = self.obs_shape_save
         return cpy
     
     def __eq__(self, game: "Game") -> bool:
@@ -112,7 +118,15 @@ class IMPGame(Game):
         return 1
     
     def get_obs_shape(self, never_flatten=False) -> tuple[int, ...]:
-        return self.obs_shape_save
+        raw_obs_shape = self.obs_shape_save
+        if self.cfg.temperature_input:
+            raw_obs_list = list(raw_obs_shape)
+            if self.cfg.single_temperature_input:
+                raw_obs_list[-1] += 1
+            else:
+                raw_obs_list[-1] += self.cfg.num_players - 1
+            raw_obs_shape = tuple(raw_obs_list)
+        return raw_obs_shape
     
     def get_obs(
             self,
@@ -129,7 +143,22 @@ class IMPGame(Game):
             raise Exception("This should never happen, probably game is terminal")
         obs_arr = np.asarray([obs_dict[f"agent_{p}"] for p in self.players_at_turn()])
         if self.cfg.temperature_input:
-            raise NotImplementedError()
+            temp_list = []
+            for player in range(self.cfg.num_players):
+                single_temp = self.cfg.single_temperature_input if single_temperature is None else single_temperature
+                if temperatures is None:
+                    raise ValueError(f"Need temperatures to generate encoding")
+                if single_temp and len(temperatures) != 1:
+                    raise ValueError(f"Cannot process multiple temperatures if single temperature input specified")
+                if not single_temp and len(temperatures) != self.num_players:
+                    raise ValueError(f"Invalid temperature length: {temperatures}")
+                if single_temp:
+                    temp_arr = np.asarray([temperatures[0]], dtype=float)
+                else:
+                    temp_arr = np.asarray([t for i, t in enumerate(temperatures) if i != player], dtype=float)
+                temp_list.append(temp_arr)
+            full_temp_arr = np.stack(temp_list, axis=0) / 10  # scale temperatures to reasonable range
+            obs_arr = np.concatenate((obs_arr, full_temp_arr), axis=-1)
         id_dict = {a: a for a in range(self.num_actions)}
         return obs_arr, id_dict, id_dict
         

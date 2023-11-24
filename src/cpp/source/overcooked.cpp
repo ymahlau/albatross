@@ -74,8 +74,8 @@ OvercookedGameState* init_overcooked(
 ){
     // convert input to proper format
     vector<int> board_vector(board, board + w * h);
-    Player p0 = {Coord(start_pos[0], start_pos[1]), start_pos[2], NO_ITEM};
-    Player p1 = {Coord(start_pos[3], start_pos[4]), start_pos[5], NO_ITEM};
+    Player p0 = {Coord(start_pos[0], start_pos[1]), start_pos[2], start_pos[3]};
+    Player p1 = {Coord(start_pos[4], start_pos[5]), start_pos[6], start_pos[7]};
     vector<Player> player_vector = {p0, p1};
     OvercookedRewards rewards = {
             placement_in_pot_reward,

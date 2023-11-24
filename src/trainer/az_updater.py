@@ -310,7 +310,7 @@ def perform_update(
     )
     stats.loss_time_sum += time.time() - loss_time_start
     update_time_start = time.time()
-    loss = value_loss
+    loss = torch.clone(value_loss)
     if policy_loss is not None:
         policy_loss *= updater_cfg.policy_loss_factor
         loss += policy_loss
