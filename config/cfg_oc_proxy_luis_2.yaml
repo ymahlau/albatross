@@ -109,9 +109,9 @@ data:
       id: 2
       name: oc_proxy_luis
       project_name: overcooked_cramped
-      updater_bucket_size: 100
+      updater_bucket_size: 1000
       wandb_mode: offline
-      worker_episode_bucket_size: 25
+      worker_episode_bucket_size: 2
   max_batch_size: 3000
   max_cpu_evaluator: 1
   max_cpu_inference_server: 2
@@ -213,7 +213,7 @@ data:
     __name__: SaverConfig
     data:
       save_all_checkpoints: false
-      save_interval_sec: 30
+      save_interval_sec: 300
   single_sbr_temperature: true
   temperature_input: true
   updater_cfg:

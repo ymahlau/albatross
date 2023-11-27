@@ -242,12 +242,12 @@ def generate_training_structured_configs():
             buffer_gen=False,
             name='oc_proxy_luis',
             id=seed,
-            updater_bucket_size=100,
-            worker_episode_bucket_size=25,
+            updater_bucket_size=1000,
+            worker_episode_bucket_size=2,
             wandb_mode='offline',
         )
         saver_cfg = SaverConfig(
-            save_interval_sec=30,
+            save_interval_sec=300,
         )
         inf_cfg = InferenceServerConfig(
             use_gpu=True,
