@@ -146,6 +146,8 @@ class OvercookedGame(Game):
             arr = np.zeros(shape=self.get_obs_shape(), dtype=ct.c_float)
             arr_p = arr.ctypes.data_as(ct.POINTER(ct.c_float))
             temp_in = 0
+            if temperatures is not None and not self.cfg.temperature_input:
+                raise ValueError("Cannot process temperatures if cfg does not specify temp input")
             if self.cfg.temperature_input:
                 single_temp = self.cfg.single_temperature_input if single_temperature is None else single_temperature
                 if temperatures is None:

@@ -24,7 +24,8 @@ class InferenceServerStats:
 
 def run_inference_server(
         trainer_cfg: AlphaZeroTrainerConfig,
-        net_queue: mp.Queue,
+        const_net_path: Optional[str],
+        net_queue: Optional[mp.Queue],
         stop_flag: sc.Synchronized,
         info_queue: mp.Queue,
         input_rdy_arr,
@@ -36,18 +37,21 @@ def run_inference_server(
         prev_run_dir: Optional[Path],
         prev_run_idx: Optional[int],
 ):
-    # important to avoid pytorch deadlocks
-    # torch.set_num_threads(1)
-    # os.environ["OMP_NUM_THREADS"] = "1"
     inf_cfg = trainer_cfg.inf_cfg
-    # load initial network
     net_cfg = trainer_cfg.net_cfg
-    if net_cfg is None:
-        raise Exception("Network config is None")
-    net = get_network_from_config(net_cfg)
-    if prev_run_dir is not None and not trainer_cfg.init_new_network_params:
-        model_path = prev_run_dir / 'fixed_time_models' / f'm_{prev_run_idx}.pt'
-        net = get_network_from_file(model_path)
+    # load initial network
+    start_phase = True
+    if const_net_path is None:
+        if net_cfg is None:
+            raise Exception("Network config is None")
+        net = get_network_from_config(net_cfg)
+        if prev_run_dir is not None and not trainer_cfg.init_new_network_params:
+            model_path = prev_run_dir / 'fixed_time_models' / f'm_{prev_run_idx}.pt'
+            net = get_network_from_file(model_path)
+    else:
+        # constant network which is never updated
+        net = get_network_from_file(Path(const_net_path))
+        start_phase = False
     # cuda
     if inf_cfg.use_gpu:
         # torch.cuda.init()
@@ -84,22 +88,22 @@ def run_inference_server(
     input_np = input_np.reshape((n, *obs_shape))
     output_arr_np = np.frombuffer(output_arr, dtype=np.float32)
     output_arr_np = output_arr_np.reshape((n, out_shape))
-    start_phase = True
     # statistics
     stats = InferenceServerStats()
     # processing loop
     try:
         while not stop_flag.value:
             # get the newest network state dictionary
-            load_time_start = time.time()
-            maybe_state_dict = get_latest_obj_from_queue(net_queue)
-            if stop_flag.value:
-                break
-            if maybe_state_dict is not None:
-                net.load_state_dict(maybe_state_dict)
-                net = net.eval()
-                start_phase = False
-            stats.load_time_sum += time.time() - load_time_start
+            if net_queue is not None:
+                load_time_start = time.time()
+                maybe_state_dict = get_latest_obj_from_queue(net_queue)
+                if stop_flag.value:
+                    break
+                if maybe_state_dict is not None:
+                    net.load_state_dict(maybe_state_dict)
+                    net = net.eval()
+                    start_phase = False
+                stats.load_time_sum += time.time() - load_time_start
             # get ready input data
             input_rdy_cpy = np.array(np.copy(input_rdy_np), dtype=bool)
             if np.all(input_rdy_cpy == 0):
@@ -137,7 +141,6 @@ def run_inference_server(
             if stop_flag.value:
                 break
             # send statistics
-
     except KeyboardInterrupt:
         print('Detected Keyboard Interrupt in Inference Server\n', flush=True)
     # cleanup

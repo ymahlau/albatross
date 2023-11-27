@@ -7,6 +7,7 @@ from typing import Optional
 
 import numpy as np
 import torch
+import multiprocessing.sharedctypes as sc
 
 from src.game.actions import apply_permutation, filter_illegal_and_normalize, softmax
 from src.game.battlesnake.battlesnake import BattleSnakeGame
@@ -14,7 +15,7 @@ from src.game.values import apply_utility_norm, UtilityNorm
 from src.network import Network
 from src.network.initialization import get_network_from_config, get_network_from_file
 from src.search.config import NetworkEvalConfig, CopyCatEvalConfig, AreaControlEvalConfig, EvalFuncConfig, \
-    DummyEvalConfig, EnemyExploitationEvalConfig, RandomRolloutEvalConfig, InferenceServerEvalConfig
+    DummyEvalConfig, EnemyExploitationEvalConfig, RandomRolloutEvalConfig, InferenceServerEvalConfig, ResponseInferenceServerEvalConfig
 from src.search.node import Node
 
 
@@ -191,6 +192,7 @@ def gather_encodings(
         single_temperature: bool,
         random_symmetry: bool,
         temperatures: Optional[list[float]],
+        only_get_player: Optional[int] = None
 ) -> tuple[
     list[Node],
     list[np.ndarray],
@@ -216,8 +218,14 @@ def gather_encodings(
             single_temperature=single_temperature
         )
         # encoding for every separate player
-        for idx, player in enumerate(node.game.players_at_turn()):
-            encoding_list.append(enc[idx])
+        if only_get_player is None:
+            for idx, player in enumerate(node.game.players_at_turn()):
+                encoding_list.append(enc[idx])
+        else:
+            if only_get_player not in node.game.players_at_turn():
+                continue
+            player_idx = node.game.players_at_turn().index(only_get_player)
+            encoding_list.append(enc[player_idx])
         filtered_list.append(node)
         inv_perm_list.append(inv_perm)
         index_list.append(len(encoding_list))
@@ -341,9 +349,6 @@ class NetworkEvalFunc(EvalFunc):
 
 
 class DummyEvalFunc(EvalFunc):
-    """
-    GameState evaluation function, which does an area control evaluation. Area control is weighted by health.
-    """
 
     def __init__(self, cfg: DummyEvalConfig):
         super().__init__(cfg)
@@ -358,10 +363,6 @@ class DummyEvalFunc(EvalFunc):
 
 
 class EnemyExploitationEvalFunc(EvalFunc):
-    """
-    GameState evaluation function, which does an area control evaluation. Area control is weighted by health.
-    """
-
     def __init__(self, cfg: EnemyExploitationEvalConfig):
         super().__init__(cfg)
         self.cfg = cfg
@@ -399,7 +400,10 @@ class EnemyExploitationEvalFunc(EvalFunc):
         # quick start mode
         if self.player_eval_func.net is None:
             for node in node_list:
-                uniform_actions = np.ones(shape=(node.game.num_players_at_turn(), node.game.num_actions,), dtype=float)
+                uniform_actions = np.ones(
+                    shape=(node.game.num_players_at_turn(), node.game.num_actions,), 
+                    dtype=float
+                )
                 filtered_actions = filter_illegal_and_normalize(uniform_actions, node.game)
                 node.visits = 1
                 node.value_sum *= 0
@@ -410,6 +414,8 @@ class EnemyExploitationEvalFunc(EvalFunc):
         # compute enemy estimates
         for player in range(num_players):
             # update temperature of enemy eval function
+            if self.temperatures is None:
+                raise Exception("This should never happen")
             self.enemy_eval_func.temperatures = [self.temperatures[player]]
             self.enemy_eval_func(node_list)
             for node in node_list:
@@ -445,17 +451,13 @@ class InferenceServerEvalFunc(EvalFunc):
         super().__init__(cfg)
         self.cfg = cfg
         self.temperatures = self.cfg.init_temperatures
-        self.input_arr: Optional[mp.Array] = None
         self.input_arr_np: Optional[np.ndarray] = None
-        self.output_arr: Optional[mp.Array] = None
         self.output_arr_np: Optional[np.ndarray] = None
-        self.input_rdy_arr: Optional[mp.Array] = None
         self.input_rdy_arr_np: Optional[np.ndarray] = None
-        self.output_rdy_arr: Optional[mp.Array] = None
         self.output_rdy_arr_np: Optional[np.ndarray] = None
         self.start_idx: Optional[int] = None
         self.max_length: Optional[int] = None
-        self.stop_flag: Optional[mp.Value] = None
+        self.stop_flag: Optional[sc.Synchronized] = None
 
     def _compute(self, node_list: list[Node]) -> None:
         if not node_list:
@@ -469,7 +471,7 @@ class InferenceServerEvalFunc(EvalFunc):
             node_list=node_list,
             temperature_input=self.cfg.temperature_input,
             single_temperature=self.cfg.single_temperature,
-            random_symmetry=self.cfg.single_temperature,
+            random_symmetry=self.cfg.random_symmetry,
             temperatures=self.temperatures,
         )
         stacked_obs = np.stack(encoding_list_np, axis=0)
@@ -516,24 +518,172 @@ class InferenceServerEvalFunc(EvalFunc):
 
     def update_arrays_and_indices(
             self,
-            input_arr: mp.Array,
-            output_arr: mp.Array,
-            input_rdy_arr: mp.Array,
-            output_rdy_arr: mp.Array,
+            input_arr_np: np.ndarray,
+            output_arr_np: np.ndarray,
+            input_rdy_arr_np: np.ndarray,
+            output_rdy_arr_np: np.ndarray,
             start_idx: int,
             max_length: int,
-            stop_flag: mp.Value,
-            input_shape: tuple[int, ...],
-            output_shape: tuple[int, ...],
+            stop_flag: sc.Synchronized,
     ):
-        self.input_arr = input_arr
-        self.input_arr_np = np.frombuffer(input_arr, dtype=np.float32).reshape(input_shape)
-        self.output_arr = output_arr
-        self.output_arr_np = np.frombuffer(output_arr, dtype=np.float32).reshape(output_shape)
-        self.input_rdy_arr = input_rdy_arr
-        self.input_rdy_arr_np = np.frombuffer(input_rdy_arr, dtype=np.int32)
-        self.output_rdy_arr = output_rdy_arr
-        self.output_rdy_arr_np = np.frombuffer(output_rdy_arr, dtype=np.int32)
+        self.input_arr_np = input_arr_np
+        self.output_arr_np = output_arr_np
+        self.input_rdy_arr_np = input_rdy_arr_np
+        self.output_rdy_arr_np = output_rdy_arr_np
+        self.start_idx = start_idx
+        self.max_length = max_length
+        self.stop_flag = stop_flag
+        
+        
+class ResponseInferenceEvalFunc(EvalFunc):
+    def __init__(self, cfg: ResponseInferenceServerEvalConfig):
+        super().__init__(cfg)
+        self.cfg = cfg
+        if not self.cfg.policy_prediction:
+            raise ValueError("Need network to predict policy in response training")
+        self.temperatures = []
+        self.input_arr_np: Optional[np.ndarray] = None
+        self.input_arr_resp_np: Optional[np.ndarray] = None
+        self.output_arr_np: Optional[np.ndarray] = None
+        self.output_arr_resp_np: Optional[np.ndarray] = None
+        self.input_rdy_arr_np: Optional[np.ndarray] = None
+        self.input_rdy_arr_resp_np: Optional[np.ndarray] = None
+        self.output_rdy_arr_np: Optional[np.ndarray] = None
+        self.output_rdy_arr_resp_np: Optional[np.ndarray] = None
+        self.start_idx: Optional[int] = None
+        self.max_length: Optional[int] = None
+        self.stop_flag: Optional[sc.Synchronized] = None
+        
+    def _compute(self, node_list: list[Node]) -> None:
+        if not node_list:
+            return
+        if self.input_arr_np is None or self.output_arr_np is None or self.input_rdy_arr_np is None \
+                or self.output_rdy_arr_np is None or self.start_idx is None or self.max_length is None \
+                or self.stop_flag is None or self.input_arr_resp_np is None \
+                or self.output_arr_resp_np is None or self.input_rdy_arr_resp_np is None \
+                or self.output_rdy_arr_resp_np is None:
+            raise Exception('Need Arrays and indices for sending data to inference server!')
+        if self.temperatures is None:
+            raise Exception("Need temperature for response model evaluation")
+        
+        # get observations for proxy model
+        node_list_proxy, encoding_list_proxy, inv_perm_list_proxy, index_list_proxy = [], [], [], []
+        for player, temperature in enumerate(self.temperatures):
+            filtered_list, encoding_list_np, inv_perm_list, index_list = gather_encodings(
+                node_list=node_list,
+                temperature_input=True,
+                single_temperature=True,
+                random_symmetry=self.cfg.random_symmetry,
+                temperatures=[temperature],
+                only_get_player=player,
+            )
+            node_list_proxy.append(filtered_list)
+            encoding_list_proxy.append(encoding_list_np)
+            inv_perm_list_proxy.append(inv_perm_list)
+            index_list_proxy.append(index_list)
+        # get encoding for response model
+        filtered_list_resp, encoding_list_resp, inv_perm_list_resp, index_list_resp = gather_encodings(
+            node_list=node_list,
+            temperature_input=True,
+            single_temperature=False,
+            random_symmetry=self.cfg.random_symmetry,
+            temperatures=self.temperatures,
+        )
+        # send to proxy inference server
+        stacked_obs = np.asarray(encoding_list_proxy, dtype=np.float32)
+        stacked_obs = stacked_obs.reshape(-1, *self.input_arr_np.shape[1:])
+        if stacked_obs.shape[0] > self.max_length:
+            raise ValueError("Received more observation than inference server allows. Increase max size!")
+        end_idx_proxy = self.start_idx+stacked_obs.shape[0]
+        self.input_arr_np[self.start_idx:end_idx_proxy] = stacked_obs
+        self.input_rdy_arr_np[self.start_idx:end_idx_proxy] = 1
+        # send to response inference server
+        stacked_obs_resp = np.stack(encoding_list_resp, axis=0)
+        if stacked_obs_resp.shape[0] > self.max_length:
+            raise ValueError("Received more observation than inference server allows. Increase max size!")
+        end_idx_resp = self.start_idx+stacked_obs_resp.shape[0]
+        self.input_arr_resp_np[self.start_idx:end_idx_resp] = stacked_obs_resp
+        self.input_rdy_arr_resp_np[self.start_idx:end_idx_resp] = 1
+        # wait for both inference servers
+        while not self.stop_flag.value:
+            # check if data ready
+            if np.all(self.output_rdy_arr_np[self.start_idx:end_idx_proxy] == 1) \
+                    and np.all(self.output_rdy_arr_resp_np[self.start_idx:end_idx_resp] == 1):
+                break
+            # wait again
+            time.sleep(self.cfg.active_wait_time)
+        if self.stop_flag.value:  # program terminated
+            return
+        # gather outputs and clear rdy arr
+        outputs_proxy = self.output_arr_np[self.start_idx:end_idx_proxy]
+        self.output_rdy_arr_np[self.start_idx:end_idx_proxy] = 0
+        outputs_resp = self.output_arr_resp_np[self.start_idx:end_idx_resp]
+        self.output_rdy_arr_resp_np[self.start_idx:end_idx_resp] = 0
+        # retrieve values/actions
+        values_proxy = Network.retrieve_value(outputs_proxy)
+        values_resp = Network.retrieve_value(outputs_resp)
+        # apply softmax to raw log-actions
+        actions_proxy = softmax(Network.retrieve_policy(outputs_proxy), 1)
+        actions_resp = softmax(Network.retrieve_policy(outputs_resp), 1)
+        # sanity checks
+        if np.any(np.isnan(actions_proxy)) or np.any(np.isinf(actions_proxy)) \
+                or np.any(np.abs(1 - np.sum(actions_proxy, axis=-1)) > 1e3):
+            raise Exception(f"Invalid actions returned by proxy: {actions_proxy}")
+        if np.any(np.isnan(actions_resp)) or np.any(np.isinf(actions_resp)) \
+                or np.any(np.abs(1 - np.sum(actions_resp, axis=-1)) > 1e3):
+            raise Exception(f"Invalid actions returned by response: {actions_resp}")
+        # add proxy results
+        start_idx = 0
+        for player in range(len(self.temperatures)):
+            cur_end_idx = start_idx + len(node_list_proxy[player])
+            cur_values = values_proxy[start_idx:cur_end_idx]
+            cur_values = np.clip(cur_values, self.cfg.min_clip_value, self.cfg.max_clip_value)
+            cur_values = apply_utility_norm(cur_values, self.cfg.utility_norm)
+            cur_actions = actions_proxy[start_idx:cur_end_idx]
+            cur_inv_perm_list = inv_perm_list_proxy[player]
+            for idx, node in enumerate(node_list_proxy[player]):
+                node.info[f'v{player}'] = cur_values[idx]
+                cur_node_actions = cur_actions[idx]
+                perm_actions = apply_permutation(cur_node_actions[np.newaxis, :], cur_inv_perm_list[idx])[0]
+                # filter illegal and normalize
+                for action in node.game.illegal_actions(player):
+                    perm_actions[action] = 0
+                filtered_actions = perm_actions / perm_actions.sum()
+                node.info[f'p{player}'] = filtered_actions
+        # add response model results
+        update_node_stats(
+            filtered_list=filtered_list_resp,
+            inv_perm_list=inv_perm_list_resp,
+            index_list=index_list_resp,
+            values=values_resp,
+            actions=actions_resp,
+            min_clip_value=self.cfg.min_clip_value,
+            max_clip_value=self.cfg.max_clip_value,
+            utility_norm=self.cfg.utility_norm,
+        )
+    
+    def update_arrays_and_indices(
+            self,
+            input_arr_np: np.ndarray,
+            input_arr_resp_np: np.ndarray,
+            output_arr_np: np.ndarray,
+            output_arr_resp_np: np.ndarray,
+            input_rdy_arr_np: np.ndarray,
+            input_rdy_arr_resp_np: np.ndarray,
+            output_rdy_arr_np: np.ndarray,
+            output_rdy_arr_resp_np: np.ndarray,
+            start_idx: int,
+            max_length: int,
+            stop_flag: sc.Synchronized,
+    ):
+        self.input_arr_np = input_arr_np
+        self.input_arr_resp_np = input_arr_resp_np
+        self.output_arr_np = output_arr_np
+        self.output_arr_resp_np = output_arr_resp_np
+        self.input_rdy_arr_np = input_rdy_arr_np
+        self.input_rdy_arr_resp_np = input_rdy_arr_resp_np
+        self.output_rdy_arr_np = output_rdy_arr_np
+        self.output_rdy_arr_resp_np = output_rdy_arr_resp_np
         self.start_idx = start_idx
         self.max_length = max_length
         self.stop_flag = stop_flag
@@ -554,5 +704,7 @@ def get_eval_func_from_cfg(cfg: EvalFuncConfig) -> EvalFunc:
         return RandomRolloutEvalFunc(cfg)
     elif isinstance(cfg, InferenceServerEvalConfig):
         return InferenceServerEvalFunc(cfg)
+    elif isinstance(cfg, ResponseInferenceServerEvalConfig):
+        return ResponseInferenceEvalFunc(cfg)
     else:
         raise ValueError(f"Unknown eval function config: {cfg}")

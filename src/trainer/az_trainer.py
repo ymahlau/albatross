@@ -12,6 +12,7 @@ from src.game.initialization import get_game_from_config
 from src.game.values import UtilityNorm
 from src.misc.utils import set_seed
 from src.network.initialization import get_network_from_config
+from src.search.config import ResponseInferenceServerEvalConfig
 from src.search.initialization import get_search_from_config
 from src.trainer.az_collector import run_collector
 from src.trainer.az_distributor import run_distributor
@@ -57,6 +58,11 @@ class AlphaZeroTrainer:
             raise ValueError(f"Number of workers needs to be divisible by number of inference server")
         if self.cfg.merge_inference_update_gpu and self.cfg.num_inference_server > 1:
             raise ValueError("Can only merge inference and updater gpu with a single inference server")
+        if self.cfg.temperature_input and not self.cfg.single_sbr_temperature:
+            if not isinstance(self.cfg.worker_cfg.search_cfg.eval_func_cfg, ResponseInferenceServerEvalConfig):
+                raise ValueError("Response model can only be trained with response inference server eval function")
+            if self.cfg.proxy_net_path is None:
+                raise ValueError("Need proxy network to train response network")
         # test if network and search config can be initialized
         if self.cfg.net_cfg is not None:
             _ = get_network_from_config(self.cfg.net_cfg)
@@ -94,7 +100,11 @@ class AlphaZeroTrainer:
         input_arr_size = np.prod(np.asarray([n, *obs_shape])).item()
         output_arr_size = np.prod(np.asarray((n, out_shape))).item()
         input_list, input_rdy_list, output_list, output_rdy_list = [], [], [], []
-        for inference_id in range(self.cfg.num_inference_server):
+        num_inference_server = self.cfg.num_inference_server
+        if self.cfg.temperature_input and not self.cfg.single_sbr_temperature:
+            # arrays for response inference server
+            num_inference_server *= 2
+        for inference_id in range(num_inference_server):
             input_rdy_list.append(mp.Array('i', n, lock=False))
             output_rdy_list.append(mp.Array('i', n, lock=False))
             input_list.append(mp.Array('f', input_arr_size, lock=False))
@@ -158,6 +168,10 @@ class AlphaZeroTrainer:
             seed_worker = random.randint(0, 2 ** 32 - 1)
             worker_per_server = int(self.cfg.num_worker / self.cfg.num_inference_server)
             inference_id = math.floor(worker_id / worker_per_server)
+            arr_input = False
+            if self.cfg.temperature_input and not self.cfg.single_sbr_temperature:
+                inference_id *= 2
+                arr_input = True
             kwargs_worker = {
                 'worker_id': worker_id,
                 'trainer_cfg': self.cfg,
@@ -174,6 +188,10 @@ class AlphaZeroTrainer:
                 'cpu_list': cpu_list_worker,
                 'seed': seed_worker,
                 'debug': False,
+                'input_arr2': input_list[inference_id + 1] if arr_input else None,
+                'input_rdy_arr2': input_rdy_list[inference_id + 1] if arr_input else None,
+                'output_arr2': output_list[inference_id + 1] if arr_input else None,
+                'output_rdy_arr2': output_rdy_list[inference_id + 1] if arr_input else None,
             }
             p = mp.Process(target=run_worker, kwargs=kwargs_worker)
             p.start()
@@ -181,25 +199,26 @@ class AlphaZeroTrainer:
         if cpu_counter is not None and self.cfg.max_cpu_worker is not None:
             cpu_counter += self.cfg.max_cpu_worker
         # inference server
+        cpu_list_inference = None
+        if self.cfg.restrict_cpu and self.cfg.max_cpu_inference_server is not None:
+            if available_cpu_list is None:
+                raise Exception("This should never happen")
+            cpu_list_inference = available_cpu_list[cpu_counter:cpu_counter + self.cfg.max_cpu_inference_server]
+        arr_idx, gpu_idx = 0, int(self.cfg.updater_cfg.use_gpu)
         for inference_id in range(self.cfg.num_inference_server):
             inference_net_queue = mp.Queue(maxsize=self.cfg.distributor_out_qsize)
-            cpu_list_inference = None
-            if self.cfg.restrict_cpu and self.cfg.max_cpu_inference_server is not None:
-                if available_cpu_list is None:
-                    raise Exception("This should never happen")
-                cpu_list_inference = available_cpu_list[cpu_counter:cpu_counter + self.cfg.max_cpu_inference_server]
-            gpu_idx = inference_id if self.cfg.merge_inference_update_gpu else inference_id + self.cfg.updater_cfg.use_gpu
             kwargs_inference = {
                 'trainer_cfg': self.cfg,
+                'const_net_path': None,
                 'net_queue': inference_net_queue,
                 'stop_flag': stop_flag,
                 'info_queue': info_queue,
-                'input_rdy_arr': input_rdy_list[inference_id],
-                'output_rdy_arr': output_rdy_list[inference_id],
-                'input_arr': input_list[inference_id],
-                'output_arr': output_list[inference_id],
+                'input_rdy_arr': input_rdy_list[arr_idx],
+                'output_rdy_arr': output_rdy_list[arr_idx],
+                'input_arr': input_list[arr_idx],
+                'output_arr': output_list[arr_idx],
                 'cpu_list': cpu_list_inference,
-                'gpu_idx': gpu_idx,
+                'gpu_idx': gpu_idx if not self.cfg.merge_inference_update_gpu else 0,
                 'prev_run_dir': Path(self.cfg.prev_run_dir) if self.cfg.prev_run_dir is not None else None,
                 'prev_run_idx': self.cfg.prev_run_idx,
             }
@@ -208,6 +227,30 @@ class AlphaZeroTrainer:
             process_list.append(p)
             dist_out_queue_list.append(inference_net_queue)
             queue_list.append(inference_net_queue)
+            arr_idx += 1
+            gpu_idx += 1
+            if self.cfg.temperature_input and not self.cfg.single_sbr_temperature:
+                # proxy
+                kwargs_inference = {
+                    'trainer_cfg': self.cfg,
+                    'const_net_path': self.cfg.proxy_net_path,
+                    'net_queue': None,
+                    'stop_flag': stop_flag,
+                    'info_queue': info_queue,
+                    'input_rdy_arr': input_rdy_list[arr_idx],
+                    'output_rdy_arr': output_rdy_list[arr_idx],
+                    'input_arr': input_list[arr_idx],
+                    'output_arr': output_list[arr_idx],
+                    'cpu_list': cpu_list_inference,
+                    'gpu_idx': gpu_idx if not self.cfg.merge_inference_update_gpu else 0,
+                    'prev_run_dir': Path(self.cfg.prev_run_dir) if self.cfg.prev_run_dir is not None else None,
+                    'prev_run_idx': self.cfg.prev_run_idx,
+                }
+                p = mp.Process(target=run_inference_server, kwargs=kwargs_inference)
+                p.start()
+                process_list.append(p)
+                arr_idx += 1
+                gpu_idx += 1
         if self.cfg.max_cpu_inference_server is not None:
             cpu_counter += self.cfg.max_cpu_inference_server
         # cpu list for distributor, collector, saver and logger

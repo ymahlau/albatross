@@ -16,7 +16,7 @@ from src.game.utils import step_with_draw_prevention
 from src.misc.replay_buffer import BufferInputSample
 from src.misc.utils import set_seed
 from src.search import SearchInfo, Search
-from src.search.eval_func import InferenceServerEvalFunc
+from src.search.eval_func import InferenceServerEvalFunc, ResponseInferenceEvalFunc
 from src.search.initialization import get_search_from_config
 from src.search.utils import compute_q_values
 from src.supervised.annealer import TemperatureAnnealer
@@ -59,6 +59,10 @@ def run_worker(
         cpu_list: Optional[list[int]],
         seed: int,
         debug: bool = False,
+        input_rdy_arr2 = None,  # mp.Array
+        output_rdy_arr2 = None,  # mp.Array
+        input_arr2 = None,  # mp.Array
+        output_arr2 = None,  # mp.Array
 ):
     game_cfg = trainer_cfg.game_cfg
     worker_cfg = trainer_cfg.worker_cfg
@@ -67,26 +71,53 @@ def run_worker(
     search = get_search_from_config(worker_cfg.search_cfg)
     if hasattr(search, "backup_func"):
         if hasattr(search.backup_func, "error_counter"): # type: ignore
-            search.backup_func.error_counter = error_counter # type: ignore
-    if not isinstance(search.eval_func, InferenceServerEvalFunc):
-        raise ValueError(f"Worker needs Inference Server Evaluation Function")
+            search.backup_func.error_counter = error_counter # type: ignore        
+    # add inference server arrays to evaluation function of search
     game = get_game_from_config(trainer_cfg.game_cfg)
     obs_shape = game.get_obs_shape()
     out_shape = 1 + game.num_actions if trainer_cfg.net_cfg.predict_policy else 1
     worker_per_server = int(trainer_cfg.num_worker / trainer_cfg.num_inference_server)
     start_idx = (worker_id % worker_per_server) * trainer_cfg.max_eval_per_worker
     n = int(trainer_cfg.max_eval_per_worker * trainer_cfg.num_worker / trainer_cfg.num_inference_server)
-    search.eval_func.update_arrays_and_indices(
-        input_arr=input_arr,
-        output_arr=output_arr,
-        input_rdy_arr=input_rdy_arr,
-        output_rdy_arr=output_rdy_arr,
-        start_idx=start_idx,
-        max_length=trainer_cfg.max_eval_per_worker,
-        stop_flag=stop_flag,
-        input_shape=(n, *obs_shape),
-        output_shape=(n, out_shape)
-    )
+    input_shape, output_shape = (n, *obs_shape), (n, out_shape)
+    input_arr_np = np.frombuffer(input_arr, dtype=np.float32).reshape(input_shape)
+    output_arr_np = np.frombuffer(output_arr, dtype=np.float32).reshape(output_shape)
+    input_rdy_arr_np = np.frombuffer(input_rdy_arr, dtype=np.int32)
+    output_rdy_arr_np = np.frombuffer(output_rdy_arr, dtype=np.int32)
+    if input_rdy_arr2 is None or output_rdy_arr2 is None or input_arr2 is None or output_arr2 is None:
+        if not isinstance(search.eval_func, InferenceServerEvalFunc):
+            raise ValueError(f"Worker needs Inference Server Evaluation Function")
+        # single inference server
+        search.eval_func.update_arrays_and_indices(
+            input_arr_np=input_arr_np,
+            output_arr_np=output_arr_np,
+            input_rdy_arr_np=input_rdy_arr_np,
+            output_rdy_arr_np=output_rdy_arr_np,
+            start_idx=start_idx,
+            max_length=trainer_cfg.max_eval_per_worker,
+            stop_flag=stop_flag,
+        )
+    else:
+        if not isinstance(search.eval_func, ResponseInferenceEvalFunc):
+            raise ValueError(f"Worker needs Inference Server Evaluation Function")
+        # two inference server: first proxy and second response model
+        input_arr_np2 = np.frombuffer(input_arr2, dtype=np.float32).reshape(input_shape)
+        output_arr_np2 = np.frombuffer(output_arr2, dtype=np.float32).reshape(output_shape)
+        input_rdy_arr_np2 = np.frombuffer(input_rdy_arr2, dtype=np.int32)
+        output_rdy_arr_np2 = np.frombuffer(output_rdy_arr2, dtype=np.int32)
+        search.eval_func.update_arrays_and_indices(
+            input_arr_np=input_arr_np2,
+            output_arr_np=output_arr_np2,
+            input_rdy_arr_np=input_rdy_arr_np2,
+            output_rdy_arr_np=output_rdy_arr_np2,
+            input_arr_resp_np=input_arr_np,
+            output_arr_resp_np=output_arr_np,
+            input_rdy_arr_resp_np=input_rdy_arr_np,
+            output_rdy_arr_resp_np=output_rdy_arr_np,
+            start_idx=start_idx,
+            max_length=trainer_cfg.max_eval_per_worker,
+            stop_flag=stop_flag,
+        )
     # info for logging
     stats = WorkerStatistics(step_counter=step_counter, episode_counter=episode_counter)
     # temperature scheduling
@@ -138,8 +169,8 @@ def run_worker(
                     game=game,
                     iterations=worker_cfg.search_iterations,
                 )
-                if values[0] > 1.2:
-                    print(f"{values[0]:.2f}, {values[1]:.2f}, {action_probs=}".replace("\n", ""), flush=True)
+                # if values[0] > 1.2:
+                #     print(f"{values[0]:.2f}, {values[1]:.2f}, {action_probs=}".replace("\n", ""), flush=True)
                 if debug:
                     print(f"{values=}")
                     print(f"{action_probs=}")

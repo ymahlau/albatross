@@ -112,6 +112,7 @@ class AlphaZeroTrainerConfig:
     updater_in_qsize: int = 100
     validator_data_qsize: int = 100
     distributor_out_qsize: int = 10
+    proxy_net_path: Optional[str] = None
     prev_run_dir: Optional[str] = None  # path to hydra log dir of prev run, this means you want to continue training
     prev_run_idx: Optional[int] = None  # model index to continue training from
     init_new_network_params: bool = False  # only used if previous run dir is continued

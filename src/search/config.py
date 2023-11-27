@@ -53,18 +53,9 @@ class RegretMatchingBackupConfig(BackupFuncConfig):
 
 @dataclass(kw_only=True)
 class EnemyExploitationBackupConfig(BackupFuncConfig):
-    enemy_net_path: str
     init_temperatures: Optional[list[float]] = None  # length num_player
-    recompute_policy: bool = False
     exploit_temperature: float = 10
     average_eval: bool = False
-    # sbr
-    num_iterations: int = 300
-    epsilon: float = 0
-    moving_average_factor: float = 0.9
-    sbr_mode: SbrMode = SbrMode.MSA
-    use_cpp: bool = True
-    init_random: bool = True
 
 @dataclass
 class QNEBackupConfig(BackupFuncConfig):
@@ -157,8 +148,16 @@ class InferenceServerEvalConfig(EvalFuncConfig):
     temperature_input: bool = False
     single_temperature: bool = True
     random_symmetry: bool = False
-    min_clip_value: float = -1
-    max_clip_value: float = 1
+    min_clip_value: float = -math.inf
+    max_clip_value: float = 50
+    active_wait_time: float = 0.05
+    policy_prediction: bool = True
+    
+@dataclass
+class ResponseInferenceServerEvalConfig(EvalFuncConfig):
+    random_symmetry: bool = False
+    min_clip_value: float = -math.inf
+    max_clip_value: float = 50
     active_wait_time: float = 0.05
     policy_prediction: bool = True
 

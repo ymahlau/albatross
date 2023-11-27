@@ -403,6 +403,8 @@ class EnemyExploitationBackupFunc(BackupFunc):
         # compute q-values
         num_p = node.game.num_players_at_turn()
         q_values = np.zeros(shape=(num_p, node.game.num_actions), dtype=float)
+        if node.children is None:
+            raise Exception("This should never happen")
         for ja, child in node.children.items():
             # compute enemy joint action probabilities
             ja_probs = np.ones(shape=(node.game.num_players,), dtype=float)
@@ -410,7 +412,7 @@ class EnemyExploitationBackupFunc(BackupFunc):
                 for enemy_idx, enemy in enumerate(node.game.players_at_turn()):
                     if enemy == player:
                         continue
-                    ja_probs[player] *= enemy_policies[enemy_idx, enemy_idx, ja[enemy_idx]]
+                    ja_probs[player] *= enemy_policies[enemy_idx, ja[enemy_idx]]
             # add value scaled by joint action prob to q-values
             scaled_values = ja_probs * child.backward_estimate()
             for player_idx, player in enumerate(node.game.players_at_turn()):
@@ -619,9 +621,6 @@ class SBRLEBackupFunc(BackupFunc):
 
 
 class ExploitOtherBackupFunc(BackupFunc):
-    """
-    Computes backup action values and probabilities by solving for a (Smooth) Best Response Logit Equilibrium
-    """
     def __init__(self, cfg: ExploitOtherBackupConfig):
         super().__init__(cfg)
         self.cfg = cfg

@@ -142,6 +142,8 @@ class IMPGame(Game):
         if obs_dict is None:
             raise Exception("This should never happen, probably game is terminal")
         obs_arr = np.asarray([obs_dict[f"agent_{p}"] for p in self.players_at_turn()])
+        if temperatures is not None and not self.cfg.temperature_input:
+                raise ValueError("Cannot process temperatures if cfg does not specify temp input")
         if self.cfg.temperature_input:
             temp_list = []
             for player in range(self.cfg.num_players):
