@@ -5,10 +5,10 @@ data:
     __module__: src.trainer.config
     __name__: CollectorConfig
     data:
-      buffer_size: 2000
-      log_every_sec: 20
+      buffer_size: 100000
+      log_every_sec: 300
       quick_start_buffer_path: null
-      start_wait_n_samples: 2000
+      start_wait_n_samples: 100000
   compile_mode: reduce-overhead
   compile_model: false
   data_qsize: 10
@@ -24,13 +24,13 @@ data:
           name: RandomAgent
       enemy_iterations: 100
       eval_rate_sec: 20
-      num_episodes: 50
+      num_episodes: 100
       prevent_draw: true
       save_checkpoints: false
       temperature: 1
   game_cfg:
     __module__: src.game.overcooked.config
-    __name__: SimpleCrampedRoomOvercookedConfig
+    __name__: CrampedRoomOvercookedConfig
     data:
       board:
       - - 1
@@ -56,7 +56,7 @@ data:
       cooking_time: 20
       flat_obs: false
       h: 4
-      horizon: 2
+      horizon: 400
       num_actions: 6
       num_players: 2
       reward_cfg:
@@ -79,18 +79,18 @@ data:
             __name__: TupleWrapper
             data:
               data:
-              - 2
               - 1
+              - 2
               - 0
               - 0
           - __module__: src.misc.serialization
             __name__: TupleWrapper
             data:
               data:
-              - 2
-              - 2
-              - 0
+              - 3
               - 1
+              - 0
+              - 0
       temperature_input: true
       w: 5
   inf_cfg:
@@ -107,19 +107,19 @@ data:
     data:
       buffer_gen: false
       id: 0
-      name: null
-      project_name: test
+      name: oc_proxy
+      project_name: overcooked_cramped
       updater_bucket_size: 100
       wandb_mode: online
       worker_episode_bucket_size: 25
-  max_batch_size: 2000
+  max_batch_size: 3000
   max_cpu_evaluator: 1
-  max_cpu_inference_server: 1
+  max_cpu_inference_server: 2
   max_cpu_log_dist_save_collect: 1
-  max_cpu_updater: 1
-  max_cpu_worker: 10
-  max_eval_per_worker: 4000
-  merge_inference_update_gpu: true
+  max_cpu_updater: 2
+  max_cpu_worker: 11
+  max_eval_per_worker: 6000
+  merge_inference_update_gpu: false
   net_cfg:
     __module__: src.network.resnet
     __name__: OvercookedResNetConfig5x5
@@ -200,7 +200,7 @@ data:
             value: GROUP_NORM
           num_layers: 1
   num_inference_server: 1
-  num_worker: 5
+  num_worker: 30
   only_generate_buffer: false
   prev_run_dir: null
   prev_run_idx: null
@@ -232,7 +232,7 @@ data:
             data:
               anneal_temps:
               - 0.001
-              - 1.0e-05
+              - 1.0e-06
               anneal_types:
               - __module__: src.supervised.annealer
                 __name__: AnnealingType
@@ -242,8 +242,8 @@ data:
                 value: COSINE
               cyclic: false
               end_times_min:
-              - 1
-              - 10
+              - 30
+              - 1400
               init_temp: 0
               sampling: false
           beta1: 0.9
@@ -254,7 +254,7 @@ data:
             __name__: OptimType
             value: ADAM_W
           weight_decay: 0.0001
-      policy_loss_factor: 1
+      policy_loss_factor: 5
       updates_until_distribution: 5
       use_gpu: true
       utility_loss:
@@ -303,7 +303,7 @@ data:
         __module__: src.search.config
         __name__: FixedDepthConfig
         data:
-          average_eval: true
+          average_eval: false
           backup_func_cfg:
             __module__: src.search.config
             __name__: LogitBackupConfig
@@ -321,14 +321,14 @@ data:
                 __name__: SbrMode
                 value: NAGURNEY
               use_cpp: true
-          discount: 0.99
+          discount: 0.93
           eval_func_cfg:
             __module__: src.search.config
             __name__: InferenceServerEvalConfig
             data:
               active_wait_time: 0.05
               init_temperatures: null
-              max_clip_value: .inf
+              max_clip_value: 20
               min_clip_value: -.inf
               policy_prediction: true
               random_symmetry: false
@@ -351,4 +351,4 @@ data:
       use_symmetries: true
 hydra:
   run:
-    dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_None
+    dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_oc_proxy

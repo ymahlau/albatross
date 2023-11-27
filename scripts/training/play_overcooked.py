@@ -12,9 +12,9 @@ from src.network.initialization import get_network_from_file
 
 
 def play_overcooked_example():
-    path = Path(__file__).parent.parent.parent / 'outputs' / 'simple_response.pt'
+    path = Path(__file__).parent.parent.parent / 'outputs' / 'simple_proxy2.pt'
     temperature_input = True
-    single_temperature = False
+    single_temperature = True
     
     net = get_network_from_file(path).eval()
     game_cfg = net.cfg.game_cfg
