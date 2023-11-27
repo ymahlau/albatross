@@ -240,11 +240,11 @@ def generate_training_structured_configs():
         logger_cfg = LoggerConfig(
             project_name="overcooked_cramped",
             buffer_gen=False,
-            name='oc_proxy',
+            name='oc_proxy_luis',
             id=seed,
             updater_bucket_size=100,
             worker_episode_bucket_size=25,
-            wandb_mode='online',
+            wandb_mode='offline',
         )
         saver_cfg = SaverConfig(
             save_interval_sec=30,
@@ -278,7 +278,7 @@ def generate_training_structured_configs():
             only_generate_buffer=False,
             restrict_cpu=True,  # only works on LINUX
             max_cpu_updater=2,
-            max_cpu_worker=11,
+            max_cpu_worker=22,
             max_cpu_evaluator=1,
             max_cpu_log_dist_save_collect=1,
             max_cpu_inference_server=2,
