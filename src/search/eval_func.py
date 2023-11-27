@@ -565,7 +565,6 @@ class ResponseInferenceEvalFunc(EvalFunc):
             raise Exception('Need Arrays and indices for sending data to inference server!')
         if self.temperatures is None:
             raise Exception("Need temperature for response model evaluation")
-        
         # get observations for proxy model
         node_list_proxy, encoding_list_proxy, inv_perm_list_proxy, index_list_proxy = [], [], [], []
         for player, temperature in enumerate(self.temperatures):
@@ -594,7 +593,7 @@ class ResponseInferenceEvalFunc(EvalFunc):
         stacked_obs = stacked_obs.reshape(-1, *self.input_arr_np.shape[1:])
         if stacked_obs.shape[0] > self.max_length:
             raise ValueError("Received more observation than inference server allows. Increase max size!")
-        end_idx_proxy = self.start_idx+stacked_obs.shape[0]
+        end_idx_proxy = self.start_idx + stacked_obs.shape[0]
         self.input_arr_np[self.start_idx:end_idx_proxy] = stacked_obs
         self.input_rdy_arr_np[self.start_idx:end_idx_proxy] = 1
         # send to response inference server
@@ -650,6 +649,7 @@ class ResponseInferenceEvalFunc(EvalFunc):
                     perm_actions[action] = 0
                 filtered_actions = perm_actions / perm_actions.sum()
                 node.info[f'p{player}'] = filtered_actions
+            start_idx = cur_end_idx
         # add response model results
         update_node_stats(
             filtered_list=filtered_list_resp,
