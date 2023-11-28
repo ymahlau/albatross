@@ -10,9 +10,10 @@ from src.game.battlesnake.bootcamp.test_envs_3x3 import perform_choke_2_player
 from src.game.battlesnake.bootcamp.test_envs_7x7 import survive_on_7x7
 from src.game.initialization import get_game_from_config
 from src.network.initialization import get_network_from_config
+from src.game.overcooked.config import CrampedRoomOvercookedConfig
+from src.misc.utils import set_seed
 from src.network.resnet import ResNetConfig3x3, ResNetConfig5x5, ResNetConfig7x7, ResNetConfig9x9, ResNetConfig7x7New, \
-    ResNetConfig11x11, ResNetConfig7x7Best
-
+    ResNetConfig11x11, ResNetConfig7x7Best, OvercookedResNetConfig5x5
 
 class TestResNet(unittest.TestCase):
     def test_resnet_game(self):
@@ -189,3 +190,16 @@ class TestResNet(unittest.TestCase):
             out = net(torch.tensor(in_tensor))
         end_time = time.time()
         print(f"{(end_time - start_time) / n=}")
+        
+    def test_resnet_oc(self):
+        game_cfg = CrampedRoomOvercookedConfig()
+        game = get_game_from_config(game_cfg)
+        obs, _, _ = game.get_obs()
+        obs_tensor = torch.tensor(obs)
+        net_cfg = OvercookedResNetConfig5x5(game_cfg=game_cfg)
+        for seed in range(10):
+            set_seed(seed)
+            net = get_network_from_config(net_cfg)
+            net_out = net(obs_tensor)
+            print(net_out)
+

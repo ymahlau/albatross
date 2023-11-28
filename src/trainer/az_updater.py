@@ -49,6 +49,7 @@ class UpdaterStatistics:
     norm_max: float = 0
     norm_n: int = 0
     process_start_time: float = time.time()
+    started = False
 
 
 @dataclass
@@ -298,6 +299,9 @@ def perform_update(
     stats.idle_time_sum += time.time() - idle_time_start
     if maybe_sample is None:
         return
+    if not stats.started:
+        stats.started = True
+        stats.process_start_time = time.time()
     # compute loss and update
     essentials.optim.zero_grad()
     loss_time_start = time.time()

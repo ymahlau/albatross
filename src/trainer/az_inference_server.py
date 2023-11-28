@@ -12,6 +12,7 @@ from src.game.initialization import get_game_from_config
 
 from src.network.initialization import get_network_from_config, get_network_from_file
 from src.trainer.config import AlphaZeroTrainerConfig
+from src.misc.utils import set_seed
 import multiprocessing as mp
 
 from src.trainer.utils import get_latest_obj_from_queue
@@ -32,6 +33,7 @@ def run_inference_server(
         output_rdy_arr,
         input_arr,
         output_arr,
+        seed: int,
         cpu_list: Optional[list[int]],
         gpu_idx: Optional[int],
         prev_run_dir: Optional[Path],
@@ -39,6 +41,7 @@ def run_inference_server(
 ):
     inf_cfg = trainer_cfg.inf_cfg
     net_cfg = trainer_cfg.net_cfg
+    set_seed(seed)
     # load initial network
     start_phase = True
     if const_net_path is None:

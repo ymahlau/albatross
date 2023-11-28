@@ -207,12 +207,14 @@ class AlphaZeroTrainer:
         arr_idx, gpu_idx = 0, int(self.cfg.updater_cfg.use_gpu)
         for inference_id in range(self.cfg.num_inference_server):
             inference_net_queue = mp.Queue(maxsize=self.cfg.distributor_out_qsize)
+            seed_server = random.randint(0, 2 ** 32 - 1)
             kwargs_inference = {
                 'trainer_cfg': self.cfg,
                 'const_net_path': None,
                 'net_queue': inference_net_queue,
                 'stop_flag': stop_flag,
                 'info_queue': info_queue,
+                'seed': seed_server,
                 'input_rdy_arr': input_rdy_list[arr_idx],
                 'output_rdy_arr': output_rdy_list[arr_idx],
                 'input_arr': input_list[arr_idx],
@@ -231,12 +233,14 @@ class AlphaZeroTrainer:
             gpu_idx += 1
             if self.cfg.temperature_input and not self.cfg.single_sbr_temperature:
                 # proxy
+                seed_server = random.randint(0, 2 ** 32 - 1)
                 kwargs_inference = {
                     'trainer_cfg': self.cfg,
                     'const_net_path': self.cfg.proxy_net_path,
                     'net_queue': None,
                     'stop_flag': stop_flag,
                     'info_queue': info_queue,
+                    'seed': seed_server,
                     'input_rdy_arr': input_rdy_list[arr_idx],
                     'output_rdy_arr': output_rdy_list[arr_idx],
                     'input_arr': input_list[arr_idx],
