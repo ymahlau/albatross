@@ -12,7 +12,7 @@ from src.network.initialization import get_network_from_file
 
 
 def play_overcooked_example():
-    path = Path(__file__).parent.parent.parent / 'outputs' / 'simple_proxy2.pt'
+    path = Path(__file__).parent.parent.parent / 'outputs' / 'latest.pt'
     temperature_input = True
     single_temperature = True
     
@@ -56,12 +56,14 @@ def play_overcooked_example():
     # sample_temperatures = [1, 1]
     
     # play
-    temperatures = np.linspace(0, 10, 15)
+    # temperatures = np.linspace(0, 10, 15)
+    temperatures = [5.]
     for t in temperatures:
         agent0.temperatures = [t, t]
         agent1.temperatures = [t, t]
         game.reset()
         game.render()
+        # for _ in range(20):
         while not game.is_terminal():
             joint_action_list: list[int] = []
             prob_list = []

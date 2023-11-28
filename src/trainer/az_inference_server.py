@@ -112,17 +112,18 @@ def run_inference_server(
             obs_filtered = input_np[input_rdy_cpy]
             n = obs_filtered.shape[0]
             # forward pass for all encodings, but do not exceed max batch size
+            batch_size = int(trainer_cfg.max_batch_size / 2)
             if start_phase:
                 out_tensor = torch.zeros(size=(n, net.output_size), dtype=torch.float32)
             else:
-                if n <= trainer_cfg.max_batch_size:
+                if n <= batch_size:
                     enc_tensor = torch.from_numpy(obs_filtered).to(device)
                     out_tensor_with_grad = net(enc_tensor)
                     out_tensor = out_tensor_with_grad.cpu().detach().float().numpy()
                 else:
                     start_idx = 0
                     out_tensor_list = []
-                    end_idx_list = list(range(trainer_cfg.max_batch_size, n, trainer_cfg.max_batch_size))
+                    end_idx_list = list(range(batch_size, n, batch_size))
                     if end_idx_list[-1] < n:
                         end_idx_list.append(n)
                     for end_idx in end_idx_list:

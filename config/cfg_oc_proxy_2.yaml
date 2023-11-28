@@ -68,7 +68,7 @@ data:
           soup_delivery: 20
           soup_pickup: 5
           start_cooking: 3
-      reward_scaling_factor: 0.5
+      reward_scaling_factor: 1
       single_temperature_input: true
       start_pos:
         __module__: src.misc.serialization
@@ -109,16 +109,16 @@ data:
       id: 2
       name: oc_proxy
       project_name: overcooked_cramped
-      updater_bucket_size: 100
+      updater_bucket_size: 1000
       wandb_mode: online
-      worker_episode_bucket_size: 25
-  max_batch_size: 3000
+      worker_episode_bucket_size: 2
+  max_batch_size: 15000
   max_cpu_evaluator: 1
   max_cpu_inference_server: 2
   max_cpu_log_dist_save_collect: 1
   max_cpu_updater: 2
   max_cpu_worker: 11
-  max_eval_per_worker: 6000
+  max_eval_per_worker: 30000
   merge_inference_update_gpu: false
   net_cfg:
     __module__: src.network.resnet
@@ -213,14 +213,14 @@ data:
     __name__: SaverConfig
     data:
       save_all_checkpoints: false
-      save_interval_sec: 30
+      save_interval_sec: 300
   single_sbr_temperature: true
   temperature_input: true
   updater_cfg:
     __module__: src.trainer.config
     __name__: UpdaterConfig
     data:
-      gradient_max_norm: 1.0
+      gradient_max_norm: 100
       mse_policy_loss: true
       optim_cfg:
         __module__: src.supervised.optim
@@ -242,7 +242,7 @@ data:
                 value: COSINE
               cyclic: false
               end_times_min:
-              - 30
+              - 60
               - 1400
               init_temp: 0
               sampling: false
@@ -321,7 +321,7 @@ data:
                 __name__: SbrMode
                 value: NAGURNEY
               use_cpp: true
-          discount: 0.93
+          discount: 0.9
           eval_func_cfg:
             __module__: src.search.config
             __name__: InferenceServerEvalConfig
@@ -346,7 +346,7 @@ data:
                 __module__: src.game.values
                 __name__: UtilityNorm
                 value: FULL_COOP
-      search_iterations: 1
+      search_iterations: 2
       temperature: 1
       use_symmetries: true
 hydra:

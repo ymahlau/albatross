@@ -382,7 +382,7 @@ void construct_overcooked_encoding(
 ){
     int x_dim = state->w;
     int y_dim = state->h;
-    int z_dim = 16;
+    int z_dim = 15;
     if (include_temperature){
         z_dim += 1;
     }
@@ -510,9 +510,9 @@ void construct_overcooked_encoding(
     if (state->turn > state->horizon - 40){
         fill_layer_overcooked(arr, 1, 14, x_dim, y_dim, z_dim);
     }
-    // time step in environment: layer 15
-    float time_remaining = (float) (state->horizon - state->turn) / (float) state->horizon;
-    fill_layer_overcooked(arr, time_remaining, 15, x_dim, y_dim, z_dim);
+    // time step in environment: layer 15 (removed)
+    // float time_remaining = (float) (state->horizon - state->turn) / (float) state->horizon;
+    // fill_layer_overcooked(arr, time_remaining, 15, x_dim, y_dim, z_dim);
     // temperature: layer 16
     if (include_temperature){
         fill_layer_overcooked(arr, temperature, 16, x_dim, y_dim, z_dim);

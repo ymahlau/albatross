@@ -127,7 +127,7 @@ class OvercookedGame(Game):
 
     def get_obs_shape(self, never_flatten=False) -> tuple[int, ...]:
         max_dim = max(self.cfg.h, self.cfg.w)
-        return max_dim, max_dim, 16 + self.cfg.temperature_input
+        return max_dim, max_dim, 15 + self.cfg.temperature_input
 
     def get_obs(
             self, 

@@ -75,7 +75,7 @@ def generate_training_structured_configs():
         # net_cfg = EquivariantMobileNetConfig3x3(predict_game_len=True)
         # search
         # eval_func_cfg = NetworkEvalConfig(zero_sum_norm=ZeroSumNorm.LINEAR)
-        batch_size = 3000
+        batch_size = 15000
         # eval_func_cfg = NetworkEvalConfig(
         #     max_batch_size=batch_size,
         #     random_symmetry=False,
@@ -148,7 +148,7 @@ def generate_training_structured_configs():
             backup_func_cfg=backup_func_cfg,
             extract_func_cfg=extraction_func_cfg,
             average_eval=False,
-            discount=0.93,
+            discount=0.9,
         )
         # search_cfg = SMOOSConfig(
         #     eval_func_cfg=eval_func_cfg,
@@ -184,7 +184,7 @@ def generate_training_structured_configs():
             #     cyclic=True,
             #     sampling=True,
             # ) for _ in range(game_cfg.num_players)],
-            search_iterations=1,
+            search_iterations=2,
             temperature=1,
             max_random_start_steps=0,
             use_symmetries=True,
@@ -210,7 +210,7 @@ def generate_training_structured_configs():
             optim_type=OptimType.ADAM_W,
             anneal_cfg=TemperatureAnnealingConfig(
                 init_temp=0,
-                end_times_min=[30, 1400],
+                end_times_min=[60, 1400],
                 anneal_temps=[1e-3, 1e-6],
                 anneal_types=[AnnealingType.LINEAR, AnnealingType.COSINE],
             ),
@@ -235,16 +235,16 @@ def generate_training_structured_configs():
             policy_loss_factor=5,
             value_reg_loss_factor=0,
             utility_loss_factor=1,
-            
+            gradient_max_norm=100,
         )
         logger_cfg = LoggerConfig(
             project_name="overcooked_cramped",
             buffer_gen=False,
-            name='oc_proxy_luis',
+            name='oc_proxy',
             id=seed,
             updater_bucket_size=1000,
             worker_episode_bucket_size=2,
-            wandb_mode='offline',
+            wandb_mode='online',
         )
         saver_cfg = SaverConfig(
             save_interval_sec=300,
@@ -278,7 +278,7 @@ def generate_training_structured_configs():
             only_generate_buffer=False,
             restrict_cpu=True,  # only works on LINUX
             max_cpu_updater=2,
-            max_cpu_worker=22,
+            max_cpu_worker=11,
             max_cpu_evaluator=1,
             max_cpu_log_dist_save_collect=1,
             max_cpu_inference_server=2,

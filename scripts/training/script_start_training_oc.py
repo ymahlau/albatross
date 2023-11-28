@@ -55,8 +55,8 @@ def start_training_from_structured_configs():
     # game_cfg = survive_on_7x7_4_player_royale()
     # game_cfg = perform_choke_5x5_4_player(centered=True)
     # game_cfg.all_actions_legal = False
-    # game_cfg = OneStateCrampedRoomOvercookedConfig()
-    game_cfg = SimpleCrampedRoomOvercookedConfig()
+    game_cfg = OneStateCrampedRoomOvercookedConfig()
+    # game_cfg = SimpleCrampedRoomOvercookedConfig()
     # game_cfg = Simple2CrampedRoomOvercookedConfig()
     
     game_cfg.temperature_input = temperature_input
@@ -146,7 +146,7 @@ def start_training_from_structured_configs():
         eval_func_cfg=eval_func_cfg,
         backup_func_cfg=backup_func_cfg,
         extract_func_cfg=extraction_func_cfg,
-        average_eval=True,
+        average_eval=False,
         discount=0.99,
     )
     # search_cfg = SMOOSConfig(
@@ -228,12 +228,12 @@ def start_training_from_structured_configs():
         updates_until_distribution=5,
         optim_cfg=optim_cfg,
         use_gpu=True,
-        utility_loss=UtilityNorm.FULL_COOP,
+        utility_loss=UtilityNorm.NONE,
         mse_policy_loss=True,
         policy_loss_factor=1,
         value_reg_loss_factor=0,
-        utility_loss_factor=1,
-        
+        utility_loss_factor=0,
+        gradient_max_norm=100,
     )
     logger_cfg = LoggerConfig(
         project_name="test",
@@ -242,7 +242,7 @@ def start_training_from_structured_configs():
         id=0,
         updater_bucket_size=100,
         worker_episode_bucket_size=25,
-        wandb_mode='online',
+        wandb_mode='offline',
     )
     saver_cfg = SaverConfig(
         save_interval_sec=30,

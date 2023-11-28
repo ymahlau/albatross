@@ -56,7 +56,7 @@ class CrampedRoomOvercookedConfig(OvercookedGameConfig):
         [1, 2, 1, 5, 1],
     ])
     start_pos: tuple[tuple[int, int, int, int], tuple[int, int, int, int]] = field(default_factory=lambda: ((1, 2, 0, 0), (3, 1, 0, 0)))
-    reward_scaling_factor: float = field(default=0.5)
+    reward_scaling_factor: float = field(default=1)
 
 
 @dataclass
