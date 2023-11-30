@@ -1,5 +1,7 @@
+from collections import defaultdict
 import multiprocessing as mp
 import os
+import pickle
 import random
 import sys
 import time
@@ -12,6 +14,7 @@ import numpy as np
 from src.game.actions import sample_individual_actions, apply_permutation, filter_illegal_and_normalize
 from src.game.game import Game
 from src.game.initialization import get_game_from_config
+from src.game.overcooked.overcooked import OvercookedGame
 from src.game.utils import step_with_draw_prevention
 from src.misc.replay_buffer import BufferInputSample
 from src.misc.utils import set_seed
@@ -41,6 +44,7 @@ class WorkerStatistics:
     process_start_time: float = time.time()
     reward_sum: float = 0
     reward_counter: int = 0
+    infos = []
 
 
 def run_worker(
@@ -129,6 +133,10 @@ def run_worker(
             annealer_list = [TemperatureAnnealer(worker_cfg.anneal_cfgs[0])]
         else:
             annealer_list = [TemperatureAnnealer(cfg) for cfg in worker_cfg.anneal_cfgs]
+    min_scaler, max_scaler = None, None
+    if worker_cfg.temp_scaling_cfgs is not None:
+        min_scaler = TemperatureAnnealer(worker_cfg.temp_scaling_cfgs[0])
+        max_scaler = TemperatureAnnealer(worker_cfg.temp_scaling_cfgs[1])
     # restrict cpus
     pid = os.getpid()
     if cpu_list is not None:
@@ -148,27 +156,41 @@ def run_worker(
             # init
             game_list, value_list, reward_list, policy_list = [], [], [], []
             temp_list: list[list[float]] = []
+            # parse options
+            cur_temp_list = None
+            if annealer_list is not None:
+                time_passed = (time.time() - stats.process_start_time) / 60
+                cur_min, cur_max = None, None
+                if min_scaler is not None and max_scaler is not None:
+                    cur_min, cur_max = min_scaler(time_passed), max_scaler(time_passed)
+                if trainer_cfg.single_sbr_temperature:
+                    t = annealer_list[0](time_passed)
+                    if cur_min is not None and cur_max is not None:
+                        t = t * (cur_max - cur_min) + cur_min
+                    cur_temp_list = [t for _ in range(game_cfg.num_players)]
+                else:
+                    cur_temp_list = []
+                    for idx in range(game_cfg.num_players):
+                        t = annealer_list[idx](time_passed)
+                        if cur_min is not None and cur_max is not None:
+                            t = t * (cur_max - cur_min) + cur_min
+                        cur_temp_list.append(t)
+                search.set_temperatures(cur_temp_list)
             # do search and send results
             while not game.is_terminal() and not stop_flag.value:
                 if debug:
                     game.render()
                 # search
+                if cur_temp_list is not None:
+                    temp_list.append(cur_temp_list)
                 search_time_start = time.time()
-                # parse options
-                if annealer_list is not None:
-                    time_passed = (time.time() - stats.process_start_time) / 60
-                    if trainer_cfg.single_sbr_temperature:
-                        temperature = annealer_list[0](time_passed)
-                        cur_temp_list = [temperature for _ in range(game_cfg.num_players)]
-                    else:
-                        cur_temp_list = [a(time_passed) for a in annealer_list]
-                    temp_list.append(cur_temp_list) # type: ignore
-                    search.set_temperatures(cur_temp_list) # type: ignore
                 # do the search
                 values, action_probs, info = search(
                     game=game,
                     iterations=worker_cfg.search_iterations,
                 )
+                # if worker_id == 0:
+                #     stats.infos.append((values, action_probs, cur_temp_list))
                 # if values[0] > 1.2:
                 #     print(f"{values[0]:.2f}, {values[1]:.2f}, {action_probs=}".replace("\n", ""), flush=True)
                 if debug:
@@ -218,10 +240,13 @@ def run_worker(
             # send info about episodes to logging process
             if len(stats.episode_len_list) == trainer_cfg.logger_cfg.worker_episode_bucket_size:
                 time_passed = (time.time() - stats.process_start_time) / 60
-                temps = None if not annealer_list else [a(time_passed) for a in annealer_list]
-                send_info(stats, info_queue, stop_flag, temps) # type: ignore
+                temps = None if not temp_list else random.choice(temp_list)
+                send_info(stats, info_queue, stop_flag, temps)
                 if stop_flag.value:
                     break
+                # if worker_id == 0 and stats.infos:
+                #     with open("/tmp/infos.pkl", 'wb') as f:
+                #         pickle.dump(stats.infos, f)
     except KeyboardInterrupt:
         print('Detected Keyboard Interrupt in Worker Process\n', flush=True)
     game.close()

@@ -66,6 +66,7 @@ class SpecialExtractFunc(ExtractFunc):
             raise Exception("Special extraction only works with backup storing action probs")
         values = root.forward_estimate()
         values = apply_utility_norm(values, self.cfg.utility_norm)
+        values = np.clip(values, self.cfg.min_clip_value, self.cfg.max_clip_value)
         action_prob_sum: np.ndarray = root.info["action_probs"]
         action_prob_count: int = root.info["action_probs_count"]
         # sanity checks

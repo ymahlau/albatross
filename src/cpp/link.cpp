@@ -433,5 +433,9 @@ extern "C" {
     bool equals_overcooked_cpp(OvercookedGameState* state, OvercookedGameState* other){
         return equals_overcooked(state, other);
     }
+
+    void get_player_infos_cpp(OvercookedGameState* state, int* info_arr){
+        return get_player_infos(state, info_arr);
+    }
 }
 

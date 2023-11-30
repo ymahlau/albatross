@@ -73,6 +73,9 @@ class AlphaZeroTrainer:
             set_seed(self.cfg.logger_cfg.id)
         print(f'Started main process with pid {os.getpid()}')
         # initialization
+        tmp_dir = Path(os.getcwd()) / 'tmp'
+        if not Path.exists(tmp_dir):
+            tmp_dir.mkdir(parents=True, exist_ok=True)
         process_list = []
         stop_flag = mp.Value('b', False, lock=False)
         collector_in_queue = mp.Queue(maxsize=self.cfg.data_qsize)

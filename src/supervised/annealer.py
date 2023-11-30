@@ -96,7 +96,7 @@ class TemperatureAnnealer:
             factor = (end_temp - start_temp) * math.log(phase_time + 1)
             t = start_temp + factor / scale
         else:
-            raise ValueError(f"Invalid or not implemented anneal type: {a_type}")
+            raise ValueError(f"Invalid or not implemented anneal type: {a_type}")        
         # update lr of optimizer
         if self.optim is not None:
             for param_group in self.optim.param_groups:

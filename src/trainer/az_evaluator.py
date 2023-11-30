@@ -80,6 +80,16 @@ def run_evaluator(
     opponent_list = []
     for opponent_cfg in evaluator_cfg.enemy_cfgs:
         opponent_list.append(get_agent_from_config(opponent_cfg))
+    if evaluator_cfg.self_play:
+        agent_cfg =NetworkAgentConfig(net_cfg=net_cfg, name="SelfPlay")
+        if trainer_cfg.temperature_input:
+            agent_cfg.temperature_input = True
+            agent_cfg.single_temperature = trainer_cfg.single_sbr_temperature
+        agent = get_agent_from_config(agent_cfg)
+        agent.set_temperatures([5 for _ in range(game.num_players)])
+        agent.replace_net(net)
+        opponent_list.append(agent)
+        evaluator_cfg.enemy_cfgs.append(agent_cfg)
     # restrict cpus
     pid = os.getpid()
     if cpu_list is not None:
@@ -101,6 +111,7 @@ def run_evaluator(
                 enemy_iterations=evaluator_cfg.enemy_iterations,
                 temperature=math.inf,
                 prevent_draw=evaluator_cfg.prevent_draw,
+                switch_positions=evaluator_cfg.switch_pos,
             )
             eval_time_value = time.time() - last_eval_time
             time_played = (time.time() - start_time) / 60
@@ -124,8 +135,9 @@ def run_evaluator(
                     opponent_list=opponent_list,
                     num_episodes=evaluator_cfg.num_episodes,
                     enemy_iterations=evaluator_cfg.enemy_iterations,
-                    temperature=evaluator_cfg.temperature,
+                    temperature=math.inf,
                     prevent_draw=evaluator_cfg.prevent_draw,
+                    switch_positions=evaluator_cfg.switch_pos,
                 )
                 eval_time_policy = time.time() - last_eval_time
                 # data of policy evaluation
@@ -207,27 +219,31 @@ def do_evaluation(
         game: Game,
         evaluee: Agent,
         opponent_list: list[Agent],
-        num_episodes: int,
+        num_episodes: list[int],
         enemy_iterations: int,
         temperature: float,
         prevent_draw: bool,
+        switch_positions: bool,
 ) -> tuple[list[list[float]], list[list[int]]]:
     results = []
     episode_lengths = []
     # iterate opponents
-    for opponent in opponent_list:
+    for opponent, episodes in zip(opponent_list, num_episodes):
         cur_results = []
         cur_lengths = []
         # iterate episodes
-        for i in range(num_episodes):
+        for ep in range(episodes):
+            agent_pos = 0
+            if switch_positions:
+                agent_pos = ep % 2
             game.reset()
             step_counter = 0
             while not game.is_terminal() and game.is_player_at_turn(0):
                 joint_action_list: list[int] = []
                 for player in game.players_at_turn():
-                    if player == 0:  # agent to evaluate always plays as player 0
-                        probs, _ = evaluee(game, player=0, iterations=1)
-                        probs[game.illegal_actions(0)] = 0
+                    if player == agent_pos:  # agent to evaluate always plays as player 0
+                        probs, _ = evaluee(game, player=player, iterations=1)
+                        probs[game.illegal_actions(player)] = 0
                         probs /= probs.sum()
                         action = sample_individual_actions(probs[np.newaxis, ...], temperature)[0]
                     else:

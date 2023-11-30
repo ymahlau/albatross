@@ -134,8 +134,6 @@ def run_inference_server(
                         out_tensor_part_with_grad = net(enc_tensor)
                         out_tensor_part = out_tensor_part_with_grad.cpu().detach().numpy()
                         out_tensor_list.append(out_tensor_part)
-                        del out_tensor_part_with_grad
-                        del enc_tensor
                         start_idx = end_idx
                     out_tensor = np.concatenate(out_tensor_list, axis=0)
             # send output back to processes

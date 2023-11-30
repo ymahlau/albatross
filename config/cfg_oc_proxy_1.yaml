@@ -68,7 +68,7 @@ data:
           soup_delivery: 20
           soup_pickup: 5
           start_cooking: 3
-      reward_scaling_factor: 1
+      reward_scaling_factor: 0.3
       single_temperature_input: true
       start_pos:
         __module__: src.misc.serialization

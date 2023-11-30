@@ -12,7 +12,8 @@ def compute_value_loss(
     for i in range(len(value_pred.shape)):
         if value_pred.shape[i] != value_target.shape[i]:
             raise ValueError(f"Invalid value shapes: {value_pred.shape=}, {value_target.shape=}")
-    loss = torch.nn.functional.mse_loss(value_pred, value_target)
+    # loss = torch.nn.functional.mse_loss(value_pred, value_target)
+    loss = torch.nn.functional.huber_loss(value_pred, value_target, delta=1.0)
     return loss
 
 
@@ -28,7 +29,8 @@ def compute_policy_loss(
             raise ValueError(f"Invalid value shapes: {policy_pred_logits.shape=}, {policy_target.shape=}")
     if use_mse:
         pred_probs = torch.nn.functional.softmax(policy_pred_logits, dim=-1)
-        loss = torch.nn.functional.mse_loss(pred_probs, policy_target)
+        # loss = torch.nn.functional.mse_loss(pred_probs, policy_target)
+        loss = torch.nn.functional.huber_loss(pred_probs, policy_target, delta=0.01)
     else:
         loss = torch.nn.functional.cross_entropy(policy_pred_logits, policy_target)
     return loss
@@ -46,12 +48,14 @@ def compute_utility_loss(
             raise ValueError(f"Value output needs even shape for zero-sum loss")
         p1_vals = value_output[:int(n/2)]
         p2_vals = value_output[int(n/2):]
-        loss = torch.nn.functional.mse_loss(p1_vals, -p2_vals)
+        # loss = torch.nn.functional.mse_loss(p1_vals, -p2_vals)
+        loss = torch.nn.functional.huber_loss(p1_vals, -p2_vals, delta=1.0)
     else: # fully cooperative
         n = value_output.shape[0]
         if n % 2 != 0:
             raise ValueError(f"Fully coop loss regularization currenly only implemented for 2 players")
         p1_vals = value_output[:int(n/2)]
         p2_vals = value_output[int(n/2):]
-        loss = torch.nn.functional.mse_loss(p1_vals, p2_vals)
+        # loss = torch.nn.functional.mse_loss(p1_vals, p2_vals)
+        loss = torch.nn.functional.huber_loss(p1_vals, p2_vals, delta=1.0)
     return loss

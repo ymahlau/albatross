@@ -22,40 +22,48 @@ data:
         __name__: RandomAgentConfig
         data:
           name: RandomAgent
-      enemy_iterations: 100
-      eval_rate_sec: 20
-      num_episodes: 100
-      prevent_draw: true
+      enemy_iterations: 1
+      eval_rate_sec: 60
+      num_episodes:
+      - 100
+      - 20
+      prevent_draw: false
       save_checkpoints: false
-      temperature: 1
+      self_play: true
+      switch_pos: true
   game_cfg:
     __module__: src.game.overcooked.config
-    __name__: CrampedRoomOvercookedConfig
+    __name__: CoordinationRingOvercookedConfig
     data:
       board:
       - - 1
         - 1
+        - 1
         - 4
         - 1
+      - - 1
+        - 0
+        - 0
+        - 0
+        - 4
+      - - 2
+        - 0
+        - 1
+        - 0
         - 1
       - - 3
         - 0
         - 0
         - 0
+        - 1
+      - - 1
         - 3
-      - - 1
-        - 0
-        - 0
-        - 0
-        - 1
-      - - 1
-        - 2
-        - 1
         - 5
+        - 1
         - 1
       cooking_time: 20
       flat_obs: false
-      h: 4
+      h: 5
       horizon: 400
       num_actions: 6
       num_players: 2
@@ -68,7 +76,7 @@ data:
           soup_delivery: 20
           soup_pickup: 5
           start_cooking: 3
-      reward_scaling_factor: 0.3
+      reward_scaling_factor: 1
       single_temperature_input: true
       start_pos:
         __module__: src.misc.serialization
@@ -79,19 +87,20 @@ data:
             __name__: TupleWrapper
             data:
               data:
-              - 1
               - 2
+              - 1
               - 0
               - 0
           - __module__: src.misc.serialization
             __name__: TupleWrapper
             data:
               data:
-              - 3
               - 1
+              - 2
               - 0
               - 0
       temperature_input: true
+      unstuck_behavior: false
       w: 5
   inf_cfg:
     __module__: src.trainer.config
@@ -106,18 +115,18 @@ data:
     __name__: LoggerConfig
     data:
       buffer_gen: false
-      id: 3
-      name: oc_proxy
-      project_name: overcooked_cramped
+      id: 0
+      name: luis_proxy_cr
+      project_name: overcooked
       updater_bucket_size: 1000
-      wandb_mode: online
+      wandb_mode: offline
       worker_episode_bucket_size: 2
   max_batch_size: 15000
   max_cpu_evaluator: 1
   max_cpu_inference_server: 2
   max_cpu_log_dist_save_collect: 1
   max_cpu_updater: 2
-  max_cpu_worker: 11
+  max_cpu_worker: 22
   max_eval_per_worker: 30000
   merge_inference_update_gpu: false
   net_cfg:
@@ -200,7 +209,7 @@ data:
             value: GROUP_NORM
           num_layers: 1
   num_inference_server: 1
-  num_worker: 30
+  num_worker: 75
   only_generate_buffer: false
   prev_run_dir: null
   prev_run_idx: null
@@ -221,7 +230,7 @@ data:
     __name__: UpdaterConfig
     data:
       gradient_max_norm: 100
-      mse_policy_loss: true
+      mse_policy_loss: false
       optim_cfg:
         __module__: src.supervised.optim
         __name__: OptimizerConfig
@@ -232,8 +241,16 @@ data:
             data:
               anneal_temps:
               - 0.001
+              - 1.0e-05
+              - 0.001
               - 1.0e-06
               anneal_types:
+              - __module__: src.supervised.annealer
+                __name__: AnnealingType
+                value: LINEAR
+              - __module__: src.supervised.annealer
+                __name__: AnnealingType
+                value: COSINE
               - __module__: src.supervised.annealer
                 __name__: AnnealingType
                 value: LINEAR
@@ -243,7 +260,9 @@ data:
               cyclic: false
               end_times_min:
               - 60
-              - 1400
+              - 600
+              - 700
+              - 1300
               init_temp: 0
               sampling: false
           beta1: 0.9
@@ -254,14 +273,14 @@ data:
             __name__: OptimType
             value: ADAM_W
           weight_decay: 0.0001
-      policy_loss_factor: 5
+      policy_loss_factor: 1
       updates_until_distribution: 5
       use_gpu: true
       utility_loss:
         __module__: src.game.values
         __name__: UtilityNorm
-        value: FULL_COOP
-      utility_loss_factor: 1
+        value: NONE
+      utility_loss_factor: 0
       value_reg_loss_factor: 0
   updater_in_qsize: 100
   updater_out_qsize: 10
@@ -275,7 +294,7 @@ data:
         __name__: TemperatureAnnealingConfig
         data:
           anneal_temps:
-          - 10
+          - 1
           anneal_types:
           - __module__: src.supervised.annealer
             __name__: AnnealingType
@@ -285,7 +304,7 @@ data:
           - 1
           init_temp: 0
           sampling: true
-      exploration_prob: 0
+      exploration_prob: 0.5
       max_game_length: 8
       max_random_start_steps: 0
       policy_eval_cfg:
@@ -328,7 +347,7 @@ data:
             data:
               active_wait_time: 0.05
               init_temperatures: null
-              max_clip_value: 20
+              max_clip_value: .inf
               min_clip_value: -.inf
               policy_prediction: true
               random_symmetry: false
@@ -337,18 +356,58 @@ data:
               utility_norm:
                 __module__: src.game.values
                 __name__: UtilityNorm
-                value: NONE
+                value: FULL_COOP
           extract_func_cfg:
             __module__: src.search.config
             __name__: SpecialExtractConfig
             data:
+              max_clip_value: 30
+              min_clip_value: -.inf
               utility_norm:
                 __module__: src.game.values
                 __name__: UtilityNorm
                 value: FULL_COOP
-      search_iterations: 2
+      search_iterations: 1
+      temp_scaling_cfgs:
+        __module__: src.misc.serialization
+        __name__: TupleWrapper
+        data:
+          data:
+          - __module__: src.supervised.annealer
+            __name__: TemperatureAnnealingConfig
+            data:
+              anneal_temps:
+              - 5
+              - 0
+              anneal_types:
+              - __module__: src.supervised.annealer
+                __name__: AnnealingType
+                value: CONST
+              - __module__: src.supervised.annealer
+                __name__: AnnealingType
+                value: LINEAR
+              cyclic: false
+              end_times_min:
+              - 600
+              - 1300
+              init_temp: 5
+              sampling: false
+          - __module__: src.supervised.annealer
+            __name__: TemperatureAnnealingConfig
+            data:
+              anneal_temps:
+              - 10
+              anneal_types:
+              - __module__: src.supervised.annealer
+                __name__: AnnealingType
+                value: CONST
+              cyclic: true
+              end_times_min:
+              - 1
+              init_temp: 10
+              sampling: false
       temperature: 1
       use_symmetries: true
 hydra:
   run:
-    dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_oc_proxy
+    dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_luis_proxy_cr

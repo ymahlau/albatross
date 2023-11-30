@@ -382,7 +382,7 @@ void construct_overcooked_encoding(
 ){
     int x_dim = state->w;
     int y_dim = state->h;
-    int z_dim = 15;
+    int z_dim = 16;
     if (include_temperature){
         z_dim += 1;
     }
@@ -430,7 +430,7 @@ void construct_overcooked_encoding(
             arr[cur_idx] = 1;
         }
         // update player to other player
-        player = 1 - player;
+        player_id = 1 - player;
     }
     // base map + variable map encodings
     for (int x = 0; x < state->w; x++){
@@ -510,14 +510,13 @@ void construct_overcooked_encoding(
     if (state->turn > state->horizon - 40){
         fill_layer_overcooked(arr, 1, 14, x_dim, y_dim, z_dim);
     }
-    // time step in environment: layer 15 (removed)
-    // float time_remaining = (float) (state->horizon - state->turn) / (float) state->horizon;
-    // fill_layer_overcooked(arr, time_remaining, 15, x_dim, y_dim, z_dim);
+    // time step in environment: layer 15
+    float time_remaining = (float) (state->horizon - state->turn) / (float) state->horizon;
+    fill_layer_overcooked(arr, time_remaining, 15, x_dim, y_dim, z_dim);
     // temperature: layer 16
     if (include_temperature){
         fill_layer_overcooked(arr, temperature, 16, x_dim, y_dim, z_dim);
     }
-
 }
 
 
@@ -537,4 +536,15 @@ bool equals_overcooked(OvercookedGameState* state, OvercookedGameState* other){
     return true;
 }
 
+
+void get_player_infos(OvercookedGameState* state, int* info_arr){
+    info_arr[0] = state->players[0].position.first;
+    info_arr[1] = state->players[0].position.second;
+    info_arr[2] = state->players[0].orientation;
+    info_arr[3] = state->players[0].held_item;
+    info_arr[4] = state->players[1].position.first;
+    info_arr[5] = state->players[1].position.second;
+    info_arr[6] = state->players[1].orientation;
+    info_arr[7] = state->players[1].held_item;
+}
 

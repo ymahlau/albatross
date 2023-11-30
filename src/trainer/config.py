@@ -16,8 +16,7 @@ from src.trainer.policy_eval import PolicyEvalConfig
 @dataclass
 class EvaluatorConfig:
     eval_rate_sec: float = 60
-    num_episodes: int = 100
-    temperature: float = 1.0
+    num_episodes: list[int] = field(default_factory=lambda: [100, 100])
     enemy_iterations: int = 200
     enemy_cfgs: list[AgentConfig] = field(default_factory=lambda: [
         RandomAgentConfig(),
@@ -25,6 +24,8 @@ class EvaluatorConfig:
     ])
     prevent_draw: bool = True
     save_checkpoints: bool = False
+    self_play: bool = False
+    switch_pos: bool = False
 
 
 @dataclass
@@ -74,6 +75,7 @@ class WorkerConfig:
     max_game_length: float = 25  # only used for game length prediction
     prevent_draw: bool = False
     exploration_prob: float = 0.5
+    temp_scaling_cfgs: Optional[tuple[TemperatureAnnealingConfig, TemperatureAnnealingConfig]] = None
 
 
 @dataclass

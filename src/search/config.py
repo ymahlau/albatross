@@ -177,6 +177,8 @@ class StandardExtractConfig(ExtractFuncConfig):
 @dataclass
 class SpecialExtractConfig(ExtractFuncConfig):
     utility_norm: UtilityNorm = UtilityNorm.NONE
+    min_clip_value: float = -math.inf
+    max_clip_value: float = 50
 
 
 @dataclass

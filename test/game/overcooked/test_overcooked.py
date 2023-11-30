@@ -141,6 +141,12 @@ class TestOvercookedGame(unittest.TestCase):
         self.assertNotEquals(game3, game2)
         game3.reset()
         self.assertEqual(game3, game2)
+        
+    def test_position(self):
+        game_cfg = CrampedRoomOvercookedConfig()
+        game = OvercookedGame(game_cfg)
+        info_dict = game.get_player_info()
+        print(info_dict)
 
 
 

@@ -18,7 +18,7 @@ class OvercookedRewardConfig:
 @dataclass(kw_only=True)
 class OvercookedGameConfig(GameConfig):
     board: list[list[int]]
-    start_pos: tuple[tuple[int, int, int, int], tuple[int, int, int, int]]  # x, y, orientation
+    start_pos: tuple[tuple[int, int, int, int], tuple[int, int, int, int]]  # x, y, orientation, held_item
     w: int
     h: int
     reward_scaling_factor: float = field(default=1)
@@ -36,6 +36,7 @@ class OvercookedGameConfig(GameConfig):
     single_temperature_input: bool = True
     flat_obs: bool = False
     cooking_time: int = 20
+    unstuck_behavior: bool = False
 
 
 # const int EMPTY_TILE = 0;
@@ -164,12 +165,40 @@ class SimpleCrampedRoomOvercookedConfig(OvercookedGameConfig):
 class Simple2CrampedRoomOvercookedConfig(OvercookedGameConfig):
     w: int = field(default=5)
     h: int = field(default=4)
-    horizon: int = field(default=10)
+    horizon: int = field(default=6)
     board: list[list[int]] = field(default_factory=lambda: [
         [1, 1, 4, 1, 1],
         [3, 0, 0, 0, 3],
         [1, 0, 0, 0, 1],
         [1, 2, 1, 5, 1],
     ])
-    start_pos: tuple[tuple[int, int, int, int], tuple[int, int, int, int]] = field(default_factory=lambda: ((1, 2, 0, 0), (3, 1, 2, 0)))
+    start_pos: tuple[tuple[int, int, int, int], tuple[int, int, int, int]] = field(default_factory=lambda: ((1, 2, 0, 0), (3, 1, 0, 0)))
+    reward_scaling_factor: float = field(default=0.5)
+    
+@dataclass
+class Simple3CrampedRoomOvercookedConfig(OvercookedGameConfig):
+    w: int = field(default=5)
+    h: int = field(default=4)
+    horizon: int = field(default=15)
+    board: list[list[int]] = field(default_factory=lambda: [
+        [1, 1, 4, 1, 1],
+        [3, 0, 0, 0, 3],
+        [1, 0, 0, 0, 1],
+        [1, 2, 1, 5, 1],
+    ])
+    start_pos: tuple[tuple[int, int, int, int], tuple[int, int, int, int]] = field(default_factory=lambda: ((1, 2, 0, 0), (3, 1, 0, 0)))
+    reward_scaling_factor: float = field(default=0.5)
+
+@dataclass
+class Simple4CrampedRoomOvercookedConfig(OvercookedGameConfig):
+    w: int = field(default=5)
+    h: int = field(default=4)
+    horizon: int = field(default=50)
+    board: list[list[int]] = field(default_factory=lambda: [
+        [1, 1, 4, 1, 1],
+        [3, 0, 0, 0, 3],
+        [1, 0, 0, 0, 1],
+        [1, 2, 1, 5, 1],
+    ])
+    start_pos: tuple[tuple[int, int, int, int], tuple[int, int, int, int]] = field(default_factory=lambda: ((1, 2, 0, 0), (3, 1, 0, 0)))
     reward_scaling_factor: float = field(default=0.5)
