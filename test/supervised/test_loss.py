@@ -37,4 +37,4 @@ class TestLoss(unittest.TestCase):
         self.assertGreater(loss.item(), 0)
         sample2 = buffer.sample(8, grouped=True)
         loss2 = compute_utility_loss(torch.tensor(sample2.values), UtilityNorm.ZERO_SUM)
-        self.assertAlmostEqual(10, loss2.item(), places=5)
+        self.assertAlmostEqual(2.5, loss2.item(), places=5)

@@ -321,7 +321,7 @@ def generate_training_structured_configs():
                 temperature_input=temperature_input,
                 single_sbr_temperature=single_temperature,
                 compile_model=True,
-                compile_mode='max_autotune',
+                compile_mode='max-autotune',
                 merge_inference_update_gpu=False,
                 proxy_net_path=None,
             )

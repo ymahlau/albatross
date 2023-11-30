@@ -24,7 +24,7 @@ class OptimizerConfig:
 
 def get_optim_from_config(
         cfg: OptimizerConfig,
-        net: Network,
+        net,
 ) -> tuple[torch.optim.Optimizer, TemperatureAnnealer]:
     # construct optim
     if cfg.optim_type == OptimType.ADAM or cfg.optim_type == OptimType.ADAM.value:

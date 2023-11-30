@@ -8,6 +8,7 @@ from typing import Optional
 import multiprocessing as mp
 
 from src.network.initialization import get_network_from_config
+from src.network.utils import cleanup_state_dict
 from src.trainer.config import AlphaZeroTrainerConfig
 from src.trainer.utils import send_obj_to_queue, get_latest_obj_from_queue
 import multiprocessing.sharedctypes as sc
@@ -45,7 +46,8 @@ def run_saver(
                 if maybe_state_dict is None:
                     print(f"Warning, Saver did not receive model...", flush=True)
                 else:
-                    net.load_state_dict(maybe_state_dict)
+                    clean_dict = cleanup_state_dict(maybe_state_dict)
+                    net.load_state_dict(clean_dict)
                     # save
                     net.save(model_folder.parent / 'latest.pt')
                     if saver_cfg.save_all_checkpoints:

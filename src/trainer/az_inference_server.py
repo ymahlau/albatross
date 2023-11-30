@@ -68,7 +68,7 @@ def run_inference_server(
         net = torch.compile(
             model=net,
             dynamic=False,
-            mode=trainer_cfg.compile_mode,
+            # mode=trainer_cfg.compile_mode,  # use default, max-autotune does not work for dynamic shapes (why?)
             fullgraph=True,
         )
     # restrict cpus

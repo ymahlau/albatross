@@ -110,8 +110,6 @@ def run_updater(
             mode=trainer_cfg.compile_mode,
             fullgraph=True,
         )
-    if not isinstance(net, Network):  # just for type checking
-        raise Exception(f"Nework is: {net}")
     print(f"{net.num_params()=}", flush=True)
     info_queue.put_nowait({"Network Parameter": net.num_params()})
     # optimizer
@@ -124,7 +122,7 @@ def run_updater(
             optim.load_state_dict(optim_state_dict)
         else:
             print(f"{datetime.now()} - WARNING: Cannot load optimizer from previous run directory ........", flush=True)
-    essentials = UpdaterEssentials(net=net, optim=optim, device=device, annealer=annealer)
+    essentials = UpdaterEssentials(net=net, optim=optim, device=device, annealer=annealer) # type: ignore
     stats = UpdaterStatistics(update_counter=update_counter)
     # restrict cpus
     pid = os.getpid()
