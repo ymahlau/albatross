@@ -33,47 +33,32 @@ data:
       switch_pos: true
   game_cfg:
     __module__: src.game.overcooked.config
-    __name__: CounterCircuitOvercookedConfig
+    __name__: CoordinationRingOvercookedConfig
     data:
       board:
       - - 1
         - 1
         - 1
         - 4
-        - 4
-        - 1
-        - 1
         - 1
       - - 1
         - 0
         - 0
         - 0
-        - 0
-        - 0
-        - 0
-        - 1
+        - 4
       - - 2
         - 0
         - 1
-        - 1
-        - 1
-        - 1
         - 0
+        - 1
+      - - 3
+        - 0
+        - 0
+        - 0
+        - 1
+      - - 1
+        - 3
         - 5
-      - - 1
-        - 0
-        - 0
-        - 0
-        - 0
-        - 0
-        - 0
-        - 1
-      - - 1
-        - 1
-        - 1
-        - 3
-        - 3
-        - 1
         - 1
         - 1
       cooking_time: 20
@@ -102,21 +87,21 @@ data:
             __name__: TupleWrapper
             data:
               data:
-              - 3
-              - 3
+              - 2
+              - 1
               - 0
               - 0
           - __module__: src.misc.serialization
             __name__: TupleWrapper
             data:
               data:
-              - 3
               - 1
+              - 2
               - 0
               - 0
       temperature_input: true
       unstuck_behavior: false
-      w: 8
+      w: 5
   inf_cfg:
     __module__: src.trainer.config
     __name__: InferenceServerConfig
@@ -130,8 +115,8 @@ data:
     __name__: LoggerConfig
     data:
       buffer_gen: false
-      id: 0
-      name: luis_proxy_cc
+      id: 1
+      name: luis_proxy_cr
       project_name: overcooked
       updater_bucket_size: 1000
       wandb_mode: offline
@@ -425,4 +410,4 @@ data:
       use_symmetries: true
 hydra:
   run:
-    dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_luis_proxy_cc
+    dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_luis_proxy_cr

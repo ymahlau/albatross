@@ -309,7 +309,7 @@ def start_training_from_structured_configs():
         max_cpu_inference_server=1,
         temperature_input=temperature_input,
         single_sbr_temperature=single_temperature,
-        compile_model=True,
+        compile_model=False,
         compile_mode='max-autotune',
         merge_inference_update_gpu=True,
         proxy_net_path=None,

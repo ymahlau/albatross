@@ -84,6 +84,7 @@ def run_updater(
     # torch.set_num_threads(1)
     # os.environ["OMP_NUM_THREADS"] = "1"
     set_seed(seed)
+    torch.set_float32_matmul_precision('medium')
     if updater_cfg.utility_loss != UtilityNorm.NONE and game_cfg.num_players != 2:
         raise ValueError(f"Can only use utility loss with two players")
     # initialization
@@ -180,7 +181,7 @@ def distribute_net(
     newest_state_dict = {}
     # state dict can only be sent to processes via cpu
     for k, v in state_dict.items():
-        newest_state_dict[k.replace("_orig_mod.", "")] = v.cpu()
+        newest_state_dict[k] = v.cpu()
     stats.model_conv_time_sum += time.time() - model_conv_time_start
     # send
     idle_time_start = time.time()

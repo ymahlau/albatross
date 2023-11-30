@@ -57,7 +57,7 @@ def generate_training_structured_configs():
         
     }
     for name, game_cfg in game_cfg_dict.items():
-        for seed in range(1):
+        for seed in range(2):
             temperature_input = True
             single_temperature = True
             # game
@@ -320,7 +320,8 @@ def generate_training_structured_configs():
                 max_cpu_inference_server=2,
                 temperature_input=temperature_input,
                 single_sbr_temperature=single_temperature,
-                compile_model=False,
+                compile_model=True,
+                compile_mode='max_autotune',
                 merge_inference_update_gpu=False,
                 proxy_net_path=None,
             )

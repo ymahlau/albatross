@@ -9,8 +9,8 @@ data:
       log_every_sec: 300
       quick_start_buffer_path: null
       start_wait_n_samples: 500000
-  compile_mode: reduce-overhead
-  compile_model: false
+  compile_mode: max_autotune
+  compile_model: true
   data_qsize: 10
   distributor_out_qsize: 10
   evaluator_cfg:

@@ -130,7 +130,7 @@ data:
     __name__: LoggerConfig
     data:
       buffer_gen: false
-      id: 0
+      id: 1
       name: luis_proxy_cc
       project_name: overcooked
       updater_bucket_size: 1000
