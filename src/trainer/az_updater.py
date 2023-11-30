@@ -55,7 +55,6 @@ class UpdaterStatistics:
 @dataclass
 class UpdaterEssentials:
     net: Network
-    target_net: Network
     optim: torch.optim.Optimizer
     device: torch.device
     annealer: TemperatureAnnealer
@@ -91,11 +90,9 @@ def run_updater(
     if net_cfg is None:
         raise Exception("Network config is None")
     net = get_network_from_config(net_cfg)
-    target_net = get_network_from_config(net_cfg)
     if prev_run_dir is not None and not trainer_cfg.init_new_network_params:
         model_path = prev_run_dir / 'fixed_time_models' / f'm_{prev_run_idx}.pt'
         net = get_network_from_file(model_path)
-        target_net = get_network_from_file(model_path)
     game = get_game_from_config(game_cfg)
     # cuda
     if updater_cfg.use_gpu:
@@ -104,7 +101,6 @@ def run_updater(
     else:
         device = torch.device('cpu')
     net = net.to(device).train()
-    target_net = target_net.to(device).train()
     # compile
     if trainer_cfg.compile_model:
         net = torch.compile(
@@ -113,15 +109,7 @@ def run_updater(
             mode=trainer_cfg.compile_mode,
             fullgraph=True,
         )
-        target_net = torch.compile(
-            model=target_net,
-            dynamic=False,
-            mode=trainer_cfg.compile_mode,
-            fullgraph=True,
-        )
     if not isinstance(net, Network):  # just for type checking
-        raise Exception(f"Nework is: {net}")
-    if not isinstance(target_net, Network):  # just for type checking
         raise Exception(f"Nework is: {net}")
     print(f"{net.num_params()=}", flush=True)
     info_queue.put_nowait({"Network Parameter": net.num_params()})
@@ -135,7 +123,7 @@ def run_updater(
             optim.load_state_dict(optim_state_dict)
         else:
             print(f"{datetime.now()} - WARNING: Cannot load optimizer from previous run directory ........", flush=True)
-    essentials = UpdaterEssentials(net=net, target_net=target_net, optim=optim, device=device, annealer=annealer)
+    essentials = UpdaterEssentials(net=net, optim=optim, device=device, annealer=annealer)
     stats = UpdaterStatistics(update_counter=update_counter)
     # restrict cpus
     pid = os.getpid()

@@ -269,7 +269,7 @@ def start_training_from_structured_configs():
         id=0,
         updater_bucket_size=100,
         worker_episode_bucket_size=5,
-        wandb_mode='online',
+        wandb_mode='offline',
     )
     saver_cfg = SaverConfig(
         save_interval_sec=10,
@@ -309,7 +309,8 @@ def start_training_from_structured_configs():
         max_cpu_inference_server=1,
         temperature_input=temperature_input,
         single_sbr_temperature=single_temperature,
-        compile_model=False,
+        compile_model=True,
+        compile_mode='max-autotune',
         merge_inference_update_gpu=True,
         proxy_net_path=None,
     )

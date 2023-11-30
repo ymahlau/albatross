@@ -57,7 +57,7 @@ def play_overcooked_example():
     
     # play
     # temperatures = np.linspace(0, 10, 15)
-    temperatures = [9]
+    temperatures = [9.]
     for t in temperatures:
         agent0.temperatures = [t, t]
         agent1.temperatures = [t, t]
