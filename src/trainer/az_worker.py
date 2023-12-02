@@ -176,6 +176,11 @@ def run_worker(
                             t = t * (cur_max - cur_min) + cur_min
                         cur_temp_list.append(t)
                 search.set_temperatures(cur_temp_list)
+            # response player
+            resp_player = None
+            if trainer_cfg.temperature_input and not trainer_cfg.single_sbr_temperature:
+                # response model training: search result prob of one player and proxy prob of other players
+                resp_player = random.choice(game.players_at_turn())
             # do search and send results
             while not game.is_terminal() and not stop_flag.value:
                 if debug:
@@ -214,7 +219,22 @@ def run_worker(
                 policy_list.append(action_probs)
                 # make step
                 step_time_start = time.time()
-                rewards = make_step(worker_cfg, game, action_probs, search)
+                if resp_player is not None:
+                    # response model training: search result prob of one player and proxy prob of other players
+                    if resp_player in game.players_at_turn():
+                        if search.root is None:
+                            raise Exception("This should never happen")
+                        player_at_turn_list = game.players_at_turn().copy()
+                        action_list = [action_probs[resp_player]]
+                        player_at_turn_list.remove(resp_player)
+                        for p in player_at_turn_list:
+                            action_list.append(search.root.info[f'p{p}'])
+                        step_action_probs = np.asarray(action_list)
+                    else:  # case: response player already died
+                        step_action_probs = action_probs
+                else:
+                    step_action_probs = action_probs
+                rewards = make_step(worker_cfg, game, step_action_probs, search)
                 reward_list.append(rewards)
                 stats.reward_sum += np.sum(rewards).item()
                 stats.step_time_sum += time.time() - step_time_start

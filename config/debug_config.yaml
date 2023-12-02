@@ -5,11 +5,11 @@ data:
     __module__: src.trainer.config
     __name__: CollectorConfig
     data:
-      buffer_size: 10000
+      buffer_size: 3000
       log_every_sec: 20
       quick_start_buffer_path: null
-      start_wait_n_samples: 10000
-  compile_mode: reduce-overhead
+      start_wait_n_samples: 3000
+  compile_mode: max-autotune
   compile_model: false
   data_qsize: 10
   distributor_out_qsize: 10
@@ -33,7 +33,7 @@ data:
       switch_pos: true
   game_cfg:
     __module__: src.game.overcooked.config
-    __name__: Simple4CrampedRoomOvercookedConfig
+    __name__: Simple2CrampedRoomOvercookedConfig
     data:
       board:
       - - 1
@@ -59,7 +59,7 @@ data:
       cooking_time: 20
       flat_obs: false
       h: 4
-      horizon: 50
+      horizon: 6
       num_actions: 6
       num_players: 2
       reward_cfg:
@@ -72,7 +72,7 @@ data:
           soup_pickup: 5
           start_cooking: 3
       reward_scaling_factor: 0.5
-      single_temperature_input: true
+      single_temperature_input: false
       start_pos:
         __module__: src.misc.serialization
         __name__: TupleWrapper
@@ -114,7 +114,7 @@ data:
       name: null
       project_name: test
       updater_bucket_size: 100
-      wandb_mode: online
+      wandb_mode: offline
       worker_episode_bucket_size: 5
   max_batch_size: 3000
   max_cpu_evaluator: 1
@@ -204,11 +204,11 @@ data:
             value: GROUP_NORM
           num_layers: 1
   num_inference_server: 1
-  num_worker: 30
+  num_worker: 5
   only_generate_buffer: false
   prev_run_dir: null
   prev_run_idx: null
-  proxy_net_path: null
+  proxy_net_path: /home/mahlau/nobackup/albatross/albatross/outputs/working_proxy_simple2.pt
   restrict_cpu: true
   save_state: false
   save_state_after_seconds: 30
@@ -218,7 +218,7 @@ data:
     data:
       save_all_checkpoints: false
       save_interval_sec: 10
-  single_sbr_temperature: true
+  single_sbr_temperature: false
   temperature_input: true
   updater_cfg:
     __module__: src.trainer.config
@@ -236,8 +236,6 @@ data:
             data:
               anneal_temps:
               - 0.001
-              - 1.0e-05
-              - 0.001
               - 1.0e-06
               anneal_types:
               - __module__: src.supervised.annealer
@@ -246,18 +244,10 @@ data:
               - __module__: src.supervised.annealer
                 __name__: AnnealingType
                 value: COSINE
-              - __module__: src.supervised.annealer
-                __name__: AnnealingType
-                value: LINEAR
-              - __module__: src.supervised.annealer
-                __name__: AnnealingType
-                value: COSINE
               cyclic: false
               end_times_min:
-              - 4
-              - 20
-              - 24
-              - 40
+              - 1
+              - 5
               init_temp: 0
               sampling: false
           beta1: 0.9
@@ -289,7 +279,7 @@ data:
         __name__: TemperatureAnnealingConfig
         data:
           anneal_temps:
-          - 1
+          - 10
           anneal_types:
           - __module__: src.supervised.annealer
             __name__: AnnealingType
@@ -299,7 +289,21 @@ data:
           - 1
           init_temp: 0
           sampling: true
-      exploration_prob: 0
+      - __module__: src.supervised.annealer
+        __name__: TemperatureAnnealingConfig
+        data:
+          anneal_temps:
+          - 10
+          anneal_types:
+          - __module__: src.supervised.annealer
+            __name__: AnnealingType
+            value: COSINE
+          cyclic: true
+          end_times_min:
+          - 1
+          init_temp: 0
+          sampling: true
+      exploration_prob: 0.5
       max_game_length: 8
       max_random_start_steps: 0
       policy_eval_cfg:
@@ -317,41 +321,28 @@ data:
         __module__: src.search.config
         __name__: FixedDepthConfig
         data:
-          average_eval: false
+          average_eval: true
           backup_func_cfg:
             __module__: src.search.config
-            __name__: LogitBackupConfig
+            __name__: EnemyExploitationBackupConfig
             data:
-              epsilon: 0
-              hp_0: null
-              hp_1: null
-              init_random: true
-              init_temperatures:
-              - 15
-              - 15
-              num_iterations: 150
-              sbr_mode:
-                __module__: src.equilibria.logit
-                __name__: SbrMode
-                value: NAGURNEY
-              use_cpp: true
+              average_eval: false
+              exploit_temperature: 10
+              init_temperatures: null
           discount: 0.9
           eval_func_cfg:
             __module__: src.search.config
-            __name__: InferenceServerEvalConfig
+            __name__: ResponseInferenceServerEvalConfig
             data:
               active_wait_time: 0.05
-              init_temperatures: null
-              max_clip_value: .inf
+              max_clip_value: 50
               min_clip_value: -.inf
               policy_prediction: true
               random_symmetry: false
-              single_temperature: true
-              temperature_input: true
               utility_norm:
                 __module__: src.game.values
                 __name__: UtilityNorm
-                value: FULL_COOP
+                value: NONE
           extract_func_cfg:
             __module__: src.search.config
             __name__: SpecialExtractConfig
@@ -363,44 +354,7 @@ data:
                 __name__: UtilityNorm
                 value: FULL_COOP
       search_iterations: 1
-      temp_scaling_cfgs:
-        __module__: src.misc.serialization
-        __name__: TupleWrapper
-        data:
-          data:
-          - __module__: src.supervised.annealer
-            __name__: TemperatureAnnealingConfig
-            data:
-              anneal_temps:
-              - 5
-              - 0
-              anneal_types:
-              - __module__: src.supervised.annealer
-                __name__: AnnealingType
-                value: CONST
-              - __module__: src.supervised.annealer
-                __name__: AnnealingType
-                value: LINEAR
-              cyclic: false
-              end_times_min:
-              - 20
-              - 40
-              init_temp: 5
-              sampling: false
-          - __module__: src.supervised.annealer
-            __name__: TemperatureAnnealingConfig
-            data:
-              anneal_temps:
-              - 10
-              anneal_types:
-              - __module__: src.supervised.annealer
-                __name__: AnnealingType
-                value: CONST
-              cyclic: true
-              end_times_min:
-              - 1
-              init_temp: 10
-              sampling: false
+      temp_scaling_cfgs: null
       temperature: 1
       use_symmetries: true
 hydra:

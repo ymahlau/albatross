@@ -12,9 +12,9 @@ from src.network.initialization import get_network_from_file
 
 
 def play_overcooked_example():
-    path = Path(__file__).parent.parent.parent / 'outputs' / 'latest copy 4.pt'
+    path = Path(__file__).parent.parent.parent / 'outputs' / 'latest copy 2.pt'
     temperature_input = True
-    single_temperature = True
+    single_temperature = False
     
     net = get_network_from_file(path).eval()
     game_cfg = net.cfg.game_cfg
@@ -37,16 +37,16 @@ def play_overcooked_example():
     )
     agent0.net = net
     
-    # agent1 = RandomAgent(RandomAgentConfig())
-    agent1 = NetworkAgent(
-        NetworkAgentConfig(
-            net_cfg=net.cfg, 
-            temperature_input=temperature_input, 
-            single_temperature=single_temperature, 
-            init_temperatures=[5, 5]
-            )
-        )
-    agent1.net = net
+    agent1 = RandomAgent(RandomAgentConfig())
+    # agent1 = NetworkAgent(
+    #     NetworkAgentConfig(
+    #         net_cfg=net.cfg, 
+    #         temperature_input=temperature_input, 
+    #         single_temperature=single_temperature, 
+    #         init_temperatures=[5, 5]
+    #         )
+    #     )
+    # agent1.net = net
     
     agent_list = [
         agent1,
@@ -57,10 +57,10 @@ def play_overcooked_example():
     
     # play
     # temperatures = np.linspace(0, 10, 15)
-    temperatures = [9.]
+    temperatures = [0.1]
     for t in temperatures:
         agent0.temperatures = [t, t]
-        agent1.temperatures = [t, t]
+        # agent1.temperatures = [t, t]
         game.reset()
         game.render()
         # for _ in range(50):
@@ -73,7 +73,8 @@ def play_overcooked_example():
                     game,
                     player=player
                 )
-                print(f"{player}: {probs}, {info['values']}")
+                if 'values' in info:
+                    print(f"{player}: {probs}, {info['values']}")
                 action = sample_individual_actions(
                     probs[np.newaxis, ...],
                     temperature=sample_temperatures[player],
