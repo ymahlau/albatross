@@ -1,3 +1,4 @@
+import itertools
 import os
 import sys
 from pathlib import Path
@@ -31,7 +32,26 @@ if __name__ == '__main__':
     config_path = Path(__file__).parent / 'config'
     config_name = 'config'
 
-    if len(sys.argv) > 1 and sys.argv[1].startswith("config="):
+    if len(sys.argv) > 3 and sys.argv[1].startswith("config="):
+        config_prefix = sys.argv[1].split("=")[-1]
+        sys.argv.pop(1)
+        arr_id = int(sys.argv[1])
+        sys.argv.pop(1)
+
+        pref_lists = [
+            # list(range(1, 6)),
+            # [1] + list(range(5, 51, 5)),
+            ['aa', 'cc', 'co', 'cr', 'fc'],
+            list(range(5)),
+        ]
+        prod = list(itertools.product(*pref_lists))
+        tpl = prod[arr_id]
+        # config_name = f"{config_prefix}_{tpl[0]}_{tpl[1]}_{tpl[2]}"
+        config_name = f"{config_prefix}_{tpl[0]}_{tpl[1]}"
+        # config_name = f"{config_prefix}_{prefix_arr[t]}_{seed}"
+        # config_name = f"{config_prefix}_{seed}_{prefix_arr[t]}"
+    elif len(sys.argv) > 2 and sys.argv[1].startswith("config="):
         config_name = sys.argv[1].split("=")[-1]
         sys.argv.pop(1)
+    print(f"{config_name=}", flush=True)
     hydra.main(config_path=str(config_path), config_name=config_name, version_base=None)(main)()

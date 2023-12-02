@@ -12,9 +12,9 @@ from src.network.initialization import get_network_from_file
 
 
 def play_overcooked_example():
-    path = Path(__file__).parent.parent.parent / 'outputs' / 'latest copy 2.pt'
+    path = Path(__file__).parent / 'outputs' / 'response2.pt'
     temperature_input = True
-    single_temperature = False
+    single_temperature = True
     
     net = get_network_from_file(path).eval()
     game_cfg = net.cfg.game_cfg
@@ -49,15 +49,15 @@ def play_overcooked_example():
     # agent1.net = net
     
     agent_list = [
-        agent1,
         agent0,
+        agent1,
     ]
     sample_temperatures = [math.inf, math.inf]
     # sample_temperatures = [5, 5]
     
     # play
     # temperatures = np.linspace(0, 10, 15)
-    temperatures = [0.1]
+    temperatures = [0.5]
     for t in temperatures:
         agent0.temperatures = [t, t]
         # agent1.temperatures = [t, t]

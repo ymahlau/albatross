@@ -10,10 +10,13 @@ from src.game.battlesnake.bootcamp.test_envs_3x3 import perform_choke_2_player
 from src.game.battlesnake.bootcamp.test_envs_7x7 import survive_on_7x7
 from src.game.initialization import get_game_from_config
 from src.network.initialization import get_network_from_config
-from src.game.overcooked.config import CrampedRoomOvercookedConfig
+from src.game.overcooked.config import CrampedRoomOvercookedConfig, CoordinationRingOvercookedConfig, \
+    ForcedCoordinationOvercookedConfig, AsymmetricAdvantageOvercookedConfig, CounterCircuitOvercookedConfig
 from src.misc.utils import set_seed
 from src.network.resnet import ResNetConfig3x3, ResNetConfig5x5, ResNetConfig7x7, ResNetConfig9x9, ResNetConfig7x7New, \
-    ResNetConfig11x11, ResNetConfig7x7Best, OvercookedResNetConfig5x5
+    ResNetConfig11x11, ResNetConfig7x7Best, OvercookedResNetConfig5x5, OvercookedResNetConfig9x9, \
+    OvercookedResNetConfig8x8
+
 
 class TestResNet(unittest.TestCase):
     def test_resnet_game(self):
@@ -192,11 +195,38 @@ class TestResNet(unittest.TestCase):
         print(f"{(end_time - start_time) / n=}")
         
     def test_resnet_oc(self):
-        game_cfg = CrampedRoomOvercookedConfig()
+        game_cfg = ForcedCoordinationOvercookedConfig()
         game = get_game_from_config(game_cfg)
         obs, _, _ = game.get_obs()
+        print(obs.shape)
         obs_tensor = torch.tensor(obs)
         net_cfg = OvercookedResNetConfig5x5(game_cfg=game_cfg)
+        for seed in range(10):
+            set_seed(seed)
+            net = get_network_from_config(net_cfg)
+            net_out = net(obs_tensor)
+            print(net_out)
+
+    def test_resnet_oc_8(self):
+        game_cfg = CounterCircuitOvercookedConfig()
+        game = get_game_from_config(game_cfg)
+        obs, _, _ = game.get_obs()
+        print(obs.shape)
+        obs_tensor = torch.tensor(obs)
+        net_cfg = OvercookedResNetConfig8x8(game_cfg=game_cfg)
+        for seed in range(10):
+            set_seed(seed)
+            net = get_network_from_config(net_cfg)
+            net_out = net(obs_tensor)
+            print(net_out)
+
+    def test_resnet_oc_large(self):
+        game_cfg = AsymmetricAdvantageOvercookedConfig()
+        game = get_game_from_config(game_cfg)
+        obs, _, _ = game.get_obs()
+        print(obs.shape)
+        obs_tensor = torch.tensor(obs)
+        net_cfg = OvercookedResNetConfig9x9(game_cfg=game_cfg)
         for seed in range(10):
             set_seed(seed)
             net = get_network_from_config(net_cfg)

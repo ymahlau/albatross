@@ -26,7 +26,7 @@ data:
       eval_rate_sec: 60
       num_episodes:
       - 100
-      - 20
+      - 2
       prevent_draw: false
       save_checkpoints: false
       self_play: true
@@ -347,7 +347,7 @@ data:
             data:
               active_wait_time: 0.05
               init_temperatures: null
-              max_clip_value: .inf
+              max_clip_value: 30
               min_clip_value: -.inf
               policy_prediction: true
               random_symmetry: false

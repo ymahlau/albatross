@@ -130,7 +130,7 @@ data:
     __name__: LoggerConfig
     data:
       buffer_gen: false
-      id: 0
+      id: 4
       name: luis_proxy_cc
       project_name: overcooked
       updater_bucket_size: 1000
@@ -156,7 +156,92 @@ data:
         __module__: src.network.vision_net
         __name__: EquivarianceType
         value: NONE
-      game_cfg: null
+      game_cfg:
+        __module__: src.game.overcooked.config
+        __name__: CounterCircuitOvercookedConfig
+        data:
+          board:
+          - - 1
+            - 1
+            - 1
+            - 4
+            - 4
+            - 1
+            - 1
+            - 1
+          - - 1
+            - 0
+            - 0
+            - 0
+            - 0
+            - 0
+            - 0
+            - 1
+          - - 2
+            - 0
+            - 1
+            - 1
+            - 1
+            - 1
+            - 0
+            - 5
+          - - 1
+            - 0
+            - 0
+            - 0
+            - 0
+            - 0
+            - 0
+            - 1
+          - - 1
+            - 1
+            - 1
+            - 3
+            - 3
+            - 1
+            - 1
+            - 1
+          cooking_time: 20
+          flat_obs: false
+          h: 5
+          horizon: 400
+          num_actions: 6
+          num_players: 2
+          reward_cfg:
+            __module__: src.game.overcooked.config
+            __name__: OvercookedRewardConfig
+            data:
+              dish_pickup: 3
+              placement_in_pot: 3
+              soup_delivery: 20
+              soup_pickup: 5
+              start_cooking: 3
+          reward_scaling_factor: 1
+          single_temperature_input: true
+          start_pos:
+            __module__: src.misc.serialization
+            __name__: TupleWrapper
+            data:
+              data:
+              - __module__: src.misc.serialization
+                __name__: TupleWrapper
+                data:
+                  data:
+                  - 3
+                  - 3
+                  - 0
+                  - 0
+              - __module__: src.misc.serialization
+                __name__: TupleWrapper
+                data:
+                  data:
+                  - 3
+                  - 1
+                  - 0
+                  - 0
+          temperature_input: true
+          unstuck_behavior: false
+          w: 8
       layer_specs:
       - - 32
         - 3

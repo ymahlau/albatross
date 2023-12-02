@@ -14,7 +14,9 @@ from src.game.battlesnake.battlesnake import BattleSnakeGame
 from src.game.battlesnake.bootcamp.test_envs_3x3 import perform_choke_2_player
 from src.game.battlesnake.bootcamp.test_envs_5x5 import perform_choke_5x5_4_player
 from src.game.battlesnake.bootcamp.test_envs_7x7 import survive_on_7x7_4_player_royale
-from src.game.overcooked.config import CrampedRoomOvercookedConfig, OneStateCrampedRoomOvercookedConfig, Simple2CrampedRoomOvercookedConfig, Simple3CrampedRoomOvercookedConfig, Simple4CrampedRoomOvercookedConfig, SimpleCrampedRoomOvercookedConfig, TwoStateCrampedRoomOvercookedConfig
+from src.game.overcooked.config import CrampedRoomOvercookedConfig, OneStateCrampedRoomOvercookedConfig, \
+    Simple2CrampedRoomOvercookedConfig, Simple3CrampedRoomOvercookedConfig, Simple4CrampedRoomOvercookedConfig, \
+    SimpleCrampedRoomOvercookedConfig, TwoStateCrampedRoomOvercookedConfig
 from src.game.values import UtilityNorm
 from src.misc.const import PHI
 from src.misc.serialization import serialize_dataclass
@@ -24,7 +26,8 @@ from src.network.mobilenet_v3 import MobileNetConfig3x3, MobileNetConfig5x5
 from src.network.resnet import ResNetConfig3x3, ResNetConfig7x7Best, OvercookedResNetConfig5x5
 from src.network.utils import ActivationType
 from src.network.vision_net import EquivarianceType
-from src.search.config import AlphaZeroDecoupledSelectionConfig, InferenceServerEvalConfig, ResponseInferenceServerEvalConfig, StandardBackupConfig, StandardExtractConfig, \
+from src.search.config import AlphaZeroDecoupledSelectionConfig, InferenceServerEvalConfig, \
+    ResponseInferenceServerEvalConfig, StandardBackupConfig, StandardExtractConfig, \
     DecoupledUCTSelectionConfig, LogitBackupConfig, FixedDepthConfig, SpecialExtractConfig, NashBackupConfig, \
     Exp3SelectionConfig, MeanPolicyExtractConfig, Exp3BackupConfig, RegretMatchingSelectionConfig, \
     RegretMatchingBackupConfig, SMOOSConfig, PolicyExtractConfig, EnemyExploitationEvalConfig, \
@@ -58,7 +61,7 @@ def start_training_from_structured_configs():
     # game_cfg = OneStateCrampedRoomOvercookedConfig()
     # game_cfg = SimpleCrampedRoomOvercookedConfig()
     game_cfg = Simple2CrampedRoomOvercookedConfig()
-    
+
     game_cfg.temperature_input = temperature_input
     game_cfg.single_temperature_input = single_temperature
 
@@ -97,13 +100,12 @@ def start_training_from_structured_configs():
     #     utility_norm=UtilityNorm.FULL_COOP,
     # )
     eval_func_cfg = ResponseInferenceServerEvalConfig(
-        random_symmetry= False,
+        random_symmetry=False,
         min_clip_value=-math.inf,
         max_clip_value=50,
         policy_prediction=True,
     )
-    
-    
+
     # sel_func_cfg = DecoupledUCTSelectionConfig(exp_bonus=1.414)  # 1.4)
     # sel_func_cfg = SampleSelectionConfig(dirichlet_alpha=math.inf, dirichlet_eps=0.25, temperature=1.0)
     # sel_func_cfg = AlphaZeroDecoupledSelectionConfig(exp_bonus=1.414, dirichlet_alpha=0.3, dirichlet_eps=0.25)
@@ -129,7 +131,7 @@ def start_training_from_structured_configs():
     # backup_func_cfg = Exp3BackupConfig()
     # backup_func_cfg = RegretMatchingBackupConfig(avg_backup=True)
     extraction_func_cfg = SpecialExtractConfig(
-        utility_norm=UtilityNorm.FULL_COOP,
+        utility_norm=UtilityNorm.NONE,
         min_clip_value=-math.inf,
         max_clip_value=30,
     )
@@ -170,24 +172,24 @@ def start_training_from_structured_configs():
     worker_cfg = WorkerConfig(
         search_cfg=search_cfg,
         policy_eval_cfg=policy_eval_cfg,
-        # temp_scaling_cfgs=(
-        #     TemperatureAnnealingConfig(
-        #         init_temp=5,
-        #         end_times_min=[20, 40],
-        #         anneal_temps=[5, 0],
-        #         anneal_types=[AnnealingType.CONST, AnnealingType.LINEAR],
-        #         cyclic=False,
-        #         sampling=False,
-        #     ),
-        #     TemperatureAnnealingConfig(
-        #         init_temp=10,
-        #         end_times_min=[1],
-        #         anneal_temps=[10],
-        #         anneal_types=[AnnealingType.CONST],
-        #         cyclic=True,
-        #         sampling=False,
-        #     ),
-        # ),
+        temp_scaling_cfgs=(
+            TemperatureAnnealingConfig(
+                init_temp=5,
+                end_times_min=[2, 5],
+                anneal_temps=[5, 0],
+                anneal_types=[AnnealingType.CONST, AnnealingType.LINEAR],
+                cyclic=False,
+                sampling=False,
+            ),
+            TemperatureAnnealingConfig(
+                init_temp=10,
+                end_times_min=[1],
+                anneal_temps=[10],
+                anneal_types=[AnnealingType.CONST],
+                cyclic=True,
+                sampling=False,
+            ),
+        ),
         # anneal_cfgs=None,
         # anneal_cfgs=[TemperatureAnnealingConfig(
         #     init_temp=0,
@@ -196,11 +198,11 @@ def start_training_from_structured_configs():
         #     anneal_types=[AnnealingType.COSINE],
         #     cyclic=True,
         #     sampling=True,
-		# )],
-		anneal_cfgs=[TemperatureAnnealingConfig(
+        # )],
+        anneal_cfgs=[TemperatureAnnealingConfig(
             init_temp=0,
             end_times_min=[1],
-            anneal_temps=[10],
+            anneal_temps=[1],
             anneal_types=[AnnealingType.COSINE],
             cyclic=True,
             sampling=True,
@@ -272,7 +274,7 @@ def start_training_from_structured_configs():
         id=0,
         updater_bucket_size=100,
         worker_episode_bucket_size=5,
-        wandb_mode='offline',
+        wandb_mode='online',
     )
     saver_cfg = SaverConfig(
         save_interval_sec=10,
@@ -281,7 +283,7 @@ def start_training_from_structured_configs():
         use_gpu=True,
     )
     trainer_cfg = AlphaZeroTrainerConfig(
-        num_worker=5,  # IMPORTANT
+        num_worker=30,  # IMPORTANT
         num_inference_server=1,
         save_state=False,
         save_state_after_seconds=30,
@@ -295,7 +297,7 @@ def start_training_from_structured_configs():
         collector_cfg=collector_cfg,
         inf_cfg=inf_cfg,
         max_batch_size=batch_size,
-        max_eval_per_worker=batch_size*2,
+        max_eval_per_worker=batch_size * 2,
         data_qsize=10,
         info_qsize=100,
         updater_in_qsize=100,
@@ -304,7 +306,7 @@ def start_training_from_structured_configs():
         prev_run_dir=None,
         prev_run_idx=None,
         only_generate_buffer=False,
-        restrict_cpu=True,  # only works on LINUX
+        restrict_cpu=False,  # only works on LINUX
         max_cpu_updater=1,
         max_cpu_worker=10,
         max_cpu_evaluator=1,
@@ -316,7 +318,7 @@ def start_training_from_structured_configs():
         compile_mode='max-autotune',
         merge_inference_update_gpu=True,
         # proxy_net_path=None,
-        proxy_net_path=str(Path(__file__).parent.parent.parent / 'outputs' / 'working_proxy_simple2.pt'),
+        proxy_net_path=str(Path(__file__).parent / 'outputs' / 'proxy2.pt'),
     )
     # initialize yaml file and hydra
     print(os.getcwd())

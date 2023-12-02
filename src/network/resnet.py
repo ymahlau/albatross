@@ -229,6 +229,40 @@ class OvercookedResNetConfig5x5(ResNetConfig):
     value_head_cfg: HeadConfig = field(default_factory=lambda: WideHeadConfig())
 
 
+# channels, num_blocks, kernel_size, padding, norm
+best_9x9 = [
+    [32, 3, 3, 1, 1],
+    [64, 2, 3, 1, 1],
+    [64, 1, 3, 0, 1],
+    [128, 2, 3, 1, 1],
+    [256, 1, 3, 0, 1],
+]
+
+
+@dataclass
+class OvercookedResNetConfig9x9(ResNetConfig):
+    layer_specs: list[list[int]] = field(default_factory=lambda: best_9x9)
+    policy_head_cfg: HeadConfig = field(default_factory=lambda: WideHeadConfig())
+    value_head_cfg: HeadConfig = field(default_factory=lambda: WideHeadConfig())
+
+
+# channels, num_blocks, kernel_size, padding, norm
+best_8x8 = [
+    [32, 3, 3, 1, 1],
+    [64, 2, 3, 1, 1],
+    [64, 1, 3, 0, 1],
+    [128, 2, 3, 1, 1],
+    [256, 1, 3, 1, 1],
+]
+
+
+@dataclass
+class OvercookedResNetConfig8x8(ResNetConfig):
+    layer_specs: list[list[int]] = field(default_factory=lambda: best_8x8)
+    policy_head_cfg: HeadConfig = field(default_factory=lambda: WideHeadConfig())
+    value_head_cfg: HeadConfig = field(default_factory=lambda: WideHeadConfig())
+
+
 default_7x7 = [
     [32, 2, 3, 1, 1],
     [48, 1, 3, 0, 1],

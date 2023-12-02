@@ -26,44 +26,39 @@ data:
       eval_rate_sec: 60
       num_episodes:
       - 100
-      - 20
+      - 2
       prevent_draw: false
       save_checkpoints: false
       self_play: true
       switch_pos: true
   game_cfg:
     __module__: src.game.overcooked.config
-    __name__: CoordinationRingOvercookedConfig
+    __name__: CrampedRoomOvercookedConfig
     data:
       board:
       - - 1
         - 1
-        - 1
         - 4
         - 1
-      - - 1
-        - 0
-        - 0
-        - 0
-        - 4
-      - - 2
-        - 0
-        - 1
-        - 0
         - 1
       - - 3
         - 0
         - 0
         - 0
+        - 3
+      - - 1
+        - 0
+        - 0
+        - 0
         - 1
       - - 1
-        - 3
-        - 5
+        - 2
         - 1
+        - 5
         - 1
       cooking_time: 20
       flat_obs: false
-      h: 5
+      h: 4
       horizon: 400
       num_actions: 6
       num_players: 2
@@ -87,16 +82,16 @@ data:
             __name__: TupleWrapper
             data:
               data:
-              - 2
               - 1
+              - 2
               - 0
               - 0
           - __module__: src.misc.serialization
             __name__: TupleWrapper
             data:
               data:
+              - 3
               - 1
-              - 2
               - 0
               - 0
       temperature_input: true
@@ -347,7 +342,7 @@ data:
             data:
               active_wait_time: 0.05
               init_temperatures: null
-              max_clip_value: .inf
+              max_clip_value: 30
               min_clip_value: -.inf
               policy_prediction: true
               random_symmetry: false

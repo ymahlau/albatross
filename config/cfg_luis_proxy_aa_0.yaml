@@ -26,7 +26,7 @@ data:
       eval_rate_sec: 60
       num_episodes:
       - 100
-      - 20
+      - 2
       prevent_draw: false
       save_checkpoints: false
       self_play: true
@@ -151,7 +151,7 @@ data:
   merge_inference_update_gpu: false
   net_cfg:
     __module__: src.network.resnet
-    __name__: OvercookedResNetConfig5x5
+    __name__: OvercookedResNetConfig9x9
     data:
       activation_type:
         __module__: src.network.utils
@@ -173,8 +173,13 @@ data:
         - 3
         - 1
         - 1
-      - - 128
+      - - 64
         - 1
+        - 3
+        - 0
+        - 1
+      - - 128
+        - 2
         - 3
         - 1
         - 1
@@ -367,7 +372,7 @@ data:
             data:
               active_wait_time: 0.05
               init_temperatures: null
-              max_clip_value: .inf
+              max_clip_value: 30
               min_clip_value: -.inf
               policy_prediction: true
               random_symmetry: false
