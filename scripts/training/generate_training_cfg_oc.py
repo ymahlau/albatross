@@ -279,7 +279,7 @@ def generate_training_structured_configs():
                 name=f'luis_proxy_{name}',
                 id=seed,
                 updater_bucket_size=1000,
-                worker_episode_bucket_size=2,
+                worker_episode_bucket_size=5,
                 wandb_mode='offline',
             )
             saver_cfg = SaverConfig(

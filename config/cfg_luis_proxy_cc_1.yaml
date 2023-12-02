@@ -135,7 +135,7 @@ data:
       project_name: overcooked
       updater_bucket_size: 1000
       wandb_mode: offline
-      worker_episode_bucket_size: 2
+      worker_episode_bucket_size: 5
   max_batch_size: 15000
   max_cpu_evaluator: 1
   max_cpu_inference_server: 2
