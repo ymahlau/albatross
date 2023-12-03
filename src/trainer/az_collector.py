@@ -56,6 +56,8 @@ def run_collector(
     game_cfg = trainer_cfg.game_cfg
     collector_cfg = trainer_cfg.collector_cfg
     set_seed(seed)
+    os.environ["OMP_NUM_THREADS"] = "1"
+    # torch.set_num_threads(1)
     # init
     pid = os.getpid()
     state_save_dir = Path(os.getcwd()) / 'state'

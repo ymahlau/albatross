@@ -21,6 +21,7 @@ from src.game.initialization import get_game_from_config
 from src.game.utils import step_with_draw_prevention
 from src.misc.utils import set_seed
 from src.network.initialization import get_network_from_config, get_network_from_file
+from src.network.utils import cleanup_state_dict
 from src.trainer.config import EvaluatorConfig, AlphaZeroTrainerConfig
 from src.trainer.utils import wait_for_obj_from_queue, send_obj_to_queue
 import multiprocessing.sharedctypes as sc
@@ -40,6 +41,7 @@ def run_evaluator(
     evaluator_cfg = trainer_cfg.evaluator_cfg
     # important for multiprocessing
     torch.set_num_threads(1)
+    os.environ["OMP_NUM_THREADS"] = "1"
     set_seed(seed)
     # paths
     model_folder: Path = Path(os.getcwd()) / 'eval_models'
@@ -174,7 +176,8 @@ def run_evaluator(
                 break
             if maybe_state_dict is None:
                 raise Exception("Unknown exception with queue")
-            net.load_state_dict(maybe_state_dict)
+            state_dict = cleanup_state_dict(maybe_state_dict)
+            net.load_state_dict(state_dict)
             net.eval()
             value_agent.replace_net(net)
             if policy_agent is not None:

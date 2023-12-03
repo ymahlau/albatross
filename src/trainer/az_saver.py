@@ -7,6 +7,8 @@ from typing import Optional
 
 import multiprocessing as mp
 
+import torch
+
 from src.network.initialization import get_network_from_config
 from src.network.utils import cleanup_state_dict
 from src.trainer.config import AlphaZeroTrainerConfig
@@ -22,6 +24,8 @@ def run_saver(
 ):
     net_cfg = trainer_cfg.net_cfg
     saver_cfg = trainer_cfg.saver_cfg
+    os.environ["OMP_NUM_THREADS"] = "1"
+    torch.set_num_threads(1)
     model_folder: Path = Path(os.getcwd()) / 'fixed_time_models'
     if not Path.exists(model_folder) and saver_cfg.save_all_checkpoints:
         model_folder.mkdir(parents=True, exist_ok=True)

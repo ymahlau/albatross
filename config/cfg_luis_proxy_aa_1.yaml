@@ -10,7 +10,7 @@ data:
       quick_start_buffer_path: null
       start_wait_n_samples: 500000
   compile_mode: max-autotune
-  compile_model: true
+  compile_model: false
   data_qsize: 10
   distributor_out_qsize: 10
   evaluator_cfg:
@@ -525,4 +525,4 @@ data:
       use_symmetries: true
 hydra:
   run:
-    dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_luis_proxy_aa
+    dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_luis_proxy_aa_1

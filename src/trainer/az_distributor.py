@@ -22,6 +22,8 @@ def run_distributor(
 ):
     # init
     pid = os.getpid()
+    os.environ["OMP_NUM_THREADS"] = "1"
+    # torch.set_num_threads(1)
     if cpu_list is not None:
         print(f"{datetime.now()} - CPU list in Distributor: {cpu_list}")
         os.sched_setaffinity(pid, cpu_list)

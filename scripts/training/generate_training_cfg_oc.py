@@ -320,7 +320,7 @@ def generate_training_structured_configs():
                 max_cpu_inference_server=2,
                 temperature_input=temperature_input,
                 single_sbr_temperature=single_temperature,
-                compile_model=True,
+                compile_model=False,
                 compile_mode='max-autotune',
                 merge_inference_update_gpu=False,
                 proxy_net_path=None,
@@ -330,7 +330,8 @@ def generate_training_structured_configs():
             exported_dict = serialize_dataclass(trainer_cfg)
             yaml_str = yaml.dump(exported_dict)
             # yaml_str = OmegaConf.to_yaml(trainer_cfg)
-            yaml_str += 'hydra:\n  run:\n    dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_' + f'{logger_cfg.name}'
+            yaml_str += 'hydra:\n  run:\n    dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_' \
+                + f'{logger_cfg.name}_{logger_cfg.id}'
             config_name = f'cfg_{logger_cfg.name}_{logger_cfg.id}'
             config_dir = Path(__file__).parent.parent.parent / 'config'
             cur_config_file = config_dir / f'{config_name}.yaml'
