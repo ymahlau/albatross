@@ -22,7 +22,8 @@ from src.network.fcn import MediumHeadConfig
 from src.network.initialization import get_network_from_config
 from src.network.mobile_one import MobileOneConfig3x3
 from src.network.mobilenet_v3 import MobileNetConfig3x3, MobileNetConfig5x5
-from src.network.resnet import ResNetConfig3x3, ResNetConfig7x7Best, OvercookedResNetConfig5x5
+from src.network.resnet import ResNetConfig3x3, ResNetConfig7x7Best, OvercookedResNetConfig5x5, \
+    OvercookedResNetConfig9x9, OvercookedResNetConfig8x8
 from src.network.utils import ActivationType
 from src.network.vision_net import EquivarianceType
 from src.search.config import AlphaZeroDecoupledSelectionConfig, InferenceServerEvalConfig, StandardBackupConfig, StandardExtractConfig, \
@@ -48,16 +49,15 @@ def generate_training_structured_configs():
     Main method to start the training using dataclasses specified below
     """
     # for seed in range(5):
-    game_cfg_dict = {
-        'oc': CrampedRoomOvercookedConfig(),
-        'aa': AsymmetricAdvantageOvercookedConfig(),
-        'cr': CoordinationRingOvercookedConfig(),
-        'fc': ForcedCoordinationOvercookedConfig(),
-        'cc': CounterCircuitOvercookedConfig(),
-        
+    cfg_dict = {
+        'aa': (AsymmetricAdvantageOvercookedConfig(), OvercookedResNetConfig9x9()),
+        'cc': (CounterCircuitOvercookedConfig(), OvercookedResNetConfig8x8()),
+        'co': (CoordinationRingOvercookedConfig(), OvercookedResNetConfig5x5()),
+        'cr': (CrampedRoomOvercookedConfig(), OvercookedResNetConfig5x5()),
+        'fc': (ForcedCoordinationOvercookedConfig(), OvercookedResNetConfig5x5()),
     }
-    for name, game_cfg in game_cfg_dict.items():
-        for seed in range(2):
+    for name, (game_cfg, net_cfg) in cfg_dict.items():
+        for seed in range(5):
             temperature_input = True
             single_temperature = True
             # game
@@ -81,7 +81,7 @@ def generate_training_structured_configs():
             # net_cfg = MobileOneConfig3x3(predict_policy=True, predict_game_len=False, eq_type=eq_type)
             # net_cfg = MobileNetConfig5x5(predict_policy=True, predict_game_len=False, eq_type=eq_type)
             # net_cfg = ResNetConfig7x7Best()
-            net_cfg = OvercookedResNetConfig5x5(predict_policy=True, eq_type=eq_type, lff_features=False)
+            # net_cfg = OvercookedResNetConfig5x5()
 
             # net_cfg = EquivariantMobileNetConfig3x3(predict_game_len=True)
             # search
@@ -104,7 +104,7 @@ def generate_training_structured_configs():
                 temperature_input=temperature_input,
                 single_temperature=single_temperature,
                 min_clip_value=-math.inf,
-                max_clip_value=math.inf,
+                max_clip_value=30,
                 policy_prediction=net_cfg.predict_policy,
                 utility_norm=UtilityNorm.FULL_COOP,
             )
@@ -145,7 +145,7 @@ def generate_training_structured_configs():
                 utility_norm=UtilityNorm.FULL_COOP,
                 min_clip_value=-math.inf,
                 max_clip_value=30,
-                )
+            )
             # extraction_func_cfg = StandardExtractConfig()
             # extraction_func_cfg = MeanPolicyExtractConfig()
             # extraction_func_cfg = PolicyExtractConfig()
@@ -230,7 +230,7 @@ def generate_training_structured_configs():
             )
             evaluator_cfg = EvaluatorConfig(
                 eval_rate_sec=60,
-                num_episodes=[100, 20],
+                num_episodes=[100, 2],
                 enemy_iterations=1,
                 enemy_cfgs=[
                     RandomAgentConfig()
@@ -279,7 +279,7 @@ def generate_training_structured_configs():
                 name=f'luis_proxy_{name}',
                 id=seed,
                 updater_bucket_size=1000,
-                worker_episode_bucket_size=2,
+                worker_episode_bucket_size=5,
                 wandb_mode='offline',
             )
             saver_cfg = SaverConfig(
@@ -320,7 +320,7 @@ def generate_training_structured_configs():
                 max_cpu_inference_server=2,
                 temperature_input=temperature_input,
                 single_sbr_temperature=single_temperature,
-                compile_model=True,
+                compile_model=False,
                 compile_mode='max-autotune',
                 merge_inference_update_gpu=False,
                 proxy_net_path=None,
@@ -330,7 +330,8 @@ def generate_training_structured_configs():
             exported_dict = serialize_dataclass(trainer_cfg)
             yaml_str = yaml.dump(exported_dict)
             # yaml_str = OmegaConf.to_yaml(trainer_cfg)
-            yaml_str += 'hydra:\n  run:\n    dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_' + f'{logger_cfg.name}'
+            yaml_str += 'hydra:\n  run:\n    dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_' \
+                + f'{logger_cfg.name}_{logger_cfg.id}'
             config_name = f'cfg_{logger_cfg.name}_{logger_cfg.id}'
             config_dir = Path(__file__).parent.parent.parent / 'config'
             cur_config_file = config_dir / f'{config_name}.yaml'

@@ -81,8 +81,8 @@ def run_updater(
     # torch.autograd.set_detect_anomaly(True)
     state_save_dir = Path(os.getcwd()) / 'state'
     # important to avoid pytorch deadlocks
-    # torch.set_num_threads(1)
-    # os.environ["OMP_NUM_THREADS"] = "1"
+    torch.set_num_threads(1)
+    os.environ["OMP_NUM_THREADS"] = "1"
     set_seed(seed)
     torch.set_float32_matmul_precision('medium')
     if updater_cfg.utility_loss != UtilityNorm.NONE and game_cfg.num_players != 2:

@@ -33,33 +33,53 @@ data:
       switch_pos: true
   game_cfg:
     __module__: src.game.overcooked.config
-    __name__: ForcedCoordinationOvercookedConfig
+    __name__: AsymmetricAdvantageOvercookedConfig
     data:
       board:
       - - 1
         - 1
         - 1
-        - 4
+        - 1
+        - 1
+        - 1
+        - 1
+        - 1
         - 1
       - - 3
         - 0
         - 1
+        - 5
+        - 1
+        - 3
+        - 1
+        - 0
+        - 5
+      - - 1
+        - 0
+        - 0
         - 0
         - 4
-      - - 3
+        - 0
+        - 0
         - 0
         - 1
+      - - 1
         - 0
-        - 1
-      - - 2
         - 0
-        - 1
+        - 0
+        - 4
+        - 0
+        - 0
         - 0
         - 1
       - - 1
         - 1
         - 1
-        - 5
+        - 2
+        - 1
+        - 2
+        - 1
+        - 1
         - 1
       cooking_time: 20
       flat_obs: false
@@ -87,8 +107,8 @@ data:
             __name__: TupleWrapper
             data:
               data:
-              - 3
-              - 1
+              - 6
+              - 2
               - 0
               - 0
           - __module__: src.misc.serialization
@@ -96,12 +116,12 @@ data:
             data:
               data:
               - 1
-              - 2
+              - 3
               - 0
               - 0
       temperature_input: true
       unstuck_behavior: false
-      w: 5
+      w: 9
   inf_cfg:
     __module__: src.trainer.config
     __name__: InferenceServerConfig
@@ -115,8 +135,8 @@ data:
     __name__: LoggerConfig
     data:
       buffer_gen: false
-      id: 1
-      name: luis_proxy_fc
+      id: 2
+      name: luis_proxy_aa
       project_name: overcooked
       updater_bucket_size: 1000
       wandb_mode: offline
@@ -131,7 +151,7 @@ data:
   merge_inference_update_gpu: false
   net_cfg:
     __module__: src.network.resnet
-    __name__: OvercookedResNetConfig5x5
+    __name__: OvercookedResNetConfig9x9
     data:
       activation_type:
         __module__: src.network.utils
@@ -143,33 +163,53 @@ data:
         value: NONE
       game_cfg:
         __module__: src.game.overcooked.config
-        __name__: ForcedCoordinationOvercookedConfig
+        __name__: AsymmetricAdvantageOvercookedConfig
         data:
           board:
           - - 1
             - 1
             - 1
-            - 4
+            - 1
+            - 1
+            - 1
+            - 1
+            - 1
             - 1
           - - 3
             - 0
             - 1
+            - 5
+            - 1
+            - 3
+            - 1
+            - 0
+            - 5
+          - - 1
+            - 0
+            - 0
             - 0
             - 4
-          - - 3
+            - 0
+            - 0
             - 0
             - 1
+          - - 1
             - 0
-            - 1
-          - - 2
             - 0
-            - 1
+            - 0
+            - 4
+            - 0
+            - 0
             - 0
             - 1
           - - 1
             - 1
             - 1
-            - 5
+            - 2
+            - 1
+            - 2
+            - 1
+            - 1
             - 1
           cooking_time: 20
           flat_obs: false
@@ -197,8 +237,8 @@ data:
                 __name__: TupleWrapper
                 data:
                   data:
-                  - 3
-                  - 1
+                  - 6
+                  - 2
                   - 0
                   - 0
               - __module__: src.misc.serialization
@@ -206,12 +246,12 @@ data:
                 data:
                   data:
                   - 1
-                  - 2
+                  - 3
                   - 0
                   - 0
           temperature_input: true
           unstuck_behavior: false
-          w: 5
+          w: 9
       layer_specs:
       - - 32
         - 3
@@ -223,8 +263,13 @@ data:
         - 3
         - 1
         - 1
-      - - 128
+      - - 64
         - 1
+        - 3
+        - 0
+        - 1
+      - - 128
+        - 2
         - 3
         - 1
         - 1
@@ -480,4 +525,4 @@ data:
       use_symmetries: true
 hydra:
   run:
-    dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_luis_proxy_fc_1
+    dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_luis_proxy_aa_2

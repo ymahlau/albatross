@@ -10,7 +10,7 @@ data:
       quick_start_buffer_path: null
       start_wait_n_samples: 500000
   compile_mode: max-autotune
-  compile_model: true
+  compile_model: false
   data_qsize: 10
   distributor_out_qsize: 10
   evaluator_cfg:
@@ -26,7 +26,7 @@ data:
       eval_rate_sec: 60
       num_episodes:
       - 100
-      - 20
+      - 2
       prevent_draw: false
       save_checkpoints: false
       self_play: true
@@ -110,12 +110,12 @@ data:
     __name__: LoggerConfig
     data:
       buffer_gen: false
-      id: 0
-      name: luis_proxy_oc
+      id: 2
+      name: luis_proxy_cr
       project_name: overcooked
       updater_bucket_size: 1000
       wandb_mode: offline
-      worker_episode_bucket_size: 2
+      worker_episode_bucket_size: 5
   max_batch_size: 15000
   max_cpu_evaluator: 1
   max_cpu_inference_server: 2
@@ -136,7 +136,72 @@ data:
         __module__: src.network.vision_net
         __name__: EquivarianceType
         value: NONE
-      game_cfg: null
+      game_cfg:
+        __module__: src.game.overcooked.config
+        __name__: CrampedRoomOvercookedConfig
+        data:
+          board:
+          - - 1
+            - 1
+            - 4
+            - 1
+            - 1
+          - - 3
+            - 0
+            - 0
+            - 0
+            - 3
+          - - 1
+            - 0
+            - 0
+            - 0
+            - 1
+          - - 1
+            - 2
+            - 1
+            - 5
+            - 1
+          cooking_time: 20
+          flat_obs: false
+          h: 4
+          horizon: 400
+          num_actions: 6
+          num_players: 2
+          reward_cfg:
+            __module__: src.game.overcooked.config
+            __name__: OvercookedRewardConfig
+            data:
+              dish_pickup: 3
+              placement_in_pot: 3
+              soup_delivery: 20
+              soup_pickup: 5
+              start_cooking: 3
+          reward_scaling_factor: 1
+          single_temperature_input: true
+          start_pos:
+            __module__: src.misc.serialization
+            __name__: TupleWrapper
+            data:
+              data:
+              - __module__: src.misc.serialization
+                __name__: TupleWrapper
+                data:
+                  data:
+                  - 1
+                  - 2
+                  - 0
+                  - 0
+              - __module__: src.misc.serialization
+                __name__: TupleWrapper
+                data:
+                  data:
+                  - 3
+                  - 1
+                  - 0
+                  - 0
+          temperature_input: true
+          unstuck_behavior: false
+          w: 5
       layer_specs:
       - - 32
         - 3
@@ -342,7 +407,7 @@ data:
             data:
               active_wait_time: 0.05
               init_temperatures: null
-              max_clip_value: .inf
+              max_clip_value: 30
               min_clip_value: -.inf
               policy_prediction: true
               random_symmetry: false
@@ -405,4 +470,4 @@ data:
       use_symmetries: true
 hydra:
   run:
-    dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_luis_proxy_oc
+    dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_luis_proxy_cr_2

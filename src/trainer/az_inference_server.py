@@ -42,6 +42,8 @@ def run_inference_server(
     inf_cfg = trainer_cfg.inf_cfg
     net_cfg = trainer_cfg.net_cfg
     set_seed(seed)
+    os.environ["OMP_NUM_THREADS"] = "1"
+    torch.set_num_threads(1)
     torch.set_float32_matmul_precision('medium')
     # load initial network
     start_phase = True

@@ -114,7 +114,7 @@ data:
       name: null
       project_name: test
       updater_bucket_size: 100
-      wandb_mode: offline
+      wandb_mode: online
       worker_episode_bucket_size: 5
   max_batch_size: 3000
   max_cpu_evaluator: 1
@@ -204,12 +204,12 @@ data:
             value: GROUP_NORM
           num_layers: 1
   num_inference_server: 1
-  num_worker: 5
+  num_worker: 30
   only_generate_buffer: false
   prev_run_dir: null
   prev_run_idx: null
-  proxy_net_path: /home/mahlau/nobackup/albatross/albatross/outputs/working_proxy_simple2.pt
-  restrict_cpu: true
+  proxy_net_path: C:\Users\mahla\Programming\battlesnake\albatross\scripts\training\outputs\proxy2.pt
+  restrict_cpu: false
   save_state: false
   save_state_after_seconds: 30
   saver_cfg:
@@ -279,7 +279,7 @@ data:
         __name__: TemperatureAnnealingConfig
         data:
           anneal_temps:
-          - 10
+          - 1
           anneal_types:
           - __module__: src.supervised.annealer
             __name__: AnnealingType
@@ -293,7 +293,7 @@ data:
         __name__: TemperatureAnnealingConfig
         data:
           anneal_temps:
-          - 10
+          - 1
           anneal_types:
           - __module__: src.supervised.annealer
             __name__: AnnealingType
@@ -352,9 +352,46 @@ data:
               utility_norm:
                 __module__: src.game.values
                 __name__: UtilityNorm
-                value: FULL_COOP
+                value: NONE
       search_iterations: 1
-      temp_scaling_cfgs: null
+      temp_scaling_cfgs:
+        __module__: src.misc.serialization
+        __name__: TupleWrapper
+        data:
+          data:
+          - __module__: src.supervised.annealer
+            __name__: TemperatureAnnealingConfig
+            data:
+              anneal_temps:
+              - 5
+              - 0
+              anneal_types:
+              - __module__: src.supervised.annealer
+                __name__: AnnealingType
+                value: CONST
+              - __module__: src.supervised.annealer
+                __name__: AnnealingType
+                value: LINEAR
+              cyclic: false
+              end_times_min:
+              - 2
+              - 5
+              init_temp: 5
+              sampling: false
+          - __module__: src.supervised.annealer
+            __name__: TemperatureAnnealingConfig
+            data:
+              anneal_temps:
+              - 10
+              anneal_types:
+              - __module__: src.supervised.annealer
+                __name__: AnnealingType
+                value: CONST
+              cyclic: true
+              end_times_min:
+              - 1
+              init_temp: 10
+              sampling: false
       temperature: 1
       use_symmetries: true
 hydra:

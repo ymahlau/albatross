@@ -115,7 +115,7 @@ data:
     __name__: LoggerConfig
     data:
       buffer_gen: false
-      id: 1
+      id: 2
       name: luis_proxy_fc
       project_name: overcooked
       updater_bucket_size: 1000
@@ -480,4 +480,4 @@ data:
       use_symmetries: true
 hydra:
   run:
-    dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_luis_proxy_fc_1
+    dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_luis_proxy_fc_2

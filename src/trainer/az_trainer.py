@@ -32,6 +32,7 @@ class AlphaZeroTrainer:
     ):
         self.cfg = cfg
         os.environ["WANDB__SERVICE_WAIT"] = "300"
+        os.environ["OMP_NUM_THREADS"] = "1"
         if mp.get_start_method() != 'spawn':
             try:
                 mp.set_start_method('spawn')  # this is important for using CUDA
