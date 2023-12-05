@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+import math
 from typing import Optional
 
 from src.agent import AgentConfig
@@ -22,6 +23,7 @@ class EvaluatorConfig:
         RandomAgentConfig(),
         AreaControlSearchAgentConfig(),
     ])
+    sample_temperatures: list[float] = field(default_factory=lambda: [math.inf, math.inf])
     prevent_draw: bool = True
     save_checkpoints: bool = False
     self_play: bool = False
@@ -76,6 +78,7 @@ class WorkerConfig:
     prevent_draw: bool = False
     exploration_prob: float = 0.5
     temp_scaling_cfgs: Optional[tuple[TemperatureAnnealingConfig, TemperatureAnnealingConfig]] = None
+    epsilon_exp_prob: float = 0
 
 
 @dataclass

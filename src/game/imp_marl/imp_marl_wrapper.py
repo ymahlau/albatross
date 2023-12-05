@@ -24,6 +24,7 @@ class IMPConfig(GameConfig):
     campaign_cost: bool
     temperature_input: bool = False
     single_temperature_input: bool = True
+    reward_scaling_factor: float = 0.2
     
     def __post_init__(self):
         if self.imp_mode == IMP_MODE.OWF:
@@ -49,7 +50,7 @@ class IMPGame(Game):
             }
             self.env = Struct_owf(config=imp_cfg)
         else:
-            corresponding_k = {3:1, 5:2, 10:5, 50:25, 100:50}
+            corresponding_k = {3:2, 5:4, 10:9, 50:48, 100:95}
             imp_cfg = {
                 "n_comp": self.cfg.num_players,
                 "discount_reward": 1,
@@ -73,6 +74,7 @@ class IMPGame(Game):
         }
         _, reward_dict, done, _ = self.env.step(action_dict)
         reward_arr = np.asarray([reward_dict[ f"agent_{p}"] for p in self.players_at_turn()])
+        reward_arr *= self.cfg.reward_scaling_factor
         self.done = done
         return reward_arr, done, {}
     

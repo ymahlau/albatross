@@ -28,83 +28,22 @@ data:
       - 100
       - 2
       prevent_draw: false
-      sample_temperatures:
-      - .inf
-      - .inf
       save_checkpoints: false
       self_play: true
       switch_pos: true
   game_cfg:
-    __module__: src.game.overcooked.config
-    __name__: CoordinationRingOvercookedConfig
+    __module__: src.game.imp_marl.imp_marl_wrapper
+    __name__: IMPConfig
     data:
-      board:
-      - - 1
-        - 1
-        - 1
-        - 4
-        - 1
-      - - 1
-        - 0
-        - 0
-        - 0
-        - 4
-      - - 2
-        - 0
-        - 1
-        - 0
-        - 1
-      - - 3
-        - 0
-        - 0
-        - 0
-        - 1
-      - - 1
-        - 3
-        - 5
-        - 1
-        - 1
-      cooking_time: 20
-      flat_obs: false
-      h: 5
-      horizon: 400
-      num_actions: 6
-      num_players: 2
-      reward_cfg:
-        __module__: src.game.overcooked.config
-        __name__: OvercookedRewardConfig
-        data:
-          dish_pickup: 3
-          placement_in_pot: 3
-          soup_delivery: 20
-          soup_pickup: 5
-          start_cooking: 3
-      reward_scaling_factor: 1
+      campaign_cost: false
+      imp_mode:
+        __module__: src.game.imp_marl.imp_marl_wrapper
+        __name__: IMP_MODE
+        value: K_OF_N
+      num_actions: 3
+      num_players: 3
       single_temperature_input: true
-      start_pos:
-        __module__: src.misc.serialization
-        __name__: TupleWrapper
-        data:
-          data:
-          - __module__: src.misc.serialization
-            __name__: TupleWrapper
-            data:
-              data:
-              - 2
-              - 1
-              - 0
-              - 0
-          - __module__: src.misc.serialization
-            __name__: TupleWrapper
-            data:
-              data:
-              - 1
-              - 2
-              - 0
-              - 0
-      temperature_input: true
-      unstuck_behavior: false
-      w: 5
+      temperature_input: false
   inf_cfg:
     __module__: src.trainer.config
     __name__: InferenceServerConfig
@@ -118,9 +57,9 @@ data:
     __name__: LoggerConfig
     data:
       buffer_gen: false
-      id: 4
-      name: luis_proxy_co
-      project_name: overcooked
+      id: null
+      name: imp
+      project_name: test
       updater_bucket_size: 1000
       wandb_mode: offline
       worker_episode_bucket_size: 5
@@ -129,119 +68,23 @@ data:
   max_cpu_inference_server: 2
   max_cpu_log_dist_save_collect: 1
   max_cpu_updater: 2
-  max_cpu_worker: 22
+  max_cpu_worker: 11
   max_eval_per_worker: 30000
   merge_inference_update_gpu: false
   net_cfg:
-    __module__: src.network.resnet
-    __name__: OvercookedResNetConfig5x5
+    __module__: src.network.flat_fcn
+    __name__: WideHeadFCNConfig
     data:
-      activation_type:
-        __module__: src.network.utils
-        __name__: ActivationType
-        value: LEAKY_RELU
-      eq_type:
-        __module__: src.network.vision_net
-        __name__: EquivarianceType
-        value: NONE
-      game_cfg:
-        __module__: src.game.overcooked.config
-        __name__: CoordinationRingOvercookedConfig
-        data:
-          board:
-          - - 1
-            - 1
-            - 1
-            - 4
-            - 1
-          - - 1
-            - 0
-            - 0
-            - 0
-            - 4
-          - - 2
-            - 0
-            - 1
-            - 0
-            - 1
-          - - 3
-            - 0
-            - 0
-            - 0
-            - 1
-          - - 1
-            - 3
-            - 5
-            - 1
-            - 1
-          cooking_time: 20
-          flat_obs: false
-          h: 5
-          horizon: 400
-          num_actions: 6
-          num_players: 2
-          reward_cfg:
-            __module__: src.game.overcooked.config
-            __name__: OvercookedRewardConfig
-            data:
-              dish_pickup: 3
-              placement_in_pot: 3
-              soup_delivery: 20
-              soup_pickup: 5
-              start_cooking: 3
-          reward_scaling_factor: 1
-          single_temperature_input: true
-          start_pos:
-            __module__: src.misc.serialization
-            __name__: TupleWrapper
-            data:
-              data:
-              - __module__: src.misc.serialization
-                __name__: TupleWrapper
-                data:
-                  data:
-                  - 2
-                  - 1
-                  - 0
-                  - 0
-              - __module__: src.misc.serialization
-                __name__: TupleWrapper
-                data:
-                  data:
-                  - 1
-                  - 2
-                  - 0
-                  - 0
-          temperature_input: true
-          unstuck_behavior: false
-          w: 5
-      layer_specs:
-      - - 32
-        - 3
-        - 3
-        - 1
-        - 1
-      - - 64
-        - 2
-        - 3
-        - 1
-        - 1
-      - - 128
-        - 1
-        - 3
-        - 1
-        - 1
-      - - 256
-        - 1
-        - 3
-        - 0
-        - 1
-      lff_feature_expansion: 40
+      dropout_p: 0.1
+      game_cfg: null
+      hidden_size: 512
+      lff_feature_expansion: 10
       lff_features: false
       norm_type:
         __module__: src.network.utils
         __name__: NormalizationType
         value: GROUP_NORM
+      num_layer: 4
       policy_head_cfg:
         __module__: src.network.fcn
         __name__: WideHeadConfig
@@ -297,7 +140,7 @@ data:
       save_all_checkpoints: false
       save_interval_sec: 300
   single_sbr_temperature: true
-  temperature_input: true
+  temperature_input: false
   updater_cfg:
     __module__: src.trainer.config
     __name__: UpdaterConfig
@@ -377,7 +220,6 @@ data:
           - 1
           init_temp: 0
           sampling: true
-      epsilon_exp_prob: 0
       exploration_prob: 0.5
       max_game_length: 8
       max_random_start_steps: 0
@@ -408,6 +250,7 @@ data:
               init_temperatures:
               - 15
               - 15
+              - 15
               num_iterations: 150
               sbr_mode:
                 __module__: src.equilibria.logit
@@ -426,7 +269,7 @@ data:
               policy_prediction: true
               random_symmetry: false
               single_temperature: true
-              temperature_input: true
+              temperature_input: false
               utility_norm:
                 __module__: src.game.values
                 __name__: UtilityNorm
@@ -484,4 +327,4 @@ data:
       use_symmetries: true
 hydra:
   run:
-    dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_luis_proxy_co_4
+    dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_imp_None

@@ -28,75 +28,26 @@ data:
       - 100
       - 2
       prevent_draw: false
+      sample_temperatures:
+      - 1
+      - 1
       save_checkpoints: false
       self_play: true
-      switch_pos: true
+      switch_pos: false
   game_cfg:
-    __module__: src.game.overcooked.config
-    __name__: Simple2CrampedRoomOvercookedConfig
+    __module__: src.game.imp_marl.imp_marl_wrapper
+    __name__: IMPConfig
     data:
-      board:
-      - - 1
-        - 1
-        - 4
-        - 1
-        - 1
-      - - 3
-        - 0
-        - 0
-        - 0
-        - 3
-      - - 1
-        - 0
-        - 0
-        - 0
-        - 1
-      - - 1
-        - 2
-        - 1
-        - 5
-        - 1
-      cooking_time: 20
-      flat_obs: false
-      h: 4
-      horizon: 6
-      num_actions: 6
-      num_players: 2
-      reward_cfg:
-        __module__: src.game.overcooked.config
-        __name__: OvercookedRewardConfig
-        data:
-          dish_pickup: 3
-          placement_in_pot: 3
-          soup_delivery: 20
-          soup_pickup: 5
-          start_cooking: 3
-      reward_scaling_factor: 0.5
-      single_temperature_input: false
-      start_pos:
-        __module__: src.misc.serialization
-        __name__: TupleWrapper
-        data:
-          data:
-          - __module__: src.misc.serialization
-            __name__: TupleWrapper
-            data:
-              data:
-              - 1
-              - 2
-              - 0
-              - 0
-          - __module__: src.misc.serialization
-            __name__: TupleWrapper
-            data:
-              data:
-              - 3
-              - 1
-              - 0
-              - 0
-      temperature_input: true
-      unstuck_behavior: false
-      w: 5
+      campaign_cost: false
+      imp_mode:
+        __module__: src.game.imp_marl.imp_marl_wrapper
+        __name__: IMP_MODE
+        value: K_OF_N
+      num_actions: 3
+      num_players: 3
+      reward_scaling_factor: 0.2
+      single_temperature_input: true
+      temperature_input: false
   inf_cfg:
     __module__: src.trainer.config
     __name__: InferenceServerConfig
@@ -114,7 +65,7 @@ data:
       name: null
       project_name: test
       updater_bucket_size: 100
-      wandb_mode: online
+      wandb_mode: offline
       worker_episode_bucket_size: 5
   max_batch_size: 3000
   max_cpu_evaluator: 1
@@ -125,45 +76,19 @@ data:
   max_eval_per_worker: 6000
   merge_inference_update_gpu: true
   net_cfg:
-    __module__: src.network.resnet
-    __name__: OvercookedResNetConfig5x5
+    __module__: src.network.flat_fcn
+    __name__: WideHeadFCNConfig
     data:
-      activation_type:
-        __module__: src.network.utils
-        __name__: ActivationType
-        value: LEAKY_RELU
-      eq_type:
-        __module__: src.network.vision_net
-        __name__: EquivarianceType
-        value: NONE
+      dropout_p: 0.1
       game_cfg: null
-      layer_specs:
-      - - 32
-        - 3
-        - 3
-        - 1
-        - 1
-      - - 64
-        - 2
-        - 3
-        - 1
-        - 1
-      - - 128
-        - 1
-        - 3
-        - 1
-        - 1
-      - - 256
-        - 1
-        - 3
-        - 0
-        - 1
-      lff_feature_expansion: 40
+      hidden_size: 512
+      lff_feature_expansion: 10
       lff_features: false
       norm_type:
         __module__: src.network.utils
         __name__: NormalizationType
         value: GROUP_NORM
+      num_layer: 4
       policy_head_cfg:
         __module__: src.network.fcn
         __name__: WideHeadConfig
@@ -208,8 +133,8 @@ data:
   only_generate_buffer: false
   prev_run_dir: null
   prev_run_idx: null
-  proxy_net_path: C:\Users\mahla\Programming\battlesnake\albatross\scripts\training\outputs\proxy2.pt
-  restrict_cpu: false
+  proxy_net_path: null
+  restrict_cpu: true
   save_state: false
   save_state_after_seconds: 30
   saver_cfg:
@@ -218,8 +143,8 @@ data:
     data:
       save_all_checkpoints: false
       save_interval_sec: 10
-  single_sbr_temperature: false
-  temperature_input: true
+  single_sbr_temperature: true
+  temperature_input: false
   updater_cfg:
     __module__: src.trainer.config
     __name__: UpdaterConfig
@@ -246,8 +171,8 @@ data:
                 value: COSINE
               cyclic: false
               end_times_min:
-              - 1
-              - 5
+              - 10
+              - 90
               init_temp: 0
               sampling: false
           beta1: 0.9
@@ -274,35 +199,8 @@ data:
     __module__: src.trainer.config
     __name__: WorkerConfig
     data:
-      anneal_cfgs:
-      - __module__: src.supervised.annealer
-        __name__: TemperatureAnnealingConfig
-        data:
-          anneal_temps:
-          - 1
-          anneal_types:
-          - __module__: src.supervised.annealer
-            __name__: AnnealingType
-            value: COSINE
-          cyclic: true
-          end_times_min:
-          - 1
-          init_temp: 0
-          sampling: true
-      - __module__: src.supervised.annealer
-        __name__: TemperatureAnnealingConfig
-        data:
-          anneal_temps:
-          - 1
-          anneal_types:
-          - __module__: src.supervised.annealer
-            __name__: AnnealingType
-            value: COSINE
-          cyclic: true
-          end_times_min:
-          - 1
-          init_temp: 0
-          sampling: true
+      anneal_cfgs: null
+      epsilon_exp_prob: 0.05
       exploration_prob: 0.5
       max_game_length: 8
       max_random_start_steps: 0
@@ -321,77 +219,54 @@ data:
         __module__: src.search.config
         __name__: FixedDepthConfig
         data:
-          average_eval: true
+          average_eval: false
           backup_func_cfg:
             __module__: src.search.config
-            __name__: EnemyExploitationBackupConfig
+            __name__: LogitBackupConfig
             data:
-              average_eval: false
-              exploit_temperature: 10
-              init_temperatures: null
+              epsilon: 0
+              hp_0: null
+              hp_1: null
+              init_random: true
+              init_temperatures:
+              - 10
+              - 10
+              - 10
+              num_iterations: 150
+              sbr_mode:
+                __module__: src.equilibria.logit
+                __name__: SbrMode
+                value: NAGURNEY
+              use_cpp: true
           discount: 0.9
           eval_func_cfg:
             __module__: src.search.config
-            __name__: ResponseInferenceServerEvalConfig
+            __name__: InferenceServerEvalConfig
             data:
               active_wait_time: 0.05
+              init_temperatures: null
               max_clip_value: 50
-              min_clip_value: -.inf
+              min_clip_value: -50
               policy_prediction: true
               random_symmetry: false
+              single_temperature: true
+              temperature_input: false
               utility_norm:
                 __module__: src.game.values
                 __name__: UtilityNorm
-                value: NONE
+                value: FULL_COOP
           extract_func_cfg:
             __module__: src.search.config
             __name__: SpecialExtractConfig
             data:
-              max_clip_value: 30
-              min_clip_value: -.inf
+              max_clip_value: 50
+              min_clip_value: -50
               utility_norm:
                 __module__: src.game.values
                 __name__: UtilityNorm
-                value: NONE
+                value: FULL_COOP
       search_iterations: 1
-      temp_scaling_cfgs:
-        __module__: src.misc.serialization
-        __name__: TupleWrapper
-        data:
-          data:
-          - __module__: src.supervised.annealer
-            __name__: TemperatureAnnealingConfig
-            data:
-              anneal_temps:
-              - 5
-              - 0
-              anneal_types:
-              - __module__: src.supervised.annealer
-                __name__: AnnealingType
-                value: CONST
-              - __module__: src.supervised.annealer
-                __name__: AnnealingType
-                value: LINEAR
-              cyclic: false
-              end_times_min:
-              - 2
-              - 5
-              init_temp: 5
-              sampling: false
-          - __module__: src.supervised.annealer
-            __name__: TemperatureAnnealingConfig
-            data:
-              anneal_temps:
-              - 10
-              anneal_types:
-              - __module__: src.supervised.annealer
-                __name__: AnnealingType
-                value: CONST
-              cyclic: true
-              end_times_min:
-              - 1
-              init_temp: 10
-              sampling: false
+      temp_scaling_cfgs: null
       temperature: 1
       use_symmetries: true
 hydra:

@@ -286,6 +286,9 @@ def make_step(
     uniform_actions = np.ones(shape=(game.num_players_at_turn(), game.num_actions), dtype=float)
     filtered_uniform = filter_illegal_and_normalize(uniform_actions, game)
     exp_action_probs = np.zeros_like(action_probs)
+    # uniform probs
+    uniform_probs = np.ones_like(exp_action_probs)
+    uniform_probs = filter_illegal_and_normalize(uniform_probs, game)
     for player_idx, player in enumerate(game.players_at_turn()):
         # compute q-values given uniform enemy
         if search.root is None:
@@ -298,6 +301,7 @@ def make_step(
             exp_action_probs[player_idx, action] = cur_exp_probs[action_idx]
     # mix policy and exploration
     mixed_probs = (1 - worker_cfg.exploration_prob) * action_probs + worker_cfg.exploration_prob * exp_action_probs
+    mixed_probs = (1 - worker_cfg.epsilon_exp_prob) * mixed_probs + worker_cfg.epsilon_exp_prob * uniform_probs
     # sample
     joint_actions = sample_individual_actions(mixed_probs, temperature=worker_cfg.temperature)
     if worker_cfg.prevent_draw:

@@ -28,6 +28,9 @@ data:
       - 100
       - 2
       prevent_draw: false
+      sample_temperatures:
+      - .inf
+      - .inf
       save_checkpoints: false
       self_play: true
       switch_pos: true
@@ -409,6 +412,7 @@ data:
           - 1
           init_temp: 0
           sampling: true
+      epsilon_exp_prob: 0
       exploration_prob: 0.5
       max_game_length: 8
       max_random_start_steps: 0

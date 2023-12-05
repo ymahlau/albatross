@@ -69,6 +69,15 @@ class TestIMPMARL(unittest.TestCase):
         game_cfg = IMPConfig(num_players=3, imp_mode=IMP_MODE.K_OF_N, campaign_cost=False)
         game = get_game_from_config(game_cfg)
         
+        game.step((0, 0, 0))
+        game.step((0, 0, 0))
+        game.step((0, 0, 0))
+        game.step((0, 0, 0))
+        game.step((0, 0, 0))
+        game.step((0, 0, 0))
+        game.step((0, 0, 0))
+        game.step((0, 0, 0))
+        
         obs, _, _ = game.get_obs()
         
         game.step((0, 1, 0))

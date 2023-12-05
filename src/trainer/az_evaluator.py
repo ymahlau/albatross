@@ -111,7 +111,7 @@ def run_evaluator(
                 opponent_list=opponent_list,
                 num_episodes=evaluator_cfg.num_episodes,
                 enemy_iterations=evaluator_cfg.enemy_iterations,
-                temperature=math.inf,
+                temperature_list=evaluator_cfg.sample_temperatures,
                 prevent_draw=evaluator_cfg.prevent_draw,
                 switch_positions=evaluator_cfg.switch_pos,
             )
@@ -137,7 +137,7 @@ def run_evaluator(
                     opponent_list=opponent_list,
                     num_episodes=evaluator_cfg.num_episodes,
                     enemy_iterations=evaluator_cfg.enemy_iterations,
-                    temperature=math.inf,
+                    temperature_list=evaluator_cfg.sample_temperatures,
                     prevent_draw=evaluator_cfg.prevent_draw,
                     switch_positions=evaluator_cfg.switch_pos,
                 )
@@ -224,14 +224,14 @@ def do_evaluation(
         opponent_list: list[Agent],
         num_episodes: list[int],
         enemy_iterations: int,
-        temperature: float,
+        temperature_list: list[float],
         prevent_draw: bool,
         switch_positions: bool,
 ) -> tuple[list[list[float]], list[list[int]]]:
     results = []
     episode_lengths = []
     # iterate opponents
-    for opponent, episodes in zip(opponent_list, num_episodes):
+    for opponent, episodes, temperature in zip(opponent_list, num_episodes, temperature_list):
         cur_results = []
         cur_lengths = []
         # iterate episodes
@@ -253,7 +253,7 @@ def do_evaluation(
                         probs, _ = opponent(game, player=player, iterations=enemy_iterations)
                         probs[game.illegal_actions(player)] = 0
                         probs /= probs.sum()
-                        action = sample_individual_actions(probs[np.newaxis, ...], math.inf)[0]
+                        action = sample_individual_actions(probs[np.newaxis, ...], temperature)[0]
                     joint_action_list.append(action)
                 if prevent_draw:
                     step_with_draw_prevention(game, tuple(joint_action_list))

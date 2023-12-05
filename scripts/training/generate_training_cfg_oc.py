@@ -241,6 +241,7 @@ def generate_training_structured_configs():
                 prevent_draw=False,
                 self_play=True,
                 switch_pos=True,
+                sample_temperatures=[math.inf, math.inf],
             )
             optim_cfg = OptimizerConfig(
                 optim_type=OptimType.ADAM_W,

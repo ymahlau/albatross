@@ -13,4 +13,4 @@
 #SBATCH --constraint=enife
 echo "Hier beginnt die Ausführung/Berechnung"
 cd ..
-srun -c 17 --gres=gpu:2 -v /home/mahlau/nobackup/miniforge3/envs/albatross-env/bin/python start_training.py config=cfg_proxy_aa_0 hydra.job.chdir=True
+srun -c 17 --gres=gpu:2 -v /home/mahlau/nobackup/miniforge3/envs/albatross-env/bin/python start_training.py config=cfg_imp_None hydra.job.chdir=True
