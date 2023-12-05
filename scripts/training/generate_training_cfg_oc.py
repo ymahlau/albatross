@@ -26,7 +26,7 @@ from src.network.resnet import ResNetConfig3x3, ResNetConfig7x7Best, OvercookedR
     OvercookedResNetConfig9x9, OvercookedResNetConfig8x8
 from src.network.utils import ActivationType
 from src.network.vision_net import EquivarianceType
-from src.search.config import AlphaZeroDecoupledSelectionConfig, InferenceServerEvalConfig, StandardBackupConfig, StandardExtractConfig, \
+from src.search.config import AlphaZeroDecoupledSelectionConfig, InferenceServerEvalConfig, ResponseInferenceServerEvalConfig, StandardBackupConfig, StandardExtractConfig, \
     DecoupledUCTSelectionConfig, LogitBackupConfig, FixedDepthConfig, SpecialExtractConfig, NashBackupConfig, \
     Exp3SelectionConfig, MeanPolicyExtractConfig, Exp3BackupConfig, RegretMatchingSelectionConfig, \
     RegretMatchingBackupConfig, SMOOSConfig, PolicyExtractConfig, EnemyExploitationEvalConfig, \
@@ -59,7 +59,7 @@ def generate_training_structured_configs():
     for name, (game_cfg, net_cfg) in cfg_dict.items():
         for seed in range(5):
             temperature_input = True
-            single_temperature = True
+            single_temperature = False
             # game
             # game_cfg = perform_choke_2_player(fully_connected=False, centered=True)
             # game_cfg = CrampedRoomOvercookedConfig(reward_scaling_factor=0.3)
@@ -99,22 +99,22 @@ def generate_training_structured_configs():
             #     obs_temperature_input=True,
             #     max_batch_size=batch_size,
             # )
-            eval_func_cfg = InferenceServerEvalConfig(
-                random_symmetry=False,
-                temperature_input=temperature_input,
-                single_temperature=single_temperature,
-                min_clip_value=-math.inf,
-                max_clip_value=30,
-                policy_prediction=net_cfg.predict_policy,
-                utility_norm=UtilityNorm.FULL_COOP,
-            )
-            # eval_func_cfg = ResponseInferenceServerEvalConfig(
-            #     random_symmetry= False,
+            # eval_func_cfg = InferenceServerEvalConfig(
+            #     random_symmetry=False,
+            #     temperature_input=temperature_input,
+            #     single_temperature=single_temperature,
             #     min_clip_value=-math.inf,
-            #     max_clip_value=50,
-            #     active_wait_time=0.05,
-            #     policy_prediction=True,
+            #     max_clip_value=30,
+            #     policy_prediction=net_cfg.predict_policy,
+            #     utility_norm=UtilityNorm.FULL_COOP,
             # )
+            eval_func_cfg = ResponseInferenceServerEvalConfig(
+                random_symmetry= False,
+                min_clip_value=-math.inf,
+                max_clip_value=50,
+                active_wait_time=0.05,
+                policy_prediction=True,
+            )
             
             
             # sel_func_cfg = DecoupledUCTSelectionConfig(exp_bonus=1.414)  # 1.4)
@@ -124,15 +124,15 @@ def generate_training_structured_configs():
             # sel_func_cfg = RegretMatchingSelectionConfig(random_prob=0.1)
             # sel_func_cfg = UncertaintySelectionConfig(informed=True)
             # backup_func_cfg = NashBackupConfig()
-            backup_func_cfg = LogitBackupConfig(
-                num_iterations=150,
-                init_temperatures=[15 for _ in range(game_cfg.num_players)],
-                sbr_mode=SbrMode.NAGURNEY,
-            )
-            # backup_func_cfg = EnemyExploitationBackupConfig(
-            #     exploit_temperature=10,
-            #     average_eval=False,
+            # backup_func_cfg = LogitBackupConfig(
+            #     num_iterations=150,
+            #     init_temperatures=[15 for _ in range(game_cfg.num_players)],
+            #     sbr_mode=SbrMode.NAGURNEY,
             # )
+            backup_func_cfg = EnemyExploitationBackupConfig(
+                exploit_temperature=10,
+                average_eval=False,
+            )
             # backup_func_cfg = RNADBackupConfig(
             #     num_iterations=1000,
             #     reg_factor=0.2,
@@ -142,7 +142,7 @@ def generate_training_structured_configs():
             # backup_func_cfg = Exp3BackupConfig()
             # backup_func_cfg = RegretMatchingBackupConfig(avg_backup=True)
             extraction_func_cfg = SpecialExtractConfig(
-                utility_norm=UtilityNorm.FULL_COOP,
+                utility_norm=UtilityNorm.NONE,
                 min_clip_value=-math.inf,
                 max_clip_value=30,
             )
@@ -163,7 +163,7 @@ def generate_training_structured_configs():
                 eval_func_cfg=eval_func_cfg,
                 backup_func_cfg=backup_func_cfg,
                 extract_func_cfg=extraction_func_cfg,
-                average_eval=False,
+                average_eval=True,
                 discount=0.9,
             )
             # search_cfg = SMOOSConfig(
@@ -184,41 +184,41 @@ def generate_training_structured_configs():
                 search_cfg=search_cfg,
                 policy_eval_cfg=policy_eval_cfg,
                 # anneal_cfgs=None,
-                temp_scaling_cfgs=(
-                    TemperatureAnnealingConfig(
-                        init_temp=5,
-                        end_times_min=[600, 1300],
-                        anneal_temps=[5, 0],
-                        anneal_types=[AnnealingType.CONST, AnnealingType.LINEAR],
-                        cyclic=False,
-                        sampling=False,
-                    ),
-                    TemperatureAnnealingConfig(
-                        init_temp=10,
-                        end_times_min=[1],
-                        anneal_temps=[10],
-                        anneal_types=[AnnealingType.CONST],
-                        cyclic=True,
-                        sampling=False,
-                    ),
-                ),
+                # temp_scaling_cfgs=(
+                #     TemperatureAnnealingConfig(
+                #         init_temp=5,
+                #         end_times_min=[600, 1300],
+                #         anneal_temps=[5, 0],
+                #         anneal_types=[AnnealingType.CONST, AnnealingType.LINEAR],
+                #         cyclic=False,
+                #         sampling=False,
+                #     ),
+                #     TemperatureAnnealingConfig(
+                #         init_temp=10,
+                #         end_times_min=[1],
+                #         anneal_temps=[10],
+                #         anneal_types=[AnnealingType.CONST],
+                #         cyclic=True,
+                #         sampling=False,
+                #     ),
+                # ),
                 # anneal_cfgs=None,
-                anneal_cfgs=[TemperatureAnnealingConfig(
-                    init_temp=0,
-                    end_times_min=[1],
-                    anneal_temps=[1],
-                    anneal_types=[AnnealingType.COSINE],
-                    cyclic=True,
-                    sampling=True,
-                )],
                 # anneal_cfgs=[TemperatureAnnealingConfig(
-                #     init_temp=1,
+                #     init_temp=0,
                 #     end_times_min=[1],
-                #     anneal_temps=[10],
+                #     anneal_temps=[1],
                 #     anneal_types=[AnnealingType.COSINE],
                 #     cyclic=True,
                 #     sampling=True,
-                # ) for _ in range(game_cfg.num_players)],
+                # )],
+                anneal_cfgs=[TemperatureAnnealingConfig(
+                    init_temp=1,
+                    end_times_min=[1],
+                    anneal_temps=[10],
+                    anneal_types=[AnnealingType.COSINE],
+                    cyclic=True,
+                    sampling=True,
+                ) for _ in range(game_cfg.num_players)],
                 search_iterations=1,
                 temperature=1,
                 max_random_start_steps=0,
@@ -245,11 +245,17 @@ def generate_training_structured_configs():
             )
             optim_cfg = OptimizerConfig(
                 optim_type=OptimType.ADAM_W,
+                # anneal_cfg=TemperatureAnnealingConfig(
+                #     init_temp=0,
+                #     end_times_min=[60, 600, 700, 1300],
+                #     anneal_temps=[1e-3, 1e-5, 1e-3, 1e-6],
+                #     anneal_types=[AnnealingType.LINEAR, AnnealingType.COSINE, AnnealingType.LINEAR, AnnealingType.COSINE],
+                # ),
                 anneal_cfg=TemperatureAnnealingConfig(
                     init_temp=0,
-                    end_times_min=[60, 600, 700, 1300],
-                    anneal_temps=[1e-3, 1e-5, 1e-3, 1e-6],
-                    anneal_types=[AnnealingType.LINEAR, AnnealingType.COSINE, AnnealingType.LINEAR, AnnealingType.COSINE],
+                    end_times_min=[60, 1300],
+                    anneal_temps=[1e-3, 1e-6],
+                    anneal_types=[AnnealingType.LINEAR, AnnealingType.COSINE],
                 ),
                 weight_decay=1e-4,
                 beta1=0.9,
@@ -277,7 +283,7 @@ def generate_training_structured_configs():
             logger_cfg = LoggerConfig(
                 project_name="overcooked",
                 buffer_gen=False,
-                name=f'luis_proxy_{name}',
+                name=f'luis_resp_{name}',
                 id=seed,
                 updater_bucket_size=1000,
                 worker_episode_bucket_size=5,
@@ -324,7 +330,7 @@ def generate_training_structured_configs():
                 compile_model=False,
                 compile_mode='max-autotune',
                 merge_inference_update_gpu=False,
-                proxy_net_path=None,
+                proxy_net_path=f"/bigwork/nhmlmahy/a_saved_runs/overcooked/luis_proxy_{name}_{seed}/latest.pt",
             )
             # initialize yaml file and hydra
             print(os.getcwd())
