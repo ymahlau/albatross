@@ -5,10 +5,10 @@ data:
     __module__: src.trainer.config
     __name__: CollectorConfig
     data:
-      buffer_size: 3000
+      buffer_size: 200000
       log_every_sec: 20
       quick_start_buffer_path: null
-      start_wait_n_samples: 3000
+      start_wait_n_samples: 200000
   compile_mode: max-autotune
   compile_model: false
   data_qsize: 10
@@ -25,8 +25,8 @@ data:
       enemy_iterations: 100
       eval_rate_sec: 20
       num_episodes:
-      - 100
-      - 2
+      - 10
+      - 50
       prevent_draw: false
       sample_temperatures:
       - 1
@@ -65,15 +65,15 @@ data:
       name: null
       project_name: test
       updater_bucket_size: 100
-      wandb_mode: offline
+      wandb_mode: online
       worker_episode_bucket_size: 5
-  max_batch_size: 3000
+  max_batch_size: 100000
   max_cpu_evaluator: 1
   max_cpu_inference_server: 1
   max_cpu_log_dist_save_collect: 1
   max_cpu_updater: 1
   max_cpu_worker: 10
-  max_eval_per_worker: 6000
+  max_eval_per_worker: 84
   merge_inference_update_gpu: true
   net_cfg:
     __module__: src.network.flat_fcn
@@ -129,7 +129,7 @@ data:
             value: GROUP_NORM
           num_layers: 1
   num_inference_server: 1
-  num_worker: 30
+  num_worker: 50
   only_generate_buffer: false
   prev_run_dir: null
   prev_run_idx: null
@@ -171,8 +171,8 @@ data:
                 value: COSINE
               cyclic: false
               end_times_min:
-              - 10
-              - 90
+              - 5
+              - 40
               init_temp: 0
               sampling: false
           beta1: 0.9
@@ -201,7 +201,7 @@ data:
     data:
       anneal_cfgs: null
       epsilon_exp_prob: 0.05
-      exploration_prob: 0.5
+      exploration_prob: 0
       max_game_length: 8
       max_random_start_steps: 0
       policy_eval_cfg:
@@ -238,7 +238,7 @@ data:
                 __name__: SbrMode
                 value: NAGURNEY
               use_cpp: true
-          discount: 0.9
+          discount: 0.995
           eval_func_cfg:
             __module__: src.search.config
             __name__: InferenceServerEvalConfig

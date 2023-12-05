@@ -150,7 +150,7 @@ data:
   max_cpu_log_dist_save_collect: 1
   max_cpu_updater: 2
   max_cpu_worker: 22
-  max_eval_per_worker: 30000
+  max_eval_per_worker: 74
   merge_inference_update_gpu: false
   net_cfg:
     __module__: src.network.resnet

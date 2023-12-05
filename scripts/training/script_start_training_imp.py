@@ -68,7 +68,7 @@ def start_training_from_structured_configs():
     # net_cfg = EquivariantMobileNetConfig3x3(predict_game_len=True)
     # search
     # eval_func_cfg = NetworkEvalConfig(zero_sum_norm=ZeroSumNorm.LINEAR)
-    batch_size = 3000
+    batch_size = int(1e5)
     # eval_func_cfg = NetworkEvalConfig(
     #     max_batch_size=batch_size,
     #     random_symmetry=False,
@@ -145,7 +145,7 @@ def start_training_from_structured_configs():
         backup_func_cfg=backup_func_cfg,
         extract_func_cfg=extraction_func_cfg,
         average_eval=False,
-        discount=0.9,
+        discount=0.995,
     )
     # search_cfg = SMOOSConfig(
     #     eval_func_cfg=eval_func_cfg,
@@ -206,12 +206,12 @@ def start_training_from_structured_configs():
         quick_start=False,
         max_game_length=8,
         prevent_draw=False,
-        exploration_prob=0.5,
+        exploration_prob=0,
         epsilon_exp_prob=0.05,
     )
     evaluator_cfg = EvaluatorConfig(
         eval_rate_sec=20,
-        num_episodes=[100, 2],
+        num_episodes=[10, 50],
         enemy_iterations=100,
         sample_temperatures=[1, 1],
         enemy_cfgs=[
@@ -234,7 +234,7 @@ def start_training_from_structured_configs():
         # ),
         anneal_cfg=TemperatureAnnealingConfig(
             init_temp=0,
-            end_times_min=[10, 90],
+            end_times_min=[5, 40],
             anneal_temps=[1e-3, 1e-6],
             anneal_types=[AnnealingType.LINEAR, AnnealingType.COSINE],
         ),
@@ -242,7 +242,7 @@ def start_training_from_structured_configs():
         beta1=0.9,
         beta2=0.99,
     )
-    buffer_size = batch_size
+    buffer_size = int(2e5)
     collector_cfg = CollectorConfig(
         buffer_size=buffer_size,
         quick_start_buffer_path=None,
@@ -268,7 +268,7 @@ def start_training_from_structured_configs():
         id=0,
         updater_bucket_size=100,
         worker_episode_bucket_size=5,
-        wandb_mode='offline',
+        wandb_mode='online',
     )
     saver_cfg = SaverConfig(
         save_interval_sec=10,
@@ -277,7 +277,7 @@ def start_training_from_structured_configs():
         use_gpu=True,
     )
     trainer_cfg = AlphaZeroTrainerConfig(
-        num_worker=30,  # IMPORTANT
+        num_worker=50,  # IMPORTANT
         num_inference_server=1,
         save_state=False,
         save_state_after_seconds=30,
@@ -291,7 +291,7 @@ def start_training_from_structured_configs():
         collector_cfg=collector_cfg,
         inf_cfg=inf_cfg,
         max_batch_size=batch_size,
-        max_eval_per_worker=batch_size*2,
+        max_eval_per_worker=game_cfg.num_players * ((game_cfg.num_actions ** game_cfg.num_players) + 1),
         data_qsize=10,
         info_qsize=100,
         updater_in_qsize=100,

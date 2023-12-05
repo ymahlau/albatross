@@ -310,7 +310,7 @@ def generate_training_structured_configs():
                 collector_cfg=collector_cfg,
                 inf_cfg=inf_cfg,
                 max_batch_size=batch_size,
-                max_eval_per_worker=batch_size*2,
+                max_eval_per_worker=game_cfg.num_players * ((game_cfg.num_actions ** game_cfg.num_players) + 1),
                 data_qsize=10,
                 info_qsize=100,
                 updater_in_qsize=100,
