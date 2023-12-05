@@ -121,10 +121,10 @@ data:
       worker_episode_bucket_size: 5
   max_batch_size: 15000
   max_cpu_evaluator: 1
-  max_cpu_inference_server: 2
+  max_cpu_inference_server: 6
   max_cpu_log_dist_save_collect: 1
   max_cpu_updater: 2
-  max_cpu_worker: 22
+  max_cpu_worker: 32
   max_eval_per_worker: 74
   merge_inference_update_gpu: false
   net_cfg:

@@ -321,10 +321,10 @@ def generate_training_structured_configs():
                 only_generate_buffer=False,
                 restrict_cpu=True,  # only works on LINUX
                 max_cpu_updater=2,
-                max_cpu_worker=22,
+                max_cpu_worker=32,
                 max_cpu_evaluator=1,
                 max_cpu_log_dist_save_collect=1,
-                max_cpu_inference_server=2,
+                max_cpu_inference_server=6,
                 temperature_input=temperature_input,
                 single_sbr_temperature=single_temperature,
                 compile_model=False,
