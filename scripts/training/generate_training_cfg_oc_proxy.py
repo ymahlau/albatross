@@ -48,7 +48,7 @@ def generate_training_structured_configs():
     """
     Main method to start the training using dataclasses specified below
     """
-    # for seed in range(5):
+    
     cfg_dict = {
         'aa': (AsymmetricAdvantageOvercookedConfig(), OvercookedResNetConfig9x9()),
         'cc': (CounterCircuitOvercookedConfig(), OvercookedResNetConfig8x8()),
@@ -212,7 +212,7 @@ def generate_training_structured_configs():
                 #     sampling=True,
                 # )],
                 anneal_cfgs=[TemperatureAnnealingConfig(
-                    init_temp=1,
+                    init_temp=0,
                     end_times_min=[1],
                     anneal_temps=[10],
                     anneal_types=[AnnealingType.COSINE],

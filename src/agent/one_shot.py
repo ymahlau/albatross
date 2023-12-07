@@ -1,6 +1,8 @@
 import copy
 import multiprocessing as mp
 from dataclasses import field, dataclass
+from pathlib import Path
+import pickle
 from typing import Optional, Any
 
 import numpy as np
@@ -9,10 +11,15 @@ import torch
 from src.agent import AgentConfig, Agent
 from src.game.actions import filter_illegal_and_normalize, apply_permutation
 from src.game.battlesnake.battlesnake import BattleSnakeGame
+from src.game.conversion import overcooked_slow_from_fast
 from src.game.game import Game
-from src.game.overcooked_slow.overcooked import OvercookedGame
+from src.game.overcooked.config import AsymmetricAdvantageOvercookedConfig, CoordinationRingOvercookedConfig, CounterCircuitOvercookedConfig, CrampedRoomOvercookedConfig, ForcedCoordinationOvercookedConfig, OvercookedGameConfig
+from src.game.overcooked_slow.overcooked import OvercookedGame as OvercookedGameSlow
+from src.game.overcooked.overcooked import OvercookedGame as OvercookedGameFast
 from src.network import NetworkConfig
+from src.network.flat_fcn import FlatFCNetworkConfig
 from src.network.initialization import get_network_from_config
+from src.network.simple_fcn import SimpleNetwork, SimpleNetworkConfig
 
 
 @dataclass
@@ -171,16 +178,59 @@ class BCNetworkAgent(Agent):
             save_probs = None,  # mp.Array
             options: Optional[dict[str, Any]] = None,
     ) -> tuple[np.ndarray, dict[str, Any]]:
-        if not isinstance(game, OvercookedGame):
+        if not isinstance(game, OvercookedGameFast):
             raise ValueError(f"BC-Network agent only works on overcooked")
         if self.net is None:
             raise Exception(f"Need network to act")
+        if not isinstance(self.net, SimpleNetwork):
+            raise Exception("BC Agent need simple network")
         # get bc probs
-        if game.env is None:
+        converted = overcooked_slow_from_fast(game, layout_abbr=self.net.cfg.layout_abbrev)
+        if converted.env is None:
             raise Exception("game.env is None")
-        flat_obs = game.env.featurize_state_mdp(game.env.state)
+        flat_obs = converted.env.featurize_state_mdp(converted.env.state)
         flat_arr = torch.tensor(np.asarray(flat_obs), dtype=torch.float32)
         net_out = self.net(flat_arr).cpu().detach().numpy()
         net_probs = np.exp(net_out) / np.exp(net_out).sum(axis=-1)[..., np.newaxis]
         filtered_probs = filter_illegal_and_normalize(net_probs, game)[player]
+        filtered_probs[4] = 0  # set stay action to zero, as done in baseline methods (PECAN, etc..)
+        filtered_probs = filtered_probs / np.sum(filtered_probs)
         return filtered_probs, {}
+
+
+def infer_game_cfg_from_name(name: str) -> OvercookedGameConfig:
+    if 'aa' in name:
+        return AsymmetricAdvantageOvercookedConfig()
+    elif 'cr' in name:
+        return CrampedRoomOvercookedConfig()
+    elif 'co' in name:
+        return CoordinationRingOvercookedConfig()
+    elif 'fc' in name:
+        return ForcedCoordinationOvercookedConfig()
+    elif 'cc' in name:
+        return CounterCircuitOvercookedConfig()
+    raise Exception(f"Could not infer game config from {name=}")
+
+def bc_agent_from_file(path: Path) -> BCNetworkAgent:
+    standard_net_cfg = SimpleNetworkConfig(layout_abbrev=path.name[:2])
+    name_conversion = {
+        'fc_0/kernel:0': 'fcn.lin_in.weight',
+        'fc_0/bias:0': 'fcn.lin_in.bias',
+        'fc_1/kernel:0': 'fcn.hidden.0.weight',
+        'fc_1/bias:0': 'fcn.hidden.0.bias',
+        'logits/kernel:0': 'fcn.lin_out.weight',
+        'logits/bias:0': 'fcn.lin_out.bias',
+    }
+    standard_net_cfg.game_cfg = infer_game_cfg_from_name(path.name)
+    net = get_network_from_config(standard_net_cfg)
+    with open(path, 'rb') as f:
+        state_dict = pickle.load(f)
+    new_state_dict = {
+        name_conversion[k]: torch.tensor(v.T) for k, v in state_dict.items()
+    }
+    net.load_state_dict(new_state_dict)
+    agent_cfg = BCNetworkAgentConfig(net_cfg=net.cfg)
+    agent = BCNetworkAgent(agent_cfg)
+    agent.replace_net(net)
+    return agent
+

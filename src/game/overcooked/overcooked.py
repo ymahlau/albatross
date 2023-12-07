@@ -68,10 +68,11 @@ class OvercookedGame(Game):
         # if agent is stuck perform random action
         if self.cfg.unstuck_behavior:
             for player in range(2):
-                if self.stuck_counter[player] == 3 and actions[player] in [4, 5]:
+                if self.stuck_counter[player] >= 3:
                     action_list = list(actions)
                     action_list[player] = random.randint(0, 3)
                     actions = tuple(action_list)
+                    # print(f'random action for {player}, {action_list[player]}')
         # fill actions of players not at turn with zeros
         action_arr = np.zeros(shape=(2,), dtype=ct.c_int)
         action_arr[0] = actions[0]
@@ -89,6 +90,8 @@ class OvercookedGame(Game):
             for player in range(2):
                 if self._test_stuck(cur_info, player):
                     self.stuck_counter[player] += 1
+                else:
+                    self.stuck_counter[player] = 0
             self.last_info = cur_info
         return reward_arr, done, {}
 
@@ -223,3 +226,103 @@ class OvercookedGame(Game):
             "p1_or": arr[6],
             "p1_item": arr[7],
         }
+    
+    def get_state_array(self) -> np.ndarray:
+        arr = np.zeros(shape=(self.cfg.w * self.cfg.h,), dtype=ct.c_int)
+        arr_p = arr.ctypes.data_as(ct.POINTER(ct.c_int))
+        CPP_LIB.lib.get_state_oc_cpp(self.state_p, arr_p)
+        return arr
+    
+    @staticmethod
+    def get_or_from_code(orientation: int):
+        if orientation == 0:
+            return (0, -1)
+        elif orientation == 1:
+            return (0, 1)
+        elif orientation == 2:
+            return (1, 0)
+        elif orientation == 3:
+            return (-1, 0)
+        else:
+            raise Exception(f"Unknown orientation: {orientation}")
+    
+    @staticmethod
+    def get_item_state_from_code(item_code: int, x: int, y: int) -> Optional[dict]:
+        if item_code == 0:  # no item
+            return None
+        elif item_code == 1:  # onion
+            return {
+                'name': 'onion',
+                'position': (x, y),
+            }
+        elif item_code == 2: # dish
+            return {
+                'name': 'dish',
+                'position': (x, y),
+            }
+        elif item_code == 3:  # soup
+            return {
+                'name': 'soup',
+                'position': (x, y),
+                '_ingredients': [{'name': 'onion', 'position': (x, y)} for _ in range(3)],
+                'cooking_tick': 20,
+                'is_cooking': False,
+                'is_ready': True,
+                'is_idle': False,
+                'cook_time': 20,
+                '_cooking_tick': 20,
+            }
+        raise Exception(f"unknown item code: {item_code}")
+    
+    @staticmethod
+    def get_pot_state_from_code(pot_code: int, x: int, y: int):
+        num_ingredients = 3 if pot_code > 3 else pot_code
+        ingredients = [{'name': 'onion', 'position': (x, y)} for _ in range(num_ingredients)]
+        tick = -1 if pot_code < 4 else 24 - pot_code
+        return {
+            'name': 'soup',
+            'position': (x, y),
+            '_ingredients': ingredients,
+            'cooking_tick': tick,
+            'is_cooking': pot_code > 4,
+            'is_ready': pot_code == 4,
+            'is_idle': pot_code < 4,
+            'cook_time': -1 if pot_code < 4 else 20,
+            '_cooking_tick': tick,
+        }
+    
+    def generate_oc_state_dict(self) -> dict:
+        player_info = self.get_player_info()
+        state_arr = self.get_state_array()
+        state_arr = state_arr.reshape(self.cfg.h, self.cfg.w).T
+        board_arr = np.asarray(self.cfg.board).T
+        
+        player_list = []
+        for p in range(2):
+            x, y = player_info[f'p{p}_x'], player_info[f'p{p}_y']
+            player_list.append({
+                'position': (x, y),
+                'orientation': self.get_or_from_code(player_info[f'p{p}_or']),
+                'held_object': self.get_item_state_from_code(player_info[f'p{p}_item'], x, y),
+            })
+        
+        object_list = []
+        for x in range(self.cfg.w):
+            for y in range(self.cfg.h):
+                if board_arr[x, y] == 1:  # counter
+                    if state_arr[x, y] != 0:
+                        object_list.append(self.get_item_state_from_code(state_arr[x, y], x, y))
+                elif board_arr[x, y] == 4:  # pot
+                    if state_arr[x, y] != 0:
+                        object_list.append(self.get_pot_state_from_code(state_arr[x, y], x, y))
+                    
+        
+        state_dict = {
+            'players': player_list,
+            'objects': object_list,
+            'bonus_orders': [],
+            'all_orders': [{'ingredients': ('onion', 'onion', 'onion')}],
+            'timestep': self.turns_played,
+        }
+        return state_dict
+

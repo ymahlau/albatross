@@ -16,6 +16,7 @@ from src.agent.initialization import get_agent_from_config
 from src.agent.one_shot import NetworkAgentConfig
 from src.agent.search_agent import SBRFixedDepthAgentConfig, SearchAgent
 from src.game.actions import sample_individual_actions
+from src.game.conversion import overcooked_slow_from_fast
 from src.game.game import Game
 from src.game.initialization import get_game_from_config
 from src.game.utils import step_with_draw_prevention
@@ -248,17 +249,21 @@ def do_evaluation(
                         probs, _ = evaluee(game, player=player, iterations=1)
                         probs[game.illegal_actions(player)] = 0
                         probs /= probs.sum()
+                        print(probs)
                         action = sample_individual_actions(probs[np.newaxis, ...], temperature)[0]
                     else:
                         probs, _ = opponent(game, player=player, iterations=enemy_iterations)
                         probs[game.illegal_actions(player)] = 0
                         probs /= probs.sum()
+                        # print(probs)
                         action = sample_individual_actions(probs[np.newaxis, ...], temperature)[0]
                     joint_action_list.append(action)
                 if prevent_draw:
                     step_with_draw_prevention(game, tuple(joint_action_list))
                 else:
                     game.step(tuple(joint_action_list))
+                print(joint_action_list)
+                # game.render()
                 step_counter += 1
             # add rewards of player 0 to sum
             cum_rewards = game.get_cum_rewards()

@@ -40,8 +40,8 @@ if __name__ == '__main__':
         pref_lists = [
             # list(range(1, 6)),
             # [1] + list(range(5, 51, 5)),
-            ['aa', 'cc', 'co', 'cr', 'fc'],
-            list(range(5)),
+            # ['aa', 'cc', 'co', 'cr', 'fc'],
+            # list(range(5)),
         ]
         prod = list(itertools.product(*pref_lists))
         tpl = prod[arr_id]

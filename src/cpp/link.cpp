@@ -437,5 +437,9 @@ extern "C" {
     void get_player_infos_cpp(OvercookedGameState* state, int* info_arr){
         return get_player_infos(state, info_arr);
     }
+
+    void get_state_oc_cpp(OvercookedGameState* state, int* state_arr){
+        get_state_oc(state, state_arr);
+    }
 }
 

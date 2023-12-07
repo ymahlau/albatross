@@ -1,10 +1,10 @@
 from src.game.battlesnake.battlesnake_conf import BattleSnakeConfig
-from src.game.battlesnake.battlesnake_enc import SimpleConstrictorEncodingConfig, VanillaBattleSnakeEncodingConfig
+from src.game.battlesnake.battlesnake_enc import BestBattleSnakeEncodingConfig, SimpleConstrictorEncodingConfig, VanillaBattleSnakeEncodingConfig
 from src.game.battlesnake.battlesnake_rewards import KillBattleSnakeRewardConfig, CooperationBattleSnakeRewardConfig
 
 
 def survive_on_7x7() -> BattleSnakeConfig:
-    ec = VanillaBattleSnakeEncodingConfig()
+    ec = BestBattleSnakeEncodingConfig()
     ec.compress_enemies = False
     gc = BattleSnakeConfig(
         w=7,
@@ -20,7 +20,7 @@ def survive_on_7x7() -> BattleSnakeConfig:
     return gc
 
 def survive_on_7x7_4_player() -> BattleSnakeConfig:
-    ec = VanillaBattleSnakeEncodingConfig()
+    ec = BestBattleSnakeEncodingConfig()
     ec.compress_enemies = True
     gc = BattleSnakeConfig(
         w=7,

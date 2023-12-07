@@ -36,7 +36,7 @@ class OvercookedGameConfig(GameConfig):
     single_temperature_input: bool = True
     flat_obs: bool = False
     cooking_time: int = 20
-    unstuck_behavior: bool = False
+    unstuck_behavior: bool = True
 
 
 # const int EMPTY_TILE = 0;
@@ -57,7 +57,6 @@ class CrampedRoomOvercookedConfig(OvercookedGameConfig):
         [1, 2, 1, 5, 1],
     ])
     start_pos: tuple[tuple[int, int, int, int], tuple[int, int, int, int]] = field(default_factory=lambda: ((1, 2, 0, 0), (3, 1, 0, 0)))
-    reward_scaling_factor: float = field(default=1)
 
 
 @dataclass

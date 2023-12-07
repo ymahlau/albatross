@@ -186,6 +186,10 @@ double step_resolve_helper(OvercookedGameState* state, int player_id, int action
                     reward += state->reward_specs.dish_pickup;
                     state->dish_pickup_rewards_available -= 1;
                 }
+            } else if (faced_tile_type == COUNTER_TILE and faced_tile_state != NO_ITEM){
+                // player picks up item from counter
+                state->players[player_id].held_item = faced_tile_state;
+                state->tile_states[faced_tile_idx] = NO_ITEM;
             }
         } else if (state->players[player_id].held_item == ONION_ITEM){
             if (faced_tile_type == POT_TILE and faced_tile_state < THREE_POT){
@@ -313,7 +317,11 @@ void char_overcooked_matrix(OvercookedGameState* state, char* matrix){
             int idx = state->w * y + x;
             bool skip = false;
             if (state->board[idx] == COUNTER_TILE){
-                matrix[i++] = 'C';
+                if (state->tile_states[idx] == NO_ITEM){
+                    matrix[i++] = 'C';
+                } else {
+                    matrix[i++] = std::to_string(state->tile_states[idx])[0];
+                }
             } else if (state->board[idx] == ONION_TILE){
                 matrix[i++] = 'O';
             } else if (state->board[idx] == DISH_TILE){
@@ -548,3 +556,8 @@ void get_player_infos(OvercookedGameState* state, int* info_arr){
     info_arr[7] = state->players[1].held_item;
 }
 
+void get_state_oc(OvercookedGameState* state, int* state_arr){
+    for (int idx = 0; idx < state->w * state->h; idx++){
+        state_arr[idx] = state->tile_states[idx];
+    }
+}

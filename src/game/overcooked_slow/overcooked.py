@@ -129,13 +129,11 @@ class OvercookedGame(Game):
         return self.env.state == game.env.state
 
     def available_actions(self, player: int) -> list[int]:
-        if not self.cfg.disallow_soup_drop:
-            return list(range(6))
         pos = self.get_player_positions()[player]
         orientation = self.env.state.player_orientations[player]
         faced_square = (pos[0] + orientation[0], pos[1] + orientation[1])
         # test if player has soup in hand and would drop it somewhere else than counter
-        if not self.cfg.mep_reproduction_setting and self.get_player_held_item()[player] == 2:
+        if self.cfg.disallow_soup_drop and not self.cfg.mep_reproduction_setting and self.get_player_held_item()[player] == 2:
             serv_loc = self.gridworld.get_serving_locations()
             if faced_square not in serv_loc:
                 return list(range(5))
@@ -269,7 +267,7 @@ class OvercookedGame(Game):
         simple_state = SimplifiedOvercookedState(self.env.state.to_dict())
         return simple_state
 
-    def _set_state(self, simple_state: SimplifiedOvercookedState):
+    def set_state(self, simple_state: SimplifiedOvercookedState):
         state = OvercookedState.from_dict(simple_state.state_dict)
         self.env.state = state
         self.obs_save = None

@@ -12,13 +12,13 @@ from src.network.initialization import get_network_from_file
 
 
 def play_overcooked_example():
-    path = Path(__file__).parent / 'outputs' / 'response2.pt'
+    # path = Path(__file__).parent.parent.parent / 'outputs' / 'luis_proxy_aa_0.pt'
+    path = Path(__file__).parent.parent.parent / 'a_models' / 'luis_proxy_aa_0.pt'
     temperature_input = True
     single_temperature = True
     
     net = get_network_from_file(path).eval()
     game_cfg = net.cfg.game_cfg
-    
     
     if game_cfg is None:
         raise Exception()
@@ -37,16 +37,16 @@ def play_overcooked_example():
     )
     agent0.net = net
     
-    agent1 = RandomAgent(RandomAgentConfig())
-    # agent1 = NetworkAgent(
-    #     NetworkAgentConfig(
-    #         net_cfg=net.cfg, 
-    #         temperature_input=temperature_input, 
-    #         single_temperature=single_temperature, 
-    #         init_temperatures=[5, 5]
-    #         )
-    #     )
-    # agent1.net = net
+    # agent1 = RandomAgent(RandomAgentConfig())
+    agent1 = NetworkAgent(
+        NetworkAgentConfig(
+            net_cfg=net.cfg, 
+            temperature_input=temperature_input, 
+            single_temperature=single_temperature, 
+            init_temperatures=[5, 5]
+            )
+        )
+    agent1.net = net
     
     agent_list = [
         agent0,
@@ -57,10 +57,10 @@ def play_overcooked_example():
     
     # play
     # temperatures = np.linspace(0, 10, 15)
-    temperatures = [0.5]
+    temperatures = [1.]
     for t in temperatures:
         agent0.temperatures = [t, t]
-        # agent1.temperatures = [t, t]
+        agent1.temperatures = [t, t]
         game.reset()
         game.render()
         # for _ in range(50):

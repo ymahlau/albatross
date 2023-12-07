@@ -118,7 +118,7 @@ data:
               - 0
               - 0
       temperature_input: true
-      unstuck_behavior: false
+      unstuck_behavior: true
       w: 8
   inf_cfg:
     __module__: src.trainer.config
@@ -141,10 +141,10 @@ data:
       worker_episode_bucket_size: 5
   max_batch_size: 15000
   max_cpu_evaluator: 1
-  max_cpu_inference_server: 6
+  max_cpu_inference_server: 4
   max_cpu_log_dist_save_collect: 1
   max_cpu_updater: 2
-  max_cpu_worker: 32
+  max_cpu_worker: 30
   max_eval_per_worker: 74
   merge_inference_update_gpu: false
   net_cfg:
@@ -243,7 +243,7 @@ data:
                   - 0
                   - 0
           temperature_input: true
-          unstuck_behavior: false
+          unstuck_behavior: true
           w: 8
       layer_specs:
       - - 32
@@ -400,7 +400,7 @@ data:
           cyclic: true
           end_times_min:
           - 1
-          init_temp: 1
+          init_temp: 0
           sampling: true
       - __module__: src.supervised.annealer
         __name__: TemperatureAnnealingConfig
@@ -414,7 +414,7 @@ data:
           cyclic: true
           end_times_min:
           - 1
-          init_temp: 1
+          init_temp: 0
           sampling: true
       epsilon_exp_prob: 0
       exploration_prob: 0.5

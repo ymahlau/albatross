@@ -4,15 +4,18 @@ from pathlib import Path
 from typing import Optional
 
 import torch
+from src.game.conversion import overcooked_slow_from_fast
 
 from src.game.initialization import get_game_from_config
+from src.game.overcooked.overcooked import OvercookedGame as OvercookedGameFast
 from src.network import Network, NetworkConfig
 from src.network.fcn import FCN
 from src.network.utils import ActivationType, NormalizationType
 
 
-@dataclass
+@dataclass(kw_only=True)
 class SimpleNetworkConfig(NetworkConfig):
+    layout_abbrev: str
     num_layer: int = 3
     hidden_size: int = 64
 
@@ -21,13 +24,13 @@ class SimpleNetwork(Network):
     def __init__(self, cfg: SimpleNetworkConfig):
         super().__init__(cfg)
         self.cfg = cfg
-        if self.cfg.game_cfg is None:
-            raise Exception("Game config is None")
-        self.game = get_game_from_config(self.cfg.game_cfg)
+        if not isinstance(self.game, OvercookedGameFast):
+            raise Exception("BC agent requires Fast oc game config")
+        self.game2 = overcooked_slow_from_fast(self.game, layout_abbr=self.cfg.layout_abbrev)
         self.fcn = FCN(
-            input_size=self.game.get_obs_shape()[0],
+            input_size=self.game2.get_obs_shape()[0],
             hidden_size=self.cfg.hidden_size,
-            output_size=self.cfg.game_cfg.num_actions,
+            output_size=self.game.num_actions,
             num_layer=self.cfg.num_layer,
             activation_type=ActivationType.RELU,
             dropout_p=0,

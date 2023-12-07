@@ -100,7 +100,7 @@ class VanillaBattleSnakeEncodingConfig(BattleSnakeEncodingConfig):
 @dataclass
 class BestBattleSnakeEncodingConfig(BattleSnakeEncodingConfig):
     include_current_food: bool = field(default=True)
-    include_next_food: bool = field(default=True)
+    include_next_food: bool = field(default=False)
     include_board: bool = field(default=True)
     include_number_of_turns: bool = field(default=False)
     compress_enemies: bool = field(default=True)
