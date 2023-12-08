@@ -1,4 +1,3 @@
-import multiprocessing as mp
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
@@ -9,7 +8,6 @@ import torch
 
 from src.game.game import Game
 from src.network import Network
-import multiprocessing.sharedctypes as sc
 
 @dataclass
 class AgentConfig(ABC):

@@ -5,7 +5,7 @@ import time
 from pathlib import Path
 from typing import Any, Optional
 
-import torch.multiprocessing as mp
+import multiprocessing as mp
 
 from src.misc.replay_buffer import ReplayBuffer, BufferInputSample
 from src.network import Network

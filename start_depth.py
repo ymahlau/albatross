@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 
 from omegaconf import OmegaConf
-import torch.multiprocessing as mp
+import multiprocessing as mp
 from src.depth.depth_parallel import DepthSearchConfig, depth_search_config_from_structured, \
     compute_different_depths_parallel
 

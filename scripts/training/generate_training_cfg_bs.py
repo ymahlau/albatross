@@ -21,7 +21,7 @@ from src.misc.serialization import serialize_dataclass
 from src.network.fcn import MediumHeadConfig
 from src.network.initialization import get_network_from_config
 from src.network.mobile_one import MobileOneConfig3x3
-from src.network.mobilenet_v3 import MobileNetConfig3x3, MobileNetConfig5x5
+from src.network.mobilenet_v3 import MobileNetConfig3x3, MobileNetConfig5x5, MobileNetConfig7x7Incumbent
 from src.network.resnet import ResNetConfig3x3, ResNetConfig7x7Best, OvercookedResNetConfig5x5
 from src.network.utils import ActivationType
 from src.network.vision_net import EquivarianceType
@@ -67,7 +67,7 @@ def start_training_from_structured_configs():
     # net_cfg = MobileNetConfig3x3(predict_policy=True, predict_game_len=False, eq_type=eq_type)
     # net_cfg = MobileOneConfig3x3(predict_policy=True, predict_game_len=False, eq_type=eq_type)
     # net_cfg = MobileNetConfig5x5(predict_policy=True, eq_type=eq_type)
-    net_cfg = ResNetConfig7x7Best()
+    net_cfg = MobileNetConfig7x7Incumbent()
     # net_cfg = OvercookedResNetConfig5x5(predict_policy=True, eq_type=eq_type, lff_features=False)
 
     net_cfg.value_head_cfg.final_activation = ActivationType.TANH
@@ -75,7 +75,7 @@ def start_training_from_structured_configs():
     # net_cfg = EquivariantMobileNetConfig3x3(predict_game_len=True)
     # search
     # eval_func_cfg = NetworkEvalConfig(zero_sum_norm=ZeroSumNorm.LINEAR)
-    batch_size = 10000
+    batch_size = 2000
     # eval_func_cfg = NetworkEvalConfig(
     #     max_batch_size=batch_size,
     #     random_symmetry=False,
@@ -150,7 +150,7 @@ def start_training_from_structured_configs():
         eval_func_cfg=eval_func_cfg,
         backup_func_cfg=backup_func_cfg,
         extract_func_cfg=extraction_func_cfg,
-        average_eval=True,
+        average_eval=False,
         discount=0.99,
     )
     # search_cfg = SMOOSConfig(
@@ -205,26 +205,27 @@ def start_training_from_structured_configs():
         #     cyclic=True,
         #     sampling=True,
         # ) for _ in range(game_cfg.num_players)],
-        search_iterations=1,
+        search_iterations=3,
         temperature=1,
-        max_random_start_steps=0,
+        max_random_start_steps=1,
         use_symmetries=True,
         quick_start=False,
         max_game_length=8,
-        prevent_draw=False,
+        prevent_draw=True,
         exploration_prob=0.5,
+        epsilon_exp_prob=0,
     )
     evaluator_cfg = EvaluatorConfig(
         eval_rate_sec=20,
-        num_episodes=[100, 100, 10],
-        enemy_iterations=100,
+        num_episodes=[100, 100, 100],
+        enemy_iterations=2000,
         enemy_cfgs=[
             # RandomAgentConfig()
             LegalRandomAgentConfig(),
             AreaControlSearchAgentConfig(),
             # CopyCatSearchAgentConfig()
         ],
-        prevent_draw=False,
+        prevent_draw=True,
         self_play=True,
         switch_pos=False,
         sample_temperatures=[math.inf, math.inf, math.inf],
@@ -243,7 +244,7 @@ def start_training_from_structured_configs():
         #     anneal_temps=[1e-3, 1e-6],
         #     anneal_types=[AnnealingType.LINEAR, AnnealingType.COSINE],
         # ),
-        weight_decay=1e-4,
+        weight_decay=1e-5,
         beta1=0.9,
         beta2=0.99,
     )
@@ -253,34 +254,35 @@ def start_training_from_structured_configs():
         quick_start_buffer_path=None,
         start_wait_n_samples=buffer_size,  # int(5e2),
         # quick_start_buffer_path=Path(__file__).parent.parent.parent / 'buffer' / 'choke_1e3.pt',
-        log_every_sec=20,
+        log_every_sec=60,
     )
     updater_cfg = UpdaterConfig(
-        updates_until_distribution=5,
+        updates_until_distribution=20,
         optim_cfg=optim_cfg,
         use_gpu=True,
         utility_loss=UtilityNorm.NONE,
-        mse_policy_loss=False,
+        mse_policy_loss=True,
         policy_loss_factor=1,
         value_reg_loss_factor=0,
         utility_loss_factor=0,
-        gradient_max_norm=100,
+        gradient_max_norm=1,
     )
     logger_cfg = LoggerConfig(
         project_name="battlesnake",
         buffer_gen=False,
-        name='d7_proxy_test',
+        name='d7_proxy_test2',
         id=0,
-        updater_bucket_size=100,
-        worker_episode_bucket_size=5,
+        updater_bucket_size=1000,
+        worker_episode_bucket_size=50,
         wandb_mode='online',
     )
     saver_cfg = SaverConfig(
-        save_interval_sec=10,
+        save_interval_sec=600,
     )
     inf_cfg = InferenceServerConfig(
         use_gpu=True,
     )
+    max_eval = game_cfg.num_players * ((game_cfg.num_actions ** game_cfg.num_players) + 1) ** worker_cfg.search_iterations
     trainer_cfg = AlphaZeroTrainerConfig(
         num_worker=75,  # IMPORTANT
         num_inference_server=1,
@@ -296,7 +298,7 @@ def start_training_from_structured_configs():
         collector_cfg=collector_cfg,
         inf_cfg=inf_cfg,
         max_batch_size=batch_size,
-        max_eval_per_worker=game_cfg.num_players * ((game_cfg.num_actions ** game_cfg.num_players) + 1),
+        max_eval_per_worker=max_eval,
         data_qsize=10,
         info_qsize=100,
         updater_in_qsize=100,
@@ -305,12 +307,12 @@ def start_training_from_structured_configs():
         prev_run_dir=None,
         prev_run_idx=None,
         only_generate_buffer=False,
-        restrict_cpu=False,  # only works on LINUX
-        max_cpu_updater=2,
-        max_cpu_worker=11,
+        restrict_cpu=True,  # only works on LINUX
+        max_cpu_updater=1,
+        max_cpu_worker=13,
         max_cpu_evaluator=1,
         max_cpu_log_dist_save_collect=1,
-        max_cpu_inference_server=2,
+        max_cpu_inference_server=1,
         temperature_input=temperature_input,
         single_sbr_temperature=single_temperature,
         compile_model=False,

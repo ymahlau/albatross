@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from typing import Optional, Any
 
 import numpy as np
-import torch.multiprocessing as mp
+import multiprocessing as mp
 
 from src.equilibria.logit import compute_logit_equilibrium, SbrMode
 from src.equilibria.nash import calculate_nash_equilibrium

@@ -177,7 +177,8 @@ def run_evaluator(
                 break
             if maybe_state_dict is None:
                 raise Exception("Unknown exception with queue")
-            state_dict = cleanup_state_dict(maybe_state_dict)
+            state_dict = {k: torch.tensor(v) for k, v in maybe_state_dict.items()}
+            state_dict = cleanup_state_dict(state_dict)
             net.load_state_dict(state_dict)
             net.eval()
             value_agent.replace_net(net)
@@ -228,6 +229,7 @@ def do_evaluation(
         temperature_list: list[float],
         prevent_draw: bool,
         switch_positions: bool,
+        verbose: bool = False,
 ) -> tuple[list[list[float]], list[list[int]]]:
     results = []
     episode_lengths = []
@@ -241,6 +243,9 @@ def do_evaluation(
             if switch_positions:
                 agent_pos = ep % 2
             game.reset()
+            evaluee.reset_episode()
+            for enemy in opponent_list:
+                enemy.reset_episode()
             step_counter = 0
             while not game.is_terminal() and game.is_player_at_turn(0):
                 joint_action_list: list[int] = []
@@ -249,7 +254,8 @@ def do_evaluation(
                         probs, _ = evaluee(game, player=player, iterations=1)
                         probs[game.illegal_actions(player)] = 0
                         probs /= probs.sum()
-                        print(probs)
+                        if verbose:
+                            print(probs)
                         action = sample_individual_actions(probs[np.newaxis, ...], temperature)[0]
                     else:
                         probs, _ = opponent(game, player=player, iterations=enemy_iterations)
@@ -262,8 +268,9 @@ def do_evaluation(
                     step_with_draw_prevention(game, tuple(joint_action_list))
                 else:
                     game.step(tuple(joint_action_list))
-                print(joint_action_list)
-                # game.render()
+                if verbose:
+                    print(joint_action_list)
+                    game.render()
                 step_counter += 1
             # add rewards of player 0 to sum
             cum_rewards = game.get_cum_rewards()

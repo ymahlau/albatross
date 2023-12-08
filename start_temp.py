@@ -1,7 +1,7 @@
 import sys
 from pathlib import Path
 
-import torch.multiprocessing as mp
+import multiprocessing as mp
 
 from scripts.logit_solver.run_logit_experiments import generate_experiment_data, create_logit_data_func
 

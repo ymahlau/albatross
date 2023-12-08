@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import Tuple, Optional
 
 import numpy as np
-import torch.multiprocessing as mp
 
 file_path = Path(__file__)
 

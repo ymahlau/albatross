@@ -4,7 +4,7 @@
 #SBATCH --time=12:00:00 # (HH:MM:SS)
 #SBATCH --partition=gpu_normal
 #SBATCH --cpus-per-task=17
-#SBATCH --mem=50G
+#SBATCH --mem=100G
 #SBATCH --verbose
 #SBATCH --gres=gpu:2
 #SBATCH --nodes=1
@@ -13,4 +13,4 @@
 #SBATCH --constraint=enife
 echo "Hier beginnt die Ausführung/Berechnung"
 cd ..
-srun -c 17 --gres=gpu:2 -v /home/mahlau/nobackup/env/miniforge3/envs/albatross-env/bin/python start_training2.py config=cfg_d7_proxy_test_0 hydra.job.chdir=True
+srun -c 17 --gres=gpu:2 -v /home/mahlau/nobackup/env/miniforge3/envs/albatross-env/bin/python start_training2.py config=cfg_d7_proxy_test2_0 hydra.job.chdir=True

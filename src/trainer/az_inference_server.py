@@ -106,7 +106,8 @@ def run_inference_server(
                 if stop_flag.value:
                     break
                 if maybe_state_dict is not None:
-                    net.load_state_dict(maybe_state_dict)
+                    state_dict = {k: torch.tensor(v) for k, v in maybe_state_dict.items()}
+                    net.load_state_dict(state_dict)
                     net = net.eval()
                     start_phase = False
                 stats.load_time_sum += time.time() - load_time_start

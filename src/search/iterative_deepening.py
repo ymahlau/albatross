@@ -2,7 +2,7 @@ import time
 from typing import Optional, Any
 
 import numpy as np
-import torch.multiprocessing as mp
+import multiprocessing as mp
 
 from src.game.game import Game
 from src.search import SearchInfo, get_backup_func_from_cfg

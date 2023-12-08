@@ -2,7 +2,7 @@ import math
 from pathlib import Path
 
 import torch
-import torch.multiprocessing as mp
+import multiprocessing as mp
 
 from src.agent.one_shot import NetworkAgentConfig
 from src.agent.search_agent import LookaheadAgentConfig, SearchAgentConfig, DoubleSearchAgentConfig

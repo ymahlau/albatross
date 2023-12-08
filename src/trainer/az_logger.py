@@ -33,7 +33,6 @@ def run_logger(
     wandb_dir = Path(__file__).parent.parent.parent / 'wandb'
     wandb_dir.mkdir(parents=True, exist_ok=True)
     os.environ["OMP_NUM_THREADS"] = "1"
-    # torch.set_num_threads(1)
     # init wandb
     logger_cfg = trainer_cfg.logger_cfg
     if logger_cfg.buffer_gen:

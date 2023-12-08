@@ -10,8 +10,6 @@ from overcooked_ai_py.planning.planners import MediumLevelActionManager, NO_COUN
 from src.agent import AgentConfig, Agent
 from src.game.game import Game
 
-import multiprocessing as mp
-
 from src.game.overcooked_slow.overcooked import OvercookedGame
 
 

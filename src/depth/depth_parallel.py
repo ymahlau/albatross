@@ -9,7 +9,7 @@ from typing import Optional, Any
 
 import numpy as np
 import torch
-import torch.multiprocessing as mp
+import multiprocessing as mp
 
 from src.depth.result_struct import DepthResultStruct, joint_action_from_struct, aggregate_structs, DepthResultEntry
 from src.game import GameConfig, Game

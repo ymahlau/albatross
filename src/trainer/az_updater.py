@@ -12,7 +12,7 @@ from typing import Optional
 
 import numpy as np
 import torch
-import torch.multiprocessing as mp
+import multiprocessing as mp
 
 from src.game.game import GameConfig
 from src.game.initialization import get_game_from_config
@@ -179,7 +179,7 @@ def distribute_net(
     newest_state_dict = {}
     # state dict can only be sent to processes via cpu
     for k, v in state_dict.items():
-        newest_state_dict[k] = v.cpu()
+        newest_state_dict[k] = v.cpu().numpy()
     stats.model_conv_time_sum += time.time() - model_conv_time_start
     # send
     idle_time_start = time.time()

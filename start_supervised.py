@@ -4,8 +4,8 @@ from pathlib import Path
 
 import hydra
 from omegaconf import OmegaConf
-import torch.multiprocessing as mp
-from src.supervised.trainer import SupervisedTrainerConfig, supervised_trainer_config_from_structured, SupervisedTrainer
+import multiprocessing as mp
+from src.supervised.trainer import SupervisedTrainerConfig, SupervisedTrainer
 
 
 def main(cfg: SupervisedTrainerConfig):

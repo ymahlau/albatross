@@ -31,7 +31,7 @@ class TestConversion(unittest.TestCase):
             game3.render()
             print('#####################################################')
             
-            actions = random.choice(game.available_joint_actions())
+            actions = random.choice(game2.available_joint_actions())
             game.step(actions)
             game2.step(actions)
         

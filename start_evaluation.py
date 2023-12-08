@@ -8,7 +8,7 @@ import hydra
 import torch
 from omegaconf import OmegaConf
 
-import torch.multiprocessing as mp
+import multiprocessing as mp
 
 from src.evaluation.play_parallel import ParallelPlayConfig, play_parallel
 

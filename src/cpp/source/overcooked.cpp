@@ -169,14 +169,14 @@ double step_resolve_helper(OvercookedGameState* state, int player_id, int action
         int faced_tile_idx = cur_faced_tile.first + state->w * cur_faced_tile.second;
         int faced_tile_type = state->board[faced_tile_idx];
         int faced_tile_state = state->tile_states[faced_tile_idx];
-        if (state->players[player_id].held_item == NO_ITEM) {
-            if (faced_tile_type == POT_TILE and faced_tile_state == THREE_POT) {
-                // player faces a pot with three onions and holds no item. Start cooking.
-                // all other interactions with pot require an item of the player
-                state->tile_states[faced_tile_idx] = 4 + state->cooking_time;
-                reward += state->reward_specs.start_cooking;
-                state->dish_pickup_rewards_increment_next_round += 1;
-            } else if (faced_tile_type == ONION_TILE){
+        if (faced_tile_type == POT_TILE and faced_tile_state == THREE_POT) {
+            // player faces a pot with three onions. Start cooking.
+            // all other interactions with pot require an item of the player
+            state->tile_states[faced_tile_idx] = 4 + state->cooking_time;
+            reward += state->reward_specs.start_cooking;
+            state->dish_pickup_rewards_increment_next_round += 1;
+        } else if (state->players[player_id].held_item == NO_ITEM) {
+            if (faced_tile_type == ONION_TILE){
                 // player picks up an onion from dispenser
                 state->players[player_id].held_item = ONION_ITEM;
             } else if (faced_tile_type == DISH_TILE){

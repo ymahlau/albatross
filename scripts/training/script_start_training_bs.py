@@ -20,7 +20,7 @@ from src.misc.const import PHI
 from src.misc.serialization import serialize_dataclass
 from src.network.fcn import MediumHeadConfig
 from src.network.mobile_one import MobileOneConfig3x3
-from src.network.mobilenet_v3 import MobileNetConfig3x3, MobileNetConfig5x5
+from src.network.mobilenet_v3 import MobileNetConfig3x3, MobileNetConfig5x5, MobileNetConfig7x7Incumbent
 from src.network.resnet import ResNetConfig3x3, ResNetConfig7x7Best, OvercookedResNetConfig5x5
 from src.network.utils import ActivationType
 from src.network.vision_net import EquivarianceType
@@ -62,19 +62,19 @@ def start_training_from_structured_configs():
 
     # network
     eq_type = EquivarianceType.NONE
-    net_cfg = ResNetConfig3x3(predict_policy=True, eq_type=eq_type, lff_features=False)
+    # net_cfg = ResNetConfig3x3(predict_policy=True, eq_type=eq_type, lff_features=False)
     # net_cfg = MobileNetConfig3x3(predict_policy=True, predict_game_len=False, eq_type=eq_type)
     # net_cfg = MobileOneConfig3x3(predict_policy=True, predict_game_len=False, eq_type=eq_type)
     # net_cfg = MobileNetConfig5x5(predict_policy=True, eq_type=eq_type)
-    # net_cfg = ResNetConfig7x7Best()
+    net_cfg = MobileNetConfig7x7Incumbent()
     # net_cfg = OvercookedResNetConfig5x5(predict_policy=True, eq_type=eq_type, lff_features=False)
 
     net_cfg.value_head_cfg.final_activation = ActivationType.TANH
-
+    
     # net_cfg = EquivariantMobileNetConfig3x3(predict_game_len=True)
     # search
     # eval_func_cfg = NetworkEvalConfig(zero_sum_norm=ZeroSumNorm.LINEAR)
-    batch_size = 3000
+    batch_size = 1000
     # eval_func_cfg = NetworkEvalConfig(
     #     max_batch_size=batch_size,
     #     random_symmetry=False,
@@ -204,7 +204,7 @@ def start_training_from_structured_configs():
         #     cyclic=True,
         #     sampling=True,
         # ) for _ in range(game_cfg.num_players)],
-        search_iterations=1,
+        search_iterations=3,
         temperature=1,
         max_random_start_steps=0,
         use_symmetries=True,
@@ -280,8 +280,9 @@ def start_training_from_structured_configs():
     inf_cfg = InferenceServerConfig(
         use_gpu=True,
     )
+    max_eval = game_cfg.num_players * ((game_cfg.num_actions ** game_cfg.num_players) + 1) ** worker_cfg.search_iterations
     trainer_cfg = AlphaZeroTrainerConfig(
-        num_worker=30,  # IMPORTANT
+        num_worker=70,  # IMPORTANT
         num_inference_server=1,
         save_state=False,
         save_state_after_seconds=30,
@@ -295,7 +296,7 @@ def start_training_from_structured_configs():
         collector_cfg=collector_cfg,
         inf_cfg=inf_cfg,
         max_batch_size=batch_size,
-        max_eval_per_worker=game_cfg.num_players * ((game_cfg.num_actions ** game_cfg.num_players) + 1),
+        max_eval_per_worker=max_eval,
         data_qsize=10,
         info_qsize=100,
         updater_in_qsize=100,
@@ -304,7 +305,7 @@ def start_training_from_structured_configs():
         prev_run_dir=None,
         prev_run_idx=None,
         only_generate_buffer=False,
-        restrict_cpu=False,  # only works on LINUX
+        restrict_cpu=True,  # only works on LINUX
         max_cpu_updater=1,
         max_cpu_worker=10,
         max_cpu_evaluator=1,

@@ -7,6 +7,7 @@ logging_data/models
 /logging_data
 /temp
 /output
+/outputs_old
 /multirun
 /models
 

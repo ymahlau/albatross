@@ -9,13 +9,14 @@ import time
 import numpy as np
 
 import torch
+from src.agent.albatross import AlbatrossAgent, AlbatrossAgentConfig
 from src.agent.one_shot import NetworkAgent, NetworkAgentConfig, bc_agent_from_file
 from src.game.actions import sample_individual_actions
 from src.game.conversion import overcooked_slow_from_fast
 from src.game.imp_marl.imp_marl_wrapper import IMP_MODE, IMPConfig
 from src.game.initialization import get_game_from_config
 
-from src.game.overcooked.config import AsymmetricAdvantageOvercookedConfig, CounterCircuitOvercookedConfig, CrampedRoomOvercookedConfig, OvercookedRewardConfig
+from src.game.overcooked.config import AsymmetricAdvantageOvercookedConfig, CounterCircuitOvercookedConfig, CrampedRoomOvercookedConfig, ForcedCoordinationOvercookedConfig, OvercookedRewardConfig
 from src.game.overcooked.overcooked import OvercookedGame
 from src.game.overcooked_slow.layouts import CrampedRoomOvercookedSlowConfig, CounterCircuitOvercookedSlowConfig
 from src.network.initialization import get_network_from_config, get_network_from_file
@@ -60,10 +61,10 @@ def old():
 
 def main():
     bc_path = Path(__file__).parent.parent / 'bc_state_dicts'
-    bc_agent = bc_agent_from_file(bc_path / 'cc_0.pkl')
+    bc_agent = bc_agent_from_file(bc_path / 'aa_0.pkl')
     
     net_path = Path(__file__).parent.parent / 'a_models'
-    proxy_net = get_network_from_file(net_path / 'proxy_cc_0.pt')
+    proxy_net = get_network_from_file(net_path / 'proxy_aa_0.pt')
     proxy_net = proxy_net.eval()
     proxy_net_agent_cfg = NetworkAgentConfig(
         net_cfg=proxy_net.cfg,
@@ -74,18 +75,40 @@ def main():
     proxy_net_agent = NetworkAgent(proxy_net_agent_cfg)
     proxy_net_agent.replace_net(proxy_net)
     
-    net = get_network_from_file(net_path / 'resp_cc_0.pt')
+    net = get_network_from_file(net_path / 'resp_aa_0_tmp.pt')
     net = net.eval()
     net_agent_cfg = NetworkAgentConfig(
         net_cfg=net.cfg,
         temperature_input=True,
         single_temperature=True,
-        init_temperatures=[1.1, 1.1],
+        init_temperatures=[0.1, 0.1],
     )
     net_agent = NetworkAgent(net_agent_cfg)
     net_agent.replace_net(net)
     
-    game_cfg = CounterCircuitOvercookedConfig(
+    alb_network_agent_cfg = NetworkAgentConfig(
+        net_cfg=net.cfg,
+        temperature_input=True,
+        single_temperature=False,
+        init_temperatures=[0, 0],
+    )
+    alb_online_agent_cfg = AlbatrossAgentConfig(
+        num_player=2,
+        agent_cfg=alb_network_agent_cfg,
+        device_str='cpu',
+        response_net_path=str(net_path / 'resp_aa_0_tmp.pt'),
+        proxy_net_path=str(net_path / 'proxy_aa_0.pt'),
+        # noise_std=1,
+        # fixed_temperatures=[0.1, 0.1],
+        num_samples=10,
+        init_temp=0,
+        num_likelihood_bins=int(1e4),
+        sample_from_likelihood=True,
+    )
+    alb_online_agent = AlbatrossAgent(alb_online_agent_cfg)
+    
+    
+    game_cfg = AsymmetricAdvantageOvercookedConfig(
         temperature_input=True,
         single_temperature_input=True,
         unstuck_behavior=True,
@@ -99,17 +122,16 @@ def main():
     )
     game = OvercookedGame(game_cfg)
     
-    t = 1
-    
     results, _ = do_evaluation(
         game=game,
-        evaluee=net_agent,
+        evaluee=alb_online_agent,
         opponent_list=[bc_agent],
         num_episodes=[4],
         enemy_iterations=0,
-        temperature_list=[t, t],
+        temperature_list=[math.inf, 1],
         prevent_draw=False,
         switch_positions=True,
+        verbose=True,
     )
     print(results)
     

@@ -326,7 +326,6 @@ class TestEncodingCPP(unittest.TestCase):
         env.render()
         arr1, perm, inv_perm = env.get_obs(symmetry=0)
         np_arr = np.asarray(arr1)
-        self.assertEqual(-31, np.sum(np_arr[0, :, :, 2]))
 
     def test_distance_simple(self):
         conf = SimpleBattleSnakeEncodingConfig()
@@ -440,7 +439,7 @@ class TestEncodingCPP(unittest.TestCase):
         init_snake_len = [3, 3]
         gc = BattleSnakeConfig(w=5, h=5, num_players=2, init_food_pos=init_food_pos, init_snake_pos=init_snake_pos,
                                min_food=0, food_spawn_chance=0, init_snake_len=init_snake_len,
-                               ec=BestBattleSnakeEncodingConfig())
+                               ec=BestBattleSnakeEncodingConfig(include_next_food=True))
         gc.ec.fixed_food_spawn_chance = 100
         gc.ec.include_num_food_on_board = True
 

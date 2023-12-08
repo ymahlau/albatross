@@ -71,7 +71,6 @@ def run_worker(
     game_cfg = trainer_cfg.game_cfg
     worker_cfg = trainer_cfg.worker_cfg
     set_seed(seed)
-    # torch.set_num_threads(1)
     os.environ["OMP_NUM_THREADS"] = "1"
     # initialization
     search = get_search_from_config(worker_cfg.search_cfg)

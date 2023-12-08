@@ -1,7 +1,6 @@
 import dataclasses
 from dataclasses import dataclass
 import importlib
-from collections.abc import Iterable
 from enum import Enum
 from typing import Any
 

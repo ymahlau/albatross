@@ -50,7 +50,8 @@ def run_saver(
                 if maybe_state_dict is None:
                     print(f"Warning, Saver did not receive model...", flush=True)
                 else:
-                    clean_dict = cleanup_state_dict(maybe_state_dict)
+                    state_dict = {k: torch.tensor(v) for k, v in maybe_state_dict.items()}
+                    clean_dict = cleanup_state_dict(state_dict)
                     net.load_state_dict(clean_dict)
                     # save
                     net.save(model_folder.parent / 'latest.pt')
