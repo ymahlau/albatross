@@ -1,0 +1,431 @@
+__module__: src.trainer.config
+__name__: AlphaZeroTrainerConfig
+data:
+  collector_cfg:
+    __module__: src.trainer.config
+    __name__: CollectorConfig
+    data:
+      buffer_size: 500000
+      log_every_sec: 300
+      quick_start_buffer_path: null
+      start_wait_n_samples: 500000
+  compile_mode: max-autotune
+  compile_model: false
+  data_qsize: 10
+  distributor_out_qsize: 10
+  evaluator_cfg:
+    __module__: src.trainer.config
+    __name__: EvaluatorConfig
+    data:
+      enemy_cfgs:
+      - __module__: src.agent.one_shot
+        __name__: RandomAgentConfig
+        data:
+          name: RandomAgent
+      enemy_iterations: 1
+      eval_rate_sec: 60
+      num_episodes:
+      - 100
+      - 2
+      prevent_draw: false
+      sample_temperatures:
+      - .inf
+      - .inf
+      save_checkpoints: false
+      self_play: true
+      switch_pos: true
+  game_cfg:
+    __module__: src.game.overcooked.config
+    __name__: CrampedRoomOvercookedConfig
+    data:
+      board:
+      - - 1
+        - 1
+        - 4
+        - 1
+        - 1
+      - - 3
+        - 0
+        - 0
+        - 0
+        - 3
+      - - 1
+        - 0
+        - 0
+        - 0
+        - 1
+      - - 1
+        - 2
+        - 1
+        - 5
+        - 1
+      cooking_time: 20
+      flat_obs: false
+      h: 4
+      horizon: 400
+      num_actions: 6
+      num_players: 2
+      reward_cfg:
+        __module__: src.game.overcooked.config
+        __name__: OvercookedRewardConfig
+        data:
+          dish_pickup: 3
+          placement_in_pot: 3
+          soup_delivery: 20
+          soup_pickup: 5
+          start_cooking: 3
+      reward_scaling_factor: 1
+      single_temperature_input: false
+      start_pos:
+        __module__: src.misc.serialization
+        __name__: TupleWrapper
+        data:
+          data:
+          - __module__: src.misc.serialization
+            __name__: TupleWrapper
+            data:
+              data:
+              - 1
+              - 2
+              - 0
+              - 0
+          - __module__: src.misc.serialization
+            __name__: TupleWrapper
+            data:
+              data:
+              - 3
+              - 1
+              - 0
+              - 0
+      temperature_input: true
+      unstuck_behavior: true
+      w: 5
+  inf_cfg:
+    __module__: src.trainer.config
+    __name__: InferenceServerConfig
+    data:
+      statistics_every_sec: 60
+      use_gpu: true
+  info_qsize: 100
+  init_new_network_params: false
+  logger_cfg:
+    __module__: src.trainer.config
+    __name__: LoggerConfig
+    data:
+      buffer_gen: false
+      id: 4
+      name: resp_cr
+      project_name: overcooked
+      updater_bucket_size: 1000
+      wandb_mode: offline
+      worker_episode_bucket_size: 5
+  max_batch_size: 15000
+  max_cpu_evaluator: 1
+  max_cpu_inference_server: 4
+  max_cpu_log_dist_save_collect: 1
+  max_cpu_updater: 2
+  max_cpu_worker: 34
+  max_eval_per_worker: 74
+  merge_inference_update_gpu: false
+  net_cfg:
+    __module__: src.network.resnet
+    __name__: OvercookedResNetConfig5x5
+    data:
+      activation_type:
+        __module__: src.network.utils
+        __name__: ActivationType
+        value: LEAKY_RELU
+      eq_type:
+        __module__: src.network.vision_net
+        __name__: EquivarianceType
+        value: NONE
+      game_cfg:
+        __module__: src.game.overcooked.config
+        __name__: CrampedRoomOvercookedConfig
+        data:
+          board:
+          - - 1
+            - 1
+            - 4
+            - 1
+            - 1
+          - - 3
+            - 0
+            - 0
+            - 0
+            - 3
+          - - 1
+            - 0
+            - 0
+            - 0
+            - 1
+          - - 1
+            - 2
+            - 1
+            - 5
+            - 1
+          cooking_time: 20
+          flat_obs: false
+          h: 4
+          horizon: 400
+          num_actions: 6
+          num_players: 2
+          reward_cfg:
+            __module__: src.game.overcooked.config
+            __name__: OvercookedRewardConfig
+            data:
+              dish_pickup: 3
+              placement_in_pot: 3
+              soup_delivery: 20
+              soup_pickup: 5
+              start_cooking: 3
+          reward_scaling_factor: 1
+          single_temperature_input: false
+          start_pos:
+            __module__: src.misc.serialization
+            __name__: TupleWrapper
+            data:
+              data:
+              - __module__: src.misc.serialization
+                __name__: TupleWrapper
+                data:
+                  data:
+                  - 1
+                  - 2
+                  - 0
+                  - 0
+              - __module__: src.misc.serialization
+                __name__: TupleWrapper
+                data:
+                  data:
+                  - 3
+                  - 1
+                  - 0
+                  - 0
+          temperature_input: true
+          unstuck_behavior: true
+          w: 5
+      layer_specs:
+      - - 32
+        - 3
+        - 3
+        - 1
+        - 1
+      - - 64
+        - 2
+        - 3
+        - 1
+        - 1
+      - - 128
+        - 1
+        - 3
+        - 1
+        - 1
+      - - 256
+        - 1
+        - 3
+        - 0
+        - 1
+      lff_feature_expansion: 40
+      lff_features: false
+      norm_type:
+        __module__: src.network.utils
+        __name__: NormalizationType
+        value: GROUP_NORM
+      policy_head_cfg:
+        __module__: src.network.fcn
+        __name__: WideHeadConfig
+        data:
+          activation_type:
+            __module__: src.network.utils
+            __name__: ActivationType
+            value: LEAKY_RELU
+          dropout_p: 0.2
+          final_activation:
+            __module__: src.network.utils
+            __name__: ActivationType
+            value: NONE
+          hidden_size: 256
+          normalization_type:
+            __module__: src.network.utils
+            __name__: NormalizationType
+            value: GROUP_NORM
+          num_layers: 1
+      predict_policy: true
+      value_head_cfg:
+        __module__: src.network.fcn
+        __name__: WideHeadConfig
+        data:
+          activation_type:
+            __module__: src.network.utils
+            __name__: ActivationType
+            value: LEAKY_RELU
+          dropout_p: 0.2
+          final_activation:
+            __module__: src.network.utils
+            __name__: ActivationType
+            value: NONE
+          hidden_size: 256
+          normalization_type:
+            __module__: src.network.utils
+            __name__: NormalizationType
+            value: GROUP_NORM
+          num_layers: 1
+  num_inference_server: 2
+  num_worker: 100
+  only_generate_buffer: false
+  prev_run_dir: null
+  prev_run_idx: null
+  proxy_net_path: /bigwork/nhmlmahy/a_saved_runs/overcooked/proxy_cr_4/latest.pt
+  restrict_cpu: true
+  save_state: false
+  save_state_after_seconds: 30
+  saver_cfg:
+    __module__: src.trainer.config
+    __name__: SaverConfig
+    data:
+      save_all_checkpoints: false
+      save_interval_sec: 300
+  single_sbr_temperature: false
+  temperature_input: true
+  updater_cfg:
+    __module__: src.trainer.config
+    __name__: UpdaterConfig
+    data:
+      gradient_max_norm: 100
+      mse_policy_loss: false
+      optim_cfg:
+        __module__: src.supervised.optim
+        __name__: OptimizerConfig
+        data:
+          anneal_cfg:
+            __module__: src.supervised.annealer
+            __name__: TemperatureAnnealingConfig
+            data:
+              anneal_temps:
+              - 0.001
+              - 1.0e-06
+              anneal_types:
+              - __module__: src.supervised.annealer
+                __name__: AnnealingType
+                value: LINEAR
+              - __module__: src.supervised.annealer
+                __name__: AnnealingType
+                value: COSINE
+              cyclic: false
+              end_times_min:
+              - 60
+              - 1400
+              init_temp: 0
+              sampling: false
+          beta1: 0.9
+          beta2: 0.99
+          fused: false
+          optim_type:
+            __module__: src.supervised.optim
+            __name__: OptimType
+            value: ADAM_W
+          weight_decay: 0.0001
+      policy_loss_factor: 1
+      updates_until_distribution: 20
+      use_gpu: true
+      utility_loss:
+        __module__: src.game.values
+        __name__: UtilityNorm
+        value: NONE
+      utility_loss_factor: 0
+      value_reg_loss_factor: 0
+  updater_in_qsize: 100
+  updater_out_qsize: 10
+  validator_data_qsize: 100
+  worker_cfg:
+    __module__: src.trainer.config
+    __name__: WorkerConfig
+    data:
+      anneal_cfgs:
+      - __module__: src.supervised.annealer
+        __name__: TemperatureAnnealingConfig
+        data:
+          anneal_temps:
+          - 10
+          anneal_types:
+          - __module__: src.supervised.annealer
+            __name__: AnnealingType
+            value: COSINE
+          cyclic: true
+          end_times_min:
+          - 1
+          init_temp: 0
+          sampling: true
+      - __module__: src.supervised.annealer
+        __name__: TemperatureAnnealingConfig
+        data:
+          anneal_temps:
+          - 10
+          anneal_types:
+          - __module__: src.supervised.annealer
+            __name__: AnnealingType
+            value: COSINE
+          cyclic: true
+          end_times_min:
+          - 1
+          init_temp: 0
+          sampling: true
+      epsilon_exp_prob: 0
+      exploration_prob: 0.5
+      max_game_length: 8
+      max_random_start_steps: 0
+      policy_eval_cfg:
+        __module__: src.trainer.policy_eval
+        __name__: PolicyEvalConfig
+        data:
+          eval_type:
+            __module__: src.trainer.policy_eval
+            __name__: PolicyEvalType
+            value: TD_0
+          lambda_val: 0.5
+      prevent_draw: false
+      quick_start: false
+      search_cfg:
+        __module__: src.search.config
+        __name__: FixedDepthConfig
+        data:
+          average_eval: true
+          backup_func_cfg:
+            __module__: src.search.config
+            __name__: EnemyExploitationBackupConfig
+            data:
+              average_eval: false
+              exploit_temperature: 10
+              init_temperatures: null
+          discount: 0.9
+          eval_func_cfg:
+            __module__: src.search.config
+            __name__: ResponseInferenceServerEvalConfig
+            data:
+              active_wait_time: 0.05
+              max_clip_value: 50
+              min_clip_value: -.inf
+              policy_prediction: true
+              random_symmetry: false
+              utility_norm:
+                __module__: src.game.values
+                __name__: UtilityNorm
+                value: NONE
+          extract_func_cfg:
+            __module__: src.search.config
+            __name__: SpecialExtractConfig
+            data:
+              max_clip_value: 30
+              min_clip_value: -30
+              utility_norm:
+                __module__: src.game.values
+                __name__: UtilityNorm
+                value: NONE
+      search_iterations: 1
+      temp_scaling_cfgs: null
+      temperature: 1
+      use_symmetries: true
+hydra:
+  run:
+    dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_resp_cr_4

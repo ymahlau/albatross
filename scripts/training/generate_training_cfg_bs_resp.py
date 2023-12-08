@@ -13,17 +13,16 @@ from src.equilibria.logit import SbrMode
 from src.game.battlesnake.battlesnake import BattleSnakeGame
 from src.game.battlesnake.bootcamp.test_envs_3x3 import perform_choke_2_player
 from src.game.battlesnake.bootcamp.test_envs_5x5 import perform_choke_5x5_4_player
-from src.game.battlesnake.bootcamp.test_envs_7x7 import survive_on_7x7_4_player_royale
-from src.game.overcooked.config import AsymmetricAdvantageOvercookedConfig, CoordinationRingOvercookedConfig, CounterCircuitOvercookedConfig, CrampedRoomOvercookedConfig, ForcedCoordinationOvercookedConfig, Simple3CrampedRoomOvercookedConfig
+from src.game.battlesnake.bootcamp.test_envs_7x7 import survive_on_7x7, survive_on_7x7_4_player, survive_on_7x7_4_player_royale, survive_on_7x7_constrictor
+from src.game.overcooked.config import CrampedRoomOvercookedConfig
 from src.game.values import UtilityNorm
 from src.misc.const import PHI
 from src.misc.serialization import serialize_dataclass
 from src.network.fcn import MediumHeadConfig
 from src.network.initialization import get_network_from_config
 from src.network.mobile_one import MobileOneConfig3x3
-from src.network.mobilenet_v3 import MobileNetConfig3x3, MobileNetConfig5x5
-from src.network.resnet import ResNetConfig3x3, ResNetConfig7x7Best, OvercookedResNetConfig5x5, \
-    OvercookedResNetConfig9x9, OvercookedResNetConfig8x8
+from src.network.mobilenet_v3 import MobileNetConfig3x3, MobileNetConfig5x5, MobileNetConfig7x7Incumbent
+from src.network.resnet import ResNetConfig3x3, ResNetConfig7x7Best, OvercookedResNetConfig5x5
 from src.network.utils import ActivationType
 from src.network.vision_net import EquivarianceType
 from src.search.config import AlphaZeroDecoupledSelectionConfig, InferenceServerEvalConfig, ResponseInferenceServerEvalConfig, StandardBackupConfig, StandardExtractConfig, \
@@ -44,49 +43,47 @@ from src.trainer.policy_eval import PolicyEvalType, PolicyEvalConfig
 from start_training import main
 
 
-def generate_training_structured_configs():
+def start_training_from_structured_configs():
     """
     Main method to start the training using dataclasses specified below
     """
     
     cfg_dict = {
-        'aa': (AsymmetricAdvantageOvercookedConfig(), OvercookedResNetConfig9x9()),
-        'cc': (CounterCircuitOvercookedConfig(), OvercookedResNetConfig8x8()),
-        'co': (CoordinationRingOvercookedConfig(), OvercookedResNetConfig5x5()),
-        'cr': (CrampedRoomOvercookedConfig(), OvercookedResNetConfig5x5()),
-        'fc': (ForcedCoordinationOvercookedConfig(), OvercookedResNetConfig5x5()),
+        'nd7': survive_on_7x7(),
+        '4nd7': survive_on_7x7_4_player(),
     }
-    for name, (game_cfg, net_cfg) in cfg_dict.items():
-        for seed in range(5):
+    for seed in range(5):
+        for mode_str, game_cfg in cfg_dict.items():
             temperature_input = True
             single_temperature = False
             # game
             # game_cfg = perform_choke_2_player(fully_connected=False, centered=True)
-            # game_cfg = CrampedRoomOvercookedConfig(reward_scaling_factor=0.3)
-            # game_cfg = Simple3CrampedRoomOvercookedConfig()
+            # game_cfg = CrampedRoomOvercookedConfig(horizon=20)
             # game_cfg = survive_on_7x7_4_player_royale()
             # game_cfg = perform_choke_5x5_4_player(centered=True)
             # game_cfg.all_actions_legal = False
-            # game_cfg = OneStateCrampedRoomOvercookedConfig()
-            # game_cfg = SimpleCrampedRoomOvercookedConfig()
-            # game_cfg = Simple2CrampedRoomOvercookedConfig()
+            # game_cfg = survive_on_7x7_constrictor()
+            # game_cfg = survive_on_7x7()
+            # game_cfg = survive_on_7x7_4_player()
             
-            game_cfg.temperature_input = temperature_input
-            game_cfg.single_temperature_input = single_temperature
+            game_cfg.ec.temperature_input = temperature_input
+            game_cfg.ec.single_temperature_input = single_temperature
 
             # network
             eq_type = EquivarianceType.NONE
             # net_cfg = ResNetConfig3x3(predict_policy=True, eq_type=eq_type, lff_features=False)
             # net_cfg = MobileNetConfig3x3(predict_policy=True, predict_game_len=False, eq_type=eq_type)
             # net_cfg = MobileOneConfig3x3(predict_policy=True, predict_game_len=False, eq_type=eq_type)
-            # net_cfg = MobileNetConfig5x5(predict_policy=True, predict_game_len=False, eq_type=eq_type)
-            # net_cfg = ResNetConfig7x7Best()
-            # net_cfg = OvercookedResNetConfig5x5()
+            # net_cfg = MobileNetConfig5x5(predict_policy=True, eq_type=eq_type)
+            net_cfg = MobileNetConfig7x7Incumbent()
+            # net_cfg = OvercookedResNetConfig5x5(predict_policy=True, eq_type=eq_type, lff_features=False)
+
+            net_cfg.value_head_cfg.final_activation = ActivationType.TANH
 
             # net_cfg = EquivariantMobileNetConfig3x3(predict_game_len=True)
             # search
             # eval_func_cfg = NetworkEvalConfig(zero_sum_norm=ZeroSumNorm.LINEAR)
-            batch_size = 15000
+            batch_size = 4000
             # eval_func_cfg = NetworkEvalConfig(
             #     max_batch_size=batch_size,
             #     random_symmetry=False,
@@ -106,16 +103,15 @@ def generate_training_structured_configs():
             #     min_clip_value=-30,
             #     max_clip_value=30,
             #     policy_prediction=net_cfg.predict_policy,
-            #     utility_norm=UtilityNorm.FULL_COOP,
+            #     utility_norm=UtilityNorm.NONE if mode_str.startswith('4') else UtilityNorm.ZERO_SUM,
             # )
             eval_func_cfg = ResponseInferenceServerEvalConfig(
-                random_symmetry= False,
-                min_clip_value=-math.inf,
-                max_clip_value=50,
-                active_wait_time=0.05,
+                random_symmetry=False,
+                min_clip_value=-30,
+                max_clip_value=30,
                 policy_prediction=True,
             )
-            
+
             # sel_func_cfg = DecoupledUCTSelectionConfig(exp_bonus=1.414)  # 1.4)
             # sel_func_cfg = SampleSelectionConfig(dirichlet_alpha=math.inf, dirichlet_eps=0.25, temperature=1.0)
             # sel_func_cfg = AlphaZeroDecoupledSelectionConfig(exp_bonus=1.414, dirichlet_alpha=0.3, dirichlet_eps=0.25)
@@ -163,7 +159,7 @@ def generate_training_structured_configs():
                 backup_func_cfg=backup_func_cfg,
                 extract_func_cfg=extraction_func_cfg,
                 average_eval=True,
-                discount=0.9,
+                discount=0.99,
             )
             # search_cfg = SMOOSConfig(
             #     eval_func_cfg=eval_func_cfg,
@@ -182,11 +178,10 @@ def generate_training_structured_configs():
             worker_cfg = WorkerConfig(
                 search_cfg=search_cfg,
                 policy_eval_cfg=policy_eval_cfg,
-                # anneal_cfgs=None,
                 # temp_scaling_cfgs=(
                 #     TemperatureAnnealingConfig(
                 #         init_temp=5,
-                #         end_times_min=[600, 1300],
+                #         end_times_min=[600, 1200],
                 #         anneal_temps=[5, 0],
                 #         anneal_types=[AnnealingType.CONST, AnnealingType.LINEAR],
                 #         cyclic=False,
@@ -218,35 +213,36 @@ def generate_training_structured_configs():
                     cyclic=True,
                     sampling=True,
                 ) for _ in range(game_cfg.num_players)],
-                search_iterations=1,
+                search_iterations=2 if mode_str.startswith('4') else 3,
                 temperature=1,
-                max_random_start_steps=0,
+                max_random_start_steps=1,
                 use_symmetries=True,
                 quick_start=False,
                 max_game_length=8,
-                prevent_draw=False,
+                prevent_draw=True,
                 exploration_prob=0.5,
+                epsilon_exp_prob=0,
             )
             evaluator_cfg = EvaluatorConfig(
-                eval_rate_sec=60,
-                num_episodes=[100, 2],
-                enemy_iterations=1,
+                eval_rate_sec=20,
+                num_episodes=[100, 100],
+                enemy_iterations=2000,
                 enemy_cfgs=[
-                    RandomAgentConfig()
-                    # LegalRandomAgentConfig(),
-                    # AreaControlSearchAgentConfig(),
+                    # RandomAgentConfig()
+                    LegalRandomAgentConfig(),
+                    AreaControlSearchAgentConfig(),
                     # CopyCatSearchAgentConfig()
                 ],
-                prevent_draw=False,
-                self_play=True,
-                switch_pos=True,
+                prevent_draw=True,
+                self_play=False,
+                switch_pos=False,
                 sample_temperatures=[math.inf, math.inf],
             )
             optim_cfg = OptimizerConfig(
                 optim_type=OptimType.ADAM_W,
                 # anneal_cfg=TemperatureAnnealingConfig(
                 #     init_temp=0,
-                #     end_times_min=[60, 600, 700, 1400],
+                #     end_times_min=[60, 600, 700, 1300],
                 #     anneal_temps=[1e-3, 1e-5, 1e-3, 1e-6],
                 #     anneal_types=[AnnealingType.LINEAR, AnnealingType.COSINE, AnnealingType.LINEAR, AnnealingType.COSINE],
                 # ),
@@ -256,17 +252,17 @@ def generate_training_structured_configs():
                     anneal_temps=[1e-3, 1e-6],
                     anneal_types=[AnnealingType.LINEAR, AnnealingType.COSINE],
                 ),
-                weight_decay=1e-4,
+                weight_decay=1e-5,
                 beta1=0.9,
                 beta2=0.99,
             )
-            buffer_size = int(5e5)
+            buffer_size = int(1e5)
             collector_cfg = CollectorConfig(
                 buffer_size=buffer_size,
                 quick_start_buffer_path=None,
                 start_wait_n_samples=buffer_size,  # int(5e2),
                 # quick_start_buffer_path=Path(__file__).parent.parent.parent / 'buffer' / 'choke_1e3.pt',
-                log_every_sec=300,
+                log_every_sec=120,
             )
             updater_cfg = UpdaterConfig(
                 updates_until_distribution=20,
@@ -277,28 +273,29 @@ def generate_training_structured_configs():
                 policy_loss_factor=1,
                 value_reg_loss_factor=0,
                 utility_loss_factor=0,
-                gradient_max_norm=100,
+                gradient_max_norm=1,
             )
             logger_cfg = LoggerConfig(
-                project_name="overcooked",
+                project_name="battlesnake",
                 buffer_gen=False,
-                name=f'resp_{name}',
+                name=f"{mode_str}_resp",
                 id=seed,
                 updater_bucket_size=1000,
-                worker_episode_bucket_size=5,
+                worker_episode_bucket_size=20,
                 wandb_mode='offline',
             )
             saver_cfg = SaverConfig(
-                save_interval_sec=300,
+                save_interval_sec=600,
             )
             inf_cfg = InferenceServerConfig(
                 use_gpu=True,
             )
+            max_eval = game_cfg.num_players * ((game_cfg.num_actions ** game_cfg.num_players) + 1) ** worker_cfg.search_iterations
             trainer_cfg = AlphaZeroTrainerConfig(
                 num_worker=100,  # IMPORTANT
                 num_inference_server=2,
                 save_state=False,
-                save_state_after_seconds=30,
+                save_state_after_seconds=18000,
                 net_cfg=net_cfg,
                 game_cfg=game_cfg,
                 updater_cfg=updater_cfg,
@@ -309,7 +306,7 @@ def generate_training_structured_configs():
                 collector_cfg=collector_cfg,
                 inf_cfg=inf_cfg,
                 max_batch_size=batch_size,
-                max_eval_per_worker=game_cfg.num_players * ((game_cfg.num_actions ** game_cfg.num_players) + 1),
+                max_eval_per_worker=max_eval,
                 data_qsize=10,
                 info_qsize=100,
                 updater_in_qsize=100,
@@ -330,7 +327,7 @@ def generate_training_structured_configs():
                 compile_mode='max-autotune',
                 merge_inference_update_gpu=False,
                 # proxy_net_path=None,
-                proxy_net_path=f"/bigwork/nhmlmahy/a_saved_runs/overcooked/proxy_{name}_{seed}/latest.pt",
+                proxy_net_path=f"/bigwork/nhmlmahy/a_saved_runs/overcooked/{mode_str}_proxy_{seed}/latest.pt",
             )
             # initialize yaml file and hydra
             print(os.getcwd())
@@ -351,4 +348,4 @@ def generate_training_structured_configs():
 
 
 if __name__ == '__main__':
-    generate_training_structured_configs()
+    start_training_from_structured_configs()

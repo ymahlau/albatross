@@ -11,8 +11,10 @@ logging_data/models
 /multirun
 /models
 
+
 imp_marl/results_scripts/logs
 
+a_saved_runs
 a_models
 a_img
 outputs
