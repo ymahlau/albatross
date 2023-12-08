@@ -292,8 +292,8 @@ def start_training_from_structured_configs():
             )
             max_eval = game_cfg.num_players * ((game_cfg.num_actions ** game_cfg.num_players) + 1) ** worker_cfg.search_iterations
             trainer_cfg = AlphaZeroTrainerConfig(
-                num_worker=100,  # IMPORTANT
-                num_inference_server=2,
+                num_worker=50,  # IMPORTANT
+                num_inference_server=1,
                 save_state=False,
                 save_state_after_seconds=18000,
                 net_cfg=net_cfg,

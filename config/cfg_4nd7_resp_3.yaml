@@ -275,8 +275,8 @@ data:
             __name__: NormalizationType
             value: GROUP_NORM
           num_layers: 1
-  num_inference_server: 2
-  num_worker: 100
+  num_inference_server: 1
+  num_worker: 50
   only_generate_buffer: false
   prev_run_dir: null
   prev_run_idx: null
