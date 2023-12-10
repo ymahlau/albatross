@@ -30,14 +30,14 @@ class AlbatrossAgentConfig(AgentConfig):
     min_temp: float = 0
     max_temp: float = 10
     init_temp: float = 10
-    num_iterations: int = 10
+    num_iterations: int = 10  # only used for mle
     fixed_temperatures: Optional[list[float]] = None
     estimate_log_path: Optional[str] = None
-    noise_std: Optional[float] = None
-    num_samples: int = 1
+    noise_std: Optional[float] = None  # if not None, sample from normal
     additive_estimate_offset: float = 0
     sample_from_likelihood: bool = False
     num_likelihood_bins: int = int(1e4)
+    num_samples: int = 1
 
 
 class AlbatrossAgent(Agent):
@@ -65,6 +65,13 @@ class AlbatrossAgent(Agent):
         self.bins = np.linspace(self.cfg.min_temp, self.cfg.max_temp, self.cfg.num_likelihood_bins)
         if self.cfg.num_samples < 1:
             raise ValueError(f"Invalid sample number: {self.cfg.num_samples}")
+        if self.cfg.noise_std is not None and self.cfg.sample_from_likelihood:
+            raise ValueError("Cannot sample from both normal dist and likelihood")
+        if self.cfg.fixed_temperatures is not None and self.cfg.sample_from_likelihood:
+            raise ValueError("cannot sample from likelihood and use fixed temperatures")
+        if self.cfg.noise_std is None and not self.cfg.sample_from_likelihood:
+            if self.cfg.num_samples > 1:
+                raise ValueError("Cannot use multiple samples if no samples is specified")
 
     def _act(
             self,
@@ -76,10 +83,11 @@ class AlbatrossAgent(Agent):
             options: Optional[dict[str, Any]] = None,
     ) -> tuple[np.ndarray, dict[str, Any]]:
         # observe last actions taken
-        # temperatures = []
+        # base_temperatures: list[float], one per player
+        base_temperatures = []
         if game.turns_played == 0:
             # use initial temperatures
-            temperatures = [self.cfg.init_temp for _ in range(game.num_players)]
+            base_temperatures = [self.cfg.init_temp for _ in range(game.num_players)]
         else:
             # parse last actions for temperature estimation
             last_actions = game.get_last_action()
@@ -88,22 +96,33 @@ class AlbatrossAgent(Agent):
                     raise Exception(f"Last action is None")
                 action_idx = self.last_available_actions[p].index(last_actions[p_idx])
                 self.enemy_actions[p].append(action_idx)
-            if self.cfg.sample_from_likelihood:
-                # compute likelihoods and sample temperatures from bins
-                for p in range(game.num_players):
-                    if p == player or not game.is_player_at_turn(p):
-                        temperatures.append()  # we use temperature of zero for own player (does not matter)
-                        continue
-                    cur_probs = np.asarray(
-                        compute_all_likelihoods(
-                            chosen_actions=self.enemy_actions[p],
-                            utilities=self.enemy_util[p],
-                            min_temp=self.cfg.min_temp,
-                            max_temp=self.cfg.max_temp,
-                            resolution=self.cfg.num_likelihood_bins,
-                        )
-                    )
-        
+        if self.cfg.fixed_temperatures is not None:  # fixed temperatures
+            base_temperatures = self.cfg.fixed_temperatures
+        elif self.cfg.noise_std is not None and game.turns_played != 0:
+            # do mle for all enemies
+            base_temperatures = []
+            for p in range(game.num_players):
+                if p == player or not game.is_player_at_turn(p):
+                    base_temperatures.append(0)  # we use temperature of zero for own player (does not matter)
+                    continue
+                temp_estimate = compute_temperature_mle(
+                    min_temp=self.cfg.min_temp,
+                    max_temp=self.cfg.max_temp,
+                    num_iterations=self.cfg.num_iterations,
+                    chosen_actions=self.enemy_actions[p],
+                    utilities=self.enemy_util[p],
+                )
+                base_temperatures.append(temp_estimate)
+        assert base_temperatures
+        # sampling
+        temperatures = None
+        if self.cfg.noise_std is None and not self.cfg.sample_from_likelihood:
+            # do not sample, just use base temperatures
+            temperatures = np.asarray([base_temperatures])
+        elif self.cfg.sample_from_likelihood:
+            pass
+        else:  # sample from normal
+            pass
         
         if self.cfg.fixed_temperatures is not None:
             # use fixed temperatures

@@ -272,7 +272,7 @@ data:
   only_generate_buffer: false
   prev_run_dir: null
   prev_run_idx: null
-  proxy_net_path: /home/mahlau/nobackup/albatross/albatross/a_saved_runs/d7_proxy/latest.pt
+  proxy_net_path: /home/mahlau/nobackup/albatross/albatross/a_saved_runs/d7_proxy_3/latest.pt
   restrict_cpu: true
   save_state: false
   save_state_after_seconds: 18000

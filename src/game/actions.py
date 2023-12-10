@@ -32,6 +32,29 @@ def filter_illegal_and_normalize(
     result = result / prob_sum[..., np.newaxis]
     return result
 
+def filter_illegal_single(
+    action_probs: np.ndarray,
+    game: Game,
+    player: int,
+    epsilon: float = 1e-5,
+):
+    if len(action_probs.shape) != 1 or action_probs.shape[0] != game.num_actions:
+        raise ValueError(f"Invalid array shape: {action_probs.shape}")
+    # illegal actions of players at turn
+    result = action_probs.copy()
+    result += epsilon  # numerical stability
+    for action in game.illegal_actions(player):
+        result[action] = 0
+    # normalize
+    prob_sum = np.sum(result)
+    # sanity check
+    if np.any(prob_sum == 0) or np.any(np.isnan(prob_sum)) or np.any(np.isinf(prob_sum)):
+        raise Exception(f"Invalid probability distribution in filter method: {action_probs} for game \n"
+                        f"{game.get_str_repr()}\n {result=}\n"
+                        f"{[game.available_actions(p) for p in range(action_probs.shape[0])]}")
+    result = result / prob_sum
+    return result
+
 
 def apply_permutation(
         action_probs: np.ndarray,  # array of shape [p, a]

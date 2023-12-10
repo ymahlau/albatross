@@ -11,7 +11,7 @@ from typing import Optional
 
 import numpy as np
 
-from src.game.actions import sample_individual_actions, apply_permutation, filter_illegal_and_normalize
+from src.game.actions import filter_illegal_single, sample_individual_actions, apply_permutation, filter_illegal_and_normalize
 from src.game.game import Game
 from src.game.initialization import get_game_from_config
 from src.game.overcooked.overcooked import OvercookedGame
@@ -229,7 +229,13 @@ def run_worker(
                         action_list = [action_probs[resp_player]]
                         player_at_turn_list.remove(resp_player)
                         for p in player_at_turn_list:
-                            action_list.append(search.root.info[f'p{p}'])
+                            proxy_probs = search.root.info[f'p{p}']
+                            filtered_proxy_probs = filter_illegal_single(
+                                action_probs=proxy_probs, 
+                                game=game,
+                                player=p,
+                            )
+                            action_list.append(filtered_proxy_probs)
                         step_action_probs = np.asarray(action_list)
                     else:  # case: response player already died
                         step_action_probs = action_probs
