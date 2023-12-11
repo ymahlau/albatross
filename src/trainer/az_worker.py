@@ -225,17 +225,18 @@ def run_worker(
                     if resp_player in game.players_at_turn():
                         if search.root is None:
                             raise Exception("This should never happen")
-                        player_at_turn_list = game.players_at_turn().copy()
-                        action_list = [action_probs[resp_player]]
-                        player_at_turn_list.remove(resp_player)
-                        for p in player_at_turn_list:
-                            proxy_probs = search.root.info[f'p{p}']
-                            filtered_proxy_probs = filter_illegal_single(
-                                action_probs=proxy_probs, 
-                                game=game,
-                                player=p,
-                            )
-                            action_list.append(filtered_proxy_probs)
+                        action_list = []
+                        for p in game.players_at_turn():
+                            if p == resp_player:
+                                action_list.append(action_probs[resp_player])
+                            else:
+                                proxy_probs = search.root.info[f'p{p}']
+                                filtered_proxy_probs = filter_illegal_single(
+                                    action_probs=proxy_probs, 
+                                    game=game,
+                                    player=p,
+                                )
+                                action_list.append(filtered_proxy_probs)
                         step_action_probs = np.asarray(action_list)
                     else:  # case: response player already died
                         step_action_probs = action_probs
