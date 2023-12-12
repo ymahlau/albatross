@@ -5,10 +5,10 @@ data:
     __module__: src.trainer.config
     __name__: CollectorConfig
     data:
-      buffer_size: 100000
+      buffer_size: 500000
       log_every_sec: 120
       quick_start_buffer_path: null
-      start_wait_n_samples: 100000
+      start_wait_n_samples: 500000
   compile_mode: max-autotune
   compile_model: false
   data_qsize: 10
