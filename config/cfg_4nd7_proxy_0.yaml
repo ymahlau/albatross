@@ -154,7 +154,7 @@ data:
   max_cpu_log_dist_save_collect: 1
   max_cpu_updater: 2
   max_cpu_worker: 22
-  max_eval_per_worker: 264196
+  max_eval_per_worker: 1028
   merge_inference_update_gpu: false
   net_cfg:
     __module__: src.network.mobilenet_v3
@@ -317,7 +317,7 @@ data:
               - 60
               - 600
               - 700
-              - 1300
+              - 1400
               init_temp: 0
               sampling: false
           beta1: 0.9
@@ -425,7 +425,7 @@ data:
                 __module__: src.game.values
                 __name__: UtilityNorm
                 value: NONE
-      search_iterations: 2
+      search_iterations: 1
       temp_scaling_cfgs:
         __module__: src.misc.serialization
         __name__: TupleWrapper

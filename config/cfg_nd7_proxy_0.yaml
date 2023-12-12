@@ -315,7 +315,7 @@ data:
               - 60
               - 600
               - 700
-              - 1300
+              - 1400
               init_temp: 0
               sampling: false
           beta1: 0.9

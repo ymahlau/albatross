@@ -213,7 +213,7 @@ def start_training_from_structured_configs():
                 #     cyclic=True,
                 #     sampling=True,
                 # ) for _ in range(game_cfg.num_players)],
-                search_iterations=2 if mode_str.startswith('4') else 3,
+                search_iterations=1 if mode_str.startswith('4') else 3,
                 temperature=1,
                 max_random_start_steps=1,
                 use_symmetries=True,
