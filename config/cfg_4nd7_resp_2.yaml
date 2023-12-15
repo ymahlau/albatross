@@ -280,7 +280,7 @@ data:
   only_generate_buffer: false
   prev_run_dir: null
   prev_run_idx: null
-  proxy_net_path: /bigwork/nhmlmahy/a_saved_runs/overcooked/4nd7_proxy_2/latest.pt
+  proxy_net_path: /bigwork/nhmlmahy/a_saved_runs/battlesnake/4nd7_proxy_2/latest.pt
   restrict_cpu: true
   save_state: false
   save_state_after_seconds: 18000
