@@ -230,6 +230,7 @@ def do_evaluation(
         prevent_draw: bool,
         switch_positions: bool,
         verbose: bool = False,
+        own_temperature: float = math.inf,
 ) -> tuple[list[list[float]], list[list[int]]]:
     results = []
     episode_lengths = []
@@ -256,7 +257,7 @@ def do_evaluation(
                         probs /= probs.sum()
                         if verbose:
                             print(probs)
-                        action = sample_individual_actions(probs[np.newaxis, ...], temperature)[0]
+                        action = sample_individual_actions(probs[np.newaxis, ...], own_temperature)[0]
                     else:
                         probs, _ = opponent(game, player=player, iterations=enemy_iterations)
                         probs[game.illegal_actions(player)] = 0

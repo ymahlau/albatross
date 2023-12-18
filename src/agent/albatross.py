@@ -113,41 +113,20 @@ class AlbatrossAgent(Agent):
                     utilities=self.enemy_util[p],
                 )
                 base_temperatures.append(temp_estimate)
-        assert base_temperatures
         # sampling
         temperatures = None
-        if self.cfg.noise_std is None and not self.cfg.sample_from_likelihood:
+        if game.turns_played == 0 or (self.cfg.noise_std is None and not self.cfg.sample_from_likelihood):
             # do not sample, just use base temperatures
             temperatures = np.asarray([base_temperatures])
         elif self.cfg.sample_from_likelihood:
-            pass
-        else:  # sample from normal
-            pass
-        
-        if self.cfg.fixed_temperatures is not None:
-            # use fixed temperatures
-            temperatures = self.cfg.fixed_temperatures
-            if self.cfg.noise_std is not None and self.cfg.num_samples == 1:
-                for p in range(game.num_players):
-                    noise = np.random.normal(0, self.cfg.noise_std)
-                    temperatures[p] += noise
-                    temperatures[p] = np.clip(temperatures[p], self.cfg.min_temp, self.cfg.max_temp).item()
-        elif game.turns_played == 0:
-            # use initial temperatures
-            temperatures = [self.cfg.init_temp for _ in range(game.num_players)]
-        elif self.cfg.sample_from_likelihood:
-            # parse last actions for temperature estimation
-            last_actions = game.get_last_action()
-            for p_idx, p in enumerate(self.last_player_at_turn):
-                if last_actions is None:
-                    raise Exception(f"Last action is None")
-                action_idx = self.last_available_actions[p].index(last_actions[p_idx])
-                self.enemy_actions[p].append(action_idx)
+            temperature_list = []
+            bins = np.linspace(self.cfg.min_temp, self.cfg.max_temp, self.cfg.num_likelihood_bins)
             for p in range(game.num_players):
                 if p == player or not game.is_player_at_turn(p):
-                    probs.append(None)  # we use temperature of zero for own player (does not matter)
+                    # we use temperature of zero for own player (does not matter)
+                    temperature_list.append(np.zeros(self.cfg.num_samples, dtype=float))  
                     continue
-                cur_probs = np.asarray(
+                log_probs = np.asarray(
                     compute_all_likelihoods(
                         chosen_actions=self.enemy_actions[p],
                         utilities=self.enemy_util[p],
@@ -156,46 +135,24 @@ class AlbatrossAgent(Agent):
                         resolution=self.cfg.num_likelihood_bins,
                     )
                 )
-                # cur_probs = np.zeros_like(bins)
-                # for t_idx, t in enumerate(bins):
-                #     cur_likelihood = compute_likelihood(
-                #         temperature=t,
-                #         chosen_actions=self.enemy_actions[p],
-                #         utilities=self.enemy_util[p],
-                #     )
-                #     cur_probs[t_idx] = cur_likelihood
-                cur_probs = np.exp(cur_probs)
-                cur_probs = cur_probs / np.sum(cur_probs)  # normalize
-                probs.append(cur_probs)
-        else:
-            # parse last actions for temperature estimation
-            last_actions = game.get_last_action()
-            for p_idx, p in enumerate(self.last_player_at_turn):
-                if last_actions is None:
-                    raise Exception(f"Last action is None")
-                action_idx = self.last_available_actions[p].index(last_actions[p_idx])
-                self.enemy_actions[p].append(action_idx)
-            # do mle for all enemies
-            temperatures = []
-            for p in range(game.num_players):
-                if p == player or not game.is_player_at_turn(p):
-                    temperatures.append(0)  # we use temperature of zero for own player (does not matter)
-                    continue
-                temp_estimate = compute_temperature_mle(
-                    min_temp=self.cfg.min_temp,
-                    max_temp=self.cfg.max_temp,
-                    num_iterations=self.cfg.num_iterations,
-                    chosen_actions=self.enemy_actions[p],
-                    utilities=self.enemy_util[p],
-                )
-                # print(f"{temp_estimate=}")
-                if self.cfg.noise_std is not None and self.cfg.num_samples == 1:
-                    noise = np.random.normal(0, self.cfg.noise_std)
-                    temp_estimate += noise
-                    temp_estimate = np.clip(temp_estimate, self.cfg.min_temp, self.cfg.max_temp).item()
-                temp_estimate += self.cfg.additive_estimate_offset
-                temperatures.append(temp_estimate)
-                self.temp_estimates[p].append(temp_estimate)
+                probs = np.exp(log_probs)
+                probs = probs / np.sum(probs)  # normalize
+                # sample
+                cur_temps = np.random.choice(bins, size=(self.cfg.num_samples,), replace=True, p=probs)
+                temperature_list.append(cur_temps)
+            # transpose
+            temperatures = np.asarray(temperature_list).T
+        else:  # sample from normal
+            assert self.cfg.noise_std is not None
+            noise = np.random.normal(
+                loc=0, 
+                scale=self.cfg.noise_std, 
+                size=(self.cfg.num_samples, game.num_players)
+            )
+            temperatures = np.asarray([base_temperatures]) + noise
+            temperatures = np.clip(temperatures, self.cfg.min_temp, self.cfg.max_temp)
+        # additive offset
+        temperatures += self.cfg.additive_estimate_offset
         # copy game
         cpy = game.get_copy()
         if isinstance(game, BattleSnakeGame):
@@ -210,25 +167,8 @@ class AlbatrossAgent(Agent):
             raise NotImplementedError()
         # iterate samples
         action_prob_list = []
-        sampled_temps = []
-        for p in range(game.num_players):
-            if p == player or not game.is_player_at_turn(p):
-                sampled_temps.append(np.zeros(shape=(self.cfg.num_samples,), dtype=float))  # we use temperature of zero for own player (does not matter)
-            else:
-                sampled_temps.append(np.random.choice(bins, size=(self.cfg.num_samples,), replace=True, p=probs[player]))
-        for sample_idx in range(self.cfg.num_samples):
-            if sampled_temps:
-                cur_temp = [t[sample_idx].item() for t in sampled_temps]
-                self.agent.set_temperatures(cur_temp)
-            else:
-                if not temperatures:
-                    raise Exception('tthis should never happen')
-                temp_arr = np.asarray(temperatures, dtype=float)
-                cur_temp = temp_arr.copy()
-                if self.cfg.noise_std is not None:
-                    noise = np.random.normal(0, self.cfg.noise_std, len(temperatures))
-                    cur_temp += noise
-                self.agent.set_temperatures(list(cur_temp))
+        for idx in range(temperatures.shape[0]):
+            self.agent.set_temperatures(list(temperatures[idx]))
             cur_action_probs, info_dict = self.agent(
                 game=cpy,
                 time_limit=time_limit,

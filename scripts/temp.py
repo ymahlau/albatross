@@ -98,12 +98,12 @@ def main():
         device_str='cpu',
         response_net_path=str(net_path / 'resp_aa_0_tmp.pt'),
         proxy_net_path=str(net_path / 'proxy_aa_0.pt'),
-        # noise_std=1,
+        noise_std=2,
         # fixed_temperatures=[0.1, 0.1],
-        num_samples=10,
+        num_samples=100,
         init_temp=0,
-        num_likelihood_bins=int(1e4),
-        sample_from_likelihood=True,
+        # num_likelihood_bins=int(1e4),
+        # sample_from_likelihood=True,
     )
     alb_online_agent = AlbatrossAgent(alb_online_agent_cfg)
     
@@ -128,7 +128,8 @@ def main():
         opponent_list=[bc_agent],
         num_episodes=[4],
         enemy_iterations=0,
-        temperature_list=[math.inf, 1],
+        temperature_list=[1],
+        own_temperature=math.inf,
         prevent_draw=False,
         switch_positions=True,
         verbose=True,
