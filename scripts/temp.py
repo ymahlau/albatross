@@ -1,5 +1,3 @@
-
-
 import math
 import os
 from pathlib import Path
@@ -61,21 +59,21 @@ def old():
 
 def main():
     bc_path = Path(__file__).parent.parent / 'bc_state_dicts'
-    bc_agent = bc_agent_from_file(bc_path / 'aa_0.pkl')
+    bc_agent = bc_agent_from_file(bc_path / 'fc_0.pkl')
     
-    net_path = Path(__file__).parent.parent / 'a_models'
-    proxy_net = get_network_from_file(net_path / 'proxy_aa_0.pt')
+    net_path = Path(__file__).parent.parent / 'a_saved_runs' / 'overcooked'
+    proxy_net = get_network_from_file(net_path / 'proxy_fc_0' / 'latest.pt')
     proxy_net = proxy_net.eval()
     proxy_net_agent_cfg = NetworkAgentConfig(
         net_cfg=proxy_net.cfg,
         temperature_input=True,
         single_temperature=True,
-        init_temperatures=[1.1, 1.1],
+        init_temperatures=[5, 5],
     )
     proxy_net_agent = NetworkAgent(proxy_net_agent_cfg)
     proxy_net_agent.replace_net(proxy_net)
     
-    net = get_network_from_file(net_path / 'resp_aa_0_tmp.pt')
+    net = get_network_from_file(net_path / 'resp_fc_0' / 'latest.pt')
     net = net.eval()
     net_agent_cfg = NetworkAgentConfig(
         net_cfg=net.cfg,
@@ -96,11 +94,11 @@ def main():
         num_player=2,
         agent_cfg=alb_network_agent_cfg,
         device_str='cpu',
-        response_net_path=str(net_path / 'resp_aa_0_tmp.pt'),
-        proxy_net_path=str(net_path / 'proxy_aa_0.pt'),
+        response_net_path=str(net_path / 'resp_fc_0' / 'latest.pt'),
+        proxy_net_path=str(net_path / 'proxy_fc_0' / 'latest.pt'),
         noise_std=2,
-        # fixed_temperatures=[0.1, 0.1],
-        num_samples=100,
+        fixed_temperatures=[0.1, 0.1],
+        # num_samples=20,
         init_temp=0,
         # num_likelihood_bins=int(1e4),
         # sample_from_likelihood=True,
@@ -108,10 +106,10 @@ def main():
     alb_online_agent = AlbatrossAgent(alb_online_agent_cfg)
     
     
-    game_cfg = AsymmetricAdvantageOvercookedConfig(
+    # game_cfg = AsymmetricAdvantageOvercookedConfig(
+    game_cfg = ForcedCoordinationOvercookedConfig(
         temperature_input=True,
         single_temperature_input=True,
-        unstuck_behavior=True,
         reward_cfg=OvercookedRewardConfig(
             placement_in_pot=0,
             dish_pickup=0,
@@ -125,7 +123,7 @@ def main():
     results, _ = do_evaluation(
         game=game,
         evaluee=alb_online_agent,
-        opponent_list=[bc_agent],
+        opponent_list=[proxy_net_agent],
         num_episodes=[4],
         enemy_iterations=0,
         temperature_list=[1],

@@ -36,7 +36,7 @@ class OvercookedGameConfig(GameConfig):
     single_temperature_input: bool = True
     flat_obs: bool = False
     cooking_time: int = 20
-    unstuck_behavior: bool = True
+    unstuck_behavior: bool = False
 
 
 # const int EMPTY_TILE = 0;

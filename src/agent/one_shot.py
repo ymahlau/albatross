@@ -163,6 +163,9 @@ class BCNetworkAgent(Agent):
         super().__init__(cfg)
         self.cfg = cfg
         self.device = torch.device('cpu')
+        self.stuck_time = 0
+        self.action_history = {0: [], 1: []}
+        self.state_history = []
         if cfg.net_cfg is not None:
             self.net = get_network_from_config(cfg.net_cfg)
             self.net.to(self.device)
@@ -184,6 +187,10 @@ class BCNetworkAgent(Agent):
             raise Exception(f"Need network to act")
         if not isinstance(self.net, SimpleNetwork):
             raise Exception("BC Agent need simple network")
+        # lastly chosen actions
+        if game.last_actions is not None:
+            for p in range(2):
+                self.action_history[p].append(game.last_actions[p])
         # get bc probs
         converted = overcooked_slow_from_fast(game, layout_abbr=self.net.cfg.layout_abbrev)
         if converted.env is None:
@@ -194,8 +201,22 @@ class BCNetworkAgent(Agent):
         net_probs = np.exp(net_out) / np.exp(net_out).sum(axis=-1)[..., np.newaxis]
         filtered_probs = filter_illegal_and_normalize(net_probs, game)[player]
         filtered_probs[4] = 0  # set stay action to zero, as done in baseline methods (PECAN, etc..)
+        # set all actions to zero that get agent stuck
+        if game.stuck_counter[player] >= 3:
+            for idx in range(1, 4):
+                stuck_action = self.action_history[player][-idx]
+                filtered_probs[stuck_action] = 0
+        if np.sum(filtered_probs).item() == 0:
+            raise Exception("Unblocking set all actions to zero, this should never happen")
         filtered_probs = filtered_probs / np.sum(filtered_probs)
+        # game state
+        self.state_history.append(game.get_copy())
         return filtered_probs, {}
+    
+    def reset_episode(self):
+        self.stuck_time = 0
+        self.action_history = {0: [], 1: []}
+        self.state_history = []
 
 
 def infer_game_cfg_from_name(name: str) -> OvercookedGameConfig:

@@ -26,6 +26,7 @@ class OvercookedGame(Game):
         self.is_closed = False
         self.id_dict = {a: a for a in range(6)}
         self.last_info: Optional[dict[str, int]] = None
+        self.last_actions: Optional[tuple[int, ...]] = None
         self.stuck_counter: list[int] = [0, 0]
 
     def _init_cpp(self):
@@ -51,6 +52,7 @@ class OvercookedGame(Game):
         self.obs_dict: dict[int, np.ndarray] = dict()
         self.stuck_counter = [0, 0]
         self.last_info: Optional[dict[str, int]] = None
+        self.last_actions = None
         
     def _test_stuck(self, cur_info: dict[str, int], player: int) -> bool:
         if self.last_info is None:
@@ -85,14 +87,14 @@ class OvercookedGame(Game):
         reward_arr = np.asarray([reward, reward], dtype=float) * self.cfg.reward_scaling_factor
         done = self.turns_played >= self.cfg.horizon - 1  # turns played is only updated after the step
         # test if stuck
-        if self.cfg.unstuck_behavior:
-            cur_info = self.get_player_info()
-            for player in range(2):
-                if self._test_stuck(cur_info, player):
-                    self.stuck_counter[player] += 1
-                else:
-                    self.stuck_counter[player] = 0
-            self.last_info = cur_info
+        cur_info = self.get_player_info()
+        for player in range(2):
+            if self._test_stuck(cur_info, player):
+                self.stuck_counter[player] += 1
+            else:
+                self.stuck_counter[player] = 0
+        self.last_info = cur_info
+        self.last_actions = actions
         return reward_arr, done, {}
 
     def close(self):
