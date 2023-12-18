@@ -577,7 +577,8 @@ class ResponseInferenceEvalFunc(EvalFunc):
                 only_get_player=player,
             )
             node_list_proxy.append(filtered_list)
-            encoding_list_proxy.append(encoding_list_np)
+            for enc in encoding_list_np:
+                encoding_list_proxy.append(enc)
             inv_perm_list_proxy.append(inv_perm_list)
             index_list_proxy.append(index_list)
         # get encoding for response model
@@ -590,7 +591,7 @@ class ResponseInferenceEvalFunc(EvalFunc):
         )
         # send to proxy inference server
         stacked_obs = np.asarray(encoding_list_proxy, dtype=np.float32)
-        stacked_obs = stacked_obs.reshape(-1, *self.input_arr_np.shape[1:])
+        # stacked_obs = stacked_obs.reshape(-1, *self.input_arr_np.shape[1:])
         if stacked_obs.shape[0] > self.max_length:
             raise ValueError("Received more observation than inference server allows. Increase max size!")
         end_idx_proxy = self.start_idx + stacked_obs.shape[0]
