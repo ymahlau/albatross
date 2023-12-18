@@ -228,7 +228,8 @@ def run_worker(
                         action_list = []
                         for p in game.players_at_turn():
                             if p == resp_player:
-                                action_list.append(action_probs[resp_player])
+                                resp_idx = game.players_at_turn().index(resp_player)
+                                action_list.append(action_probs[resp_idx])
                             else:
                                 proxy_probs = search.root.info[f'p{p}']
                                 filtered_proxy_probs = filter_illegal_single(
