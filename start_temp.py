@@ -2,6 +2,7 @@ import sys
 from pathlib import Path
 
 import multiprocessing as mp
+from scripts.eval.overcooked_bc_eval import evaluate_overcooked_response
 
 from scripts.logit_solver.run_logit_experiments import generate_experiment_data, create_logit_data_func
 
@@ -18,10 +19,11 @@ if __name__ == '__main__':
     #     gt_path=None,
     # )
 
-    num_iterations = int(sys.argv[1])
-    generate_experiment_data(num_iterations)
+    experiment_id = int(sys.argv[1])
+    evaluate_overcooked_response(experiment_id)
 
-
+    # num_iterations = int(sys.argv[1])
+    # generate_experiment_data(num_iterations)
 
     # compute_equilibria()
 

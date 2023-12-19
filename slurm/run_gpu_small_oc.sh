@@ -11,4 +11,4 @@
 echo "Hier beginnt die Ausführung/Berechnung"
 module load GCC/11.2.0
 cd ..
-srun -c 42 --gres=gpu:rtx3090:3 -v /bigwork/nhmlmahy/miniforge3/envs/albatross-env/bin/python start_training_resp_oc.py $SLURM_ARRAY_TASK_ID hydra.job.chdir=True
+srun -c 42 --gres=gpu:rtx3090:3 -v /bigwork/nhmlmahy/miniforge3/envs/albatross-env/bin/python start_training_oc.py $SLURM_ARRAY_TASK_ID hydra.job.chdir=True

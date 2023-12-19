@@ -262,7 +262,7 @@ def generate_training_structured_configs():
                 beta1=0.9,
                 beta2=0.99,
             )
-            buffer_size = int(5e5)
+            buffer_size = int(1e5)
             collector_cfg = CollectorConfig(
                 buffer_size=buffer_size,
                 quick_start_buffer_path=None,

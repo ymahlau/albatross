@@ -2,13 +2,14 @@
 #SBATCH --job-name=temp.py
 #SBATCH --output=slurm-%j-%a-out.txt
 #SBATCH --time=24:00:00 # (HH:MM:SS)
-#SBATCH --partition=cpu_normal_stud
+#SBATCH --partition=cpu_normal
 #SBATCH --cpus-per-task=8
 #SBATCH --mem-per-cpu=2G
 #SBATCH --verbose
+#SBATCH --nodes=1
 #SBATCH --array=0
 echo "Hier beginnt die Ausführung/Berechnung"
-srun -c 8 -v /home/mahlauya/nobackup/miniconda3/envs/battlesnake-rl/bin/python start_temp.py $SLURM_ARRAY_TASK_ID
+srun -c 8 -v /home/mahlau/nobackup/env/miniforge3/envs/albatross-env/bin/python start_temp.py $SLURM_ARRAY_TASK_ID
 
 # interactive session with:
 #  srun --partition=amo,tnt,ai,haku,lena --mincpus 8 --mem 20G --time=2:00:00 --pty bash -l -i

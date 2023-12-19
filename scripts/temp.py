@@ -1,6 +1,7 @@
 import math
 import os
 from pathlib import Path
+import pickle
 import random
 import shutil
 import time
@@ -96,12 +97,12 @@ def main():
         device_str='cpu',
         response_net_path=str(net_path / 'resp_cr_0' / 'latest.pt'),
         proxy_net_path=str(net_path / 'proxy_cr_0' / 'latest.pt'),
-        noise_std=2,
+        # noise_std=2,
         # fixed_temperatures=[0.1, 0.1],
         num_samples=20,
         init_temp=0,
-        # num_likelihood_bins=int(1e4),
-        # sample_from_likelihood=True,
+        num_likelihood_bins=int(2e2),
+        sample_from_likelihood=True,
     )
     alb_online_agent = AlbatrossAgent(alb_online_agent_cfg)
     
@@ -133,7 +134,7 @@ def main():
         own_temperature=math.inf,
         prevent_draw=False,
         switch_positions=True,
-        verbose=True,
+        verbose_level=2,
     )
     print(results)
     
@@ -154,3 +155,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+    
+    

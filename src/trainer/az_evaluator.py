@@ -229,7 +229,7 @@ def do_evaluation(
         temperature_list: list[float],
         prevent_draw: bool,
         switch_positions: bool,
-        verbose: bool = False,
+        verbose_level: int = 0,
         own_temperature: float = math.inf,
 ) -> tuple[list[list[float]], list[list[int]]]:
     results = []
@@ -255,7 +255,7 @@ def do_evaluation(
                         probs, _ = evaluee(game, player=player, iterations=1)
                         probs[game.illegal_actions(player)] = 0
                         probs /= probs.sum()
-                        if verbose:
+                        if verbose_level >= 2:
                             print(probs)
                         action = sample_individual_actions(probs[np.newaxis, ...], own_temperature)[0]
                     else:
@@ -269,12 +269,14 @@ def do_evaluation(
                     step_with_draw_prevention(game, tuple(joint_action_list))
                 else:
                     game.step(tuple(joint_action_list))
-                if verbose:
+                if verbose_level >= 2:
                     print(joint_action_list)
                     game.render()
                 step_counter += 1
             # add rewards of player 0 to sum
             cum_rewards = game.get_cum_rewards()
+            if verbose_level >= 1:
+                print(f"{datetime.now()} - {ep}: {cum_rewards}")
             cur_results.append(cum_rewards[0].item())
             cur_lengths.append(step_counter)
         results.append(cur_results)

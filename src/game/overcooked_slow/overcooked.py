@@ -59,7 +59,7 @@ class OvercookedGame(Game):
             self.gridworld = gridworld
         self.env = env
         if env is None:
-            self.env = OvercookedEnv.from_mdp(self.gridworld, horizon=self.cfg.horizon, info_level=1)
+            self.env = OvercookedEnv.from_mdp(self.gridworld, horizon=self.cfg.horizon, info_level=0)
         # observations
         self.general_features: np.ndarray = get_general_features(self.gridworld)
         self.obs_save: Optional[torch.Tensor] = None  # save observation tensor to save compute

@@ -121,6 +121,7 @@ class AlbatrossAgent(Agent):
         elif self.cfg.sample_from_likelihood:
             temperature_list = []
             bins = np.linspace(self.cfg.min_temp, self.cfg.max_temp, self.cfg.num_likelihood_bins)
+            bin_size = (self.cfg.max_temp - self.cfg.min_temp) / self.cfg.num_likelihood_bins
             for p in range(game.num_players):
                 if p == player or not game.is_player_at_turn(p):
                     # we use temperature of zero for own player (does not matter)
@@ -138,7 +139,9 @@ class AlbatrossAgent(Agent):
                 probs = np.exp(log_probs)
                 probs = probs / np.sum(probs)  # normalize
                 # sample
-                cur_temps = np.random.choice(bins, size=(self.cfg.num_samples,), replace=True, p=probs)
+                cur_temps = np.random.choice(bins, size=(self.cfg.num_samples,), replace=False, p=probs)
+                # add small random noise s.t. sample is not always in the middle of the interval
+                cur_temps += np.random.uniform(-bin_size/2, bin_size/2, size=cur_temps.shape)
                 temperature_list.append(cur_temps)
             # transpose
             temperatures = np.asarray(temperature_list).T
