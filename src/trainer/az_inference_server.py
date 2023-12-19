@@ -96,21 +96,24 @@ def run_inference_server(
     output_arr_np = output_arr_np.reshape((n, out_shape))
     # statistics
     stats = InferenceServerStats()
+    last_poll_time = time.time()
     # processing loop
     try:
         while not stop_flag.value:
             # get the newest network state dictionary
-            if net_queue is not None:
-                load_time_start = time.time()
-                maybe_state_dict = get_latest_obj_from_queue(net_queue)
-                if stop_flag.value:
-                    break
-                if maybe_state_dict is not None:
-                    state_dict = {k: torch.tensor(v) for k, v in maybe_state_dict.items()}
-                    net.load_state_dict(state_dict)
-                    net = net.eval()
-                    start_phase = False
-                stats.load_time_sum += time.time() - load_time_start
+            if time.time() - last_poll_time > trainer_cfg.inf_cfg.poll_every_sec:
+                if net_queue is not None:
+                    load_time_start = time.time()
+                    maybe_state_dict = get_latest_obj_from_queue(net_queue)
+                    if stop_flag.value:
+                        break
+                    if maybe_state_dict is not None:
+                        state_dict = {k: torch.tensor(v) for k, v in maybe_state_dict.items()}
+                        net.load_state_dict(state_dict)
+                        net = net.eval()
+                        start_phase = False
+                    stats.load_time_sum += time.time() - load_time_start
+                last_poll_time = time.time()
             # get ready input data
             input_rdy_cpy = np.array(np.copy(input_rdy_np), dtype=bool)
             if np.all(input_rdy_cpy == 0):

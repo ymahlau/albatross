@@ -150,7 +150,7 @@ class InferenceServerEvalConfig(EvalFuncConfig):
     random_symmetry: bool = False
     min_clip_value: float = -math.inf
     max_clip_value: float = 50
-    active_wait_time: float = 0.0001
+    active_wait_time: float = 0
     policy_prediction: bool = True
     
 @dataclass

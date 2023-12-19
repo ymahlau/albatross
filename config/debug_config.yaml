@@ -104,6 +104,7 @@ data:
     __module__: src.trainer.config
     __name__: InferenceServerConfig
     data:
+      poll_every_sec: 5
       statistics_every_sec: 60
       use_gpu: true
   info_qsize: 100
@@ -306,7 +307,7 @@ data:
             __module__: src.search.config
             __name__: InferenceServerEvalConfig
             data:
-              active_wait_time: 0.0001
+              active_wait_time: 0
               init_temperatures: null
               max_clip_value: .inf
               min_clip_value: -.inf
@@ -332,7 +333,7 @@ data:
               dirichlet_eps: 0.25
               exp_bonus: 1.414
           use_hot_start: false
-      search_iterations: 500
+      search_iterations: 100
       temp_scaling_cfgs: null
       temperature: 1
       use_symmetries: true

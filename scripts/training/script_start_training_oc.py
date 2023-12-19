@@ -98,6 +98,7 @@ def start_training_from_structured_configs():
         max_clip_value=math.inf,
         policy_prediction=net_cfg.predict_policy,
         utility_norm=UtilityNorm.FULL_COOP,
+        active_wait_time=0,
     )
     # eval_func_cfg = ResponseInferenceServerEvalConfig(
     #     random_symmetry=False,
@@ -274,7 +275,7 @@ def start_training_from_structured_configs():
         id=0,
         updater_bucket_size=100,
         worker_episode_bucket_size=5,
-        wandb_mode='online',
+        wandb_mode='offline',
     )
     saver_cfg = SaverConfig(
         save_interval_sec=10,

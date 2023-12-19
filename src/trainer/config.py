@@ -91,6 +91,7 @@ class SaverConfig:
 class InferenceServerConfig:
     use_gpu: bool = True
     statistics_every_sec: int = 60
+    poll_every_sec: int = 5
 
 
 @dataclass

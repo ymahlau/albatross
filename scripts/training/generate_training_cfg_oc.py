@@ -107,7 +107,6 @@ def generate_training_structured_configs():
                 max_clip_value=30,
                 policy_prediction=net_cfg.predict_policy,
                 utility_norm=UtilityNorm.FULL_COOP,
-                active_wait_time=0.0001,
             )
             # eval_func_cfg = ResponseInferenceServerEvalConfig(
             #     random_symmetry= False,
