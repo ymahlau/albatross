@@ -3,10 +3,10 @@
 #SBATCH --output=slurm-%j-%a-out.txt
 #SBATCH --time=24:00:00 # (HH:MM:SS)
 #SBATCH --partition=lena,amo,haku,taurus,imuk,stahl,phd,tnt,ai
-#SBATCH --cpus-per-task=8
+#SBATCH --cpus-per-task=4
 #SBATCH --mem-per-cpu=3G
 #SBATCH --verbose
-#SBATCH --array=0
+#SBATCH --array=0-24
 echo "Hier beginnt die Ausführung/Berechnung"
 module load GCC/11.2.0
 cd ..

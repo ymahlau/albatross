@@ -4,7 +4,7 @@ from pathlib import Path
 import multiprocessing as mp
 from scripts.eval.overcooked_bc_eval import evaluate_overcooked_response
 
-from scripts.logit_solver.run_logit_experiments import generate_experiment_data, create_logit_data_func
+# from scripts.logit_solver.run_logit_experiments import generate_experiment_data, create_logit_data_func
 
 if __name__ == '__main__':
     mp.set_start_method('spawn', force=True)  # this is important for using CUDA

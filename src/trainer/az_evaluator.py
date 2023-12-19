@@ -256,7 +256,7 @@ def do_evaluation(
                         probs[game.illegal_actions(player)] = 0
                         probs /= probs.sum()
                         if verbose_level >= 2:
-                            print(probs)
+                            print(probs, flush=True)
                         action = sample_individual_actions(probs[np.newaxis, ...], own_temperature)[0]
                     else:
                         probs, _ = opponent(game, player=player, iterations=enemy_iterations)
@@ -270,13 +270,13 @@ def do_evaluation(
                 else:
                     game.step(tuple(joint_action_list))
                 if verbose_level >= 2:
-                    print(joint_action_list)
+                    print(joint_action_list, flush=True)
                     game.render()
                 step_counter += 1
             # add rewards of player 0 to sum
             cum_rewards = game.get_cum_rewards()
             if verbose_level >= 1:
-                print(f"{datetime.now()} - {ep}: {cum_rewards}")
+                print(f"{datetime.now()} - {ep}: {cum_rewards}", flush=True)
             cur_results.append(cum_rewards[0].item())
             cur_lengths.append(step_counter)
         results.append(cur_results)

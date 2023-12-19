@@ -7,7 +7,8 @@
 #SBATCH --mem-per-cpu=2G
 #SBATCH --verbose
 #SBATCH --nodes=1
-#SBATCH --array=0
+#SBATCH --array=0-24
+cd ..
 echo "Hier beginnt die Ausführung/Berechnung"
 srun -c 8 -v /home/mahlau/nobackup/env/miniforge3/envs/albatross-env/bin/python start_temp.py $SLURM_ARRAY_TASK_ID
 

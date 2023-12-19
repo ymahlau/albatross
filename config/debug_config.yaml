@@ -117,7 +117,7 @@ data:
       name: null
       project_name: test
       updater_bucket_size: 100
-      wandb_mode: offline
+      wandb_mode: online
       worker_episode_bucket_size: 5
   max_batch_size: 3000
   max_cpu_evaluator: 1
@@ -125,7 +125,7 @@ data:
   max_cpu_log_dist_save_collect: 1
   max_cpu_updater: 1
   max_cpu_worker: 10
-  max_eval_per_worker: 3
+  max_eval_per_worker: 2
   merge_inference_update_gpu: true
   net_cfg:
     __module__: src.network.resnet

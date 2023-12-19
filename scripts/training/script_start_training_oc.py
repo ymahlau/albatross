@@ -207,7 +207,7 @@ def start_training_from_structured_configs():
         #     cyclic=True,
         #     sampling=True,
         # ) for _ in range(game_cfg.num_players)],
-        search_iterations=500,
+        search_iterations=100,
         temperature=1,
         max_random_start_steps=0,
         use_symmetries=True,
@@ -274,7 +274,7 @@ def start_training_from_structured_configs():
         id=0,
         updater_bucket_size=100,
         worker_episode_bucket_size=5,
-        wandb_mode='offline',
+        wandb_mode='online',
     )
     saver_cfg = SaverConfig(
         save_interval_sec=10,
@@ -297,7 +297,7 @@ def start_training_from_structured_configs():
         collector_cfg=collector_cfg,
         inf_cfg=inf_cfg,
         max_batch_size=batch_size,
-        max_eval_per_worker=3,
+        max_eval_per_worker=2,
         data_qsize=10,
         info_qsize=100,
         updater_in_qsize=100,

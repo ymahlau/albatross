@@ -16,7 +16,8 @@ from src.trainer.az_evaluator import do_evaluation
 
 
 def evaluate_overcooked_response(experiment_id):
-    num_games = 2
+    print(f'{datetime.now()} - Started eval script', flush=True)
+    num_games = 100
     save_path = Path(__file__).parent.parent.parent / 'a_data' / 'oc'
     base_name = 'resp_20from200'
     
@@ -77,7 +78,7 @@ def evaluate_overcooked_response(experiment_id):
     bc_path = Path(__file__).parent.parent.parent / 'bc_state_dicts'/ f'{prefix}_{seed}.pkl'
     bc_agent = bc_agent_from_file(bc_path)
     
-    print(f'{datetime.now()} - Started evaluation of {prefix} with {seed=}')
+    print(f'{datetime.now()} - Started evaluation of {prefix} with {seed=}', flush=True)
     results, _ = do_evaluation(
         game=game,
         evaluee=alb_online_agent,
