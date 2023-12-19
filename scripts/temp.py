@@ -14,7 +14,7 @@ from src.game.conversion import overcooked_slow_from_fast
 from src.game.imp_marl.imp_marl_wrapper import IMP_MODE, IMPConfig
 from src.game.initialization import get_game_from_config
 
-from src.game.overcooked.config import AsymmetricAdvantageOvercookedConfig, CounterCircuitOvercookedConfig, CrampedRoomOvercookedConfig, ForcedCoordinationOvercookedConfig, OvercookedRewardConfig
+from src.game.overcooked.config import AsymmetricAdvantageOvercookedConfig, CoordinationRingOvercookedConfig, CounterCircuitOvercookedConfig, CrampedRoomOvercookedConfig, ForcedCoordinationOvercookedConfig, OvercookedRewardConfig
 from src.game.overcooked.overcooked import OvercookedGame
 from src.game.overcooked_slow.layouts import CrampedRoomOvercookedSlowConfig, CounterCircuitOvercookedSlowConfig
 from src.network.initialization import get_network_from_config, get_network_from_file
@@ -59,10 +59,10 @@ def old():
 
 def main():
     bc_path = Path(__file__).parent.parent / 'bc_state_dicts'
-    bc_agent = bc_agent_from_file(bc_path / 'fc_0.pkl')
+    bc_agent = bc_agent_from_file(bc_path / 'cr_0.pkl')
     
     net_path = Path(__file__).parent.parent / 'a_saved_runs' / 'overcooked'
-    proxy_net = get_network_from_file(net_path / 'proxy_fc_0' / 'latest.pt')
+    proxy_net = get_network_from_file(net_path / 'proxy_cr_0' / 'latest.pt')
     proxy_net = proxy_net.eval()
     proxy_net_agent_cfg = NetworkAgentConfig(
         net_cfg=proxy_net.cfg,
@@ -73,7 +73,7 @@ def main():
     proxy_net_agent = NetworkAgent(proxy_net_agent_cfg)
     proxy_net_agent.replace_net(proxy_net)
     
-    net = get_network_from_file(net_path / 'resp_fc_0' / 'latest.pt')
+    net = get_network_from_file(net_path / 'resp_cr_0' / 'latest.pt')
     net = net.eval()
     net_agent_cfg = NetworkAgentConfig(
         net_cfg=net.cfg,
@@ -94,11 +94,11 @@ def main():
         num_player=2,
         agent_cfg=alb_network_agent_cfg,
         device_str='cpu',
-        response_net_path=str(net_path / 'resp_fc_0' / 'latest.pt'),
-        proxy_net_path=str(net_path / 'proxy_fc_0' / 'latest.pt'),
+        response_net_path=str(net_path / 'resp_cr_0' / 'latest.pt'),
+        proxy_net_path=str(net_path / 'proxy_cr_0' / 'latest.pt'),
         noise_std=2,
-        fixed_temperatures=[0.1, 0.1],
-        # num_samples=20,
+        # fixed_temperatures=[0.1, 0.1],
+        num_samples=20,
         init_temp=0,
         # num_likelihood_bins=int(1e4),
         # sample_from_likelihood=True,
@@ -107,7 +107,10 @@ def main():
     
     
     # game_cfg = AsymmetricAdvantageOvercookedConfig(
-    game_cfg = ForcedCoordinationOvercookedConfig(
+    # game_cfg = ForcedCoordinationOvercookedConfig(
+    # game_cfg = CounterCircuitOvercookedConfig(
+    # game_cfg = CoordinationRingOvercookedConfig(
+    game_cfg = CrampedRoomOvercookedConfig(
         temperature_input=True,
         single_temperature_input=True,
         reward_cfg=OvercookedRewardConfig(
@@ -123,7 +126,7 @@ def main():
     results, _ = do_evaluation(
         game=game,
         evaluee=alb_online_agent,
-        opponent_list=[proxy_net_agent],
+        opponent_list=[bc_agent],
         num_episodes=[4],
         enemy_iterations=0,
         temperature_list=[1],

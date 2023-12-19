@@ -114,7 +114,7 @@ def run_inference_server(
             # get ready input data
             input_rdy_cpy = np.array(np.copy(input_rdy_np), dtype=bool)
             if np.all(input_rdy_cpy == 0):
-                time.sleep(0.1)
+                # time.sleep(0.0001)
                 continue
             obs_filtered = input_np[input_rdy_cpy]
             n = obs_filtered.shape[0]

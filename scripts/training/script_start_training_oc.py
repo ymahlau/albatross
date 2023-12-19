@@ -50,7 +50,7 @@ def start_training_from_structured_configs():
     Main method to start the training using dataclasses specified below
     """
 
-    temperature_input = True
+    temperature_input = False
     single_temperature = False
     # game
     # game_cfg = perform_choke_2_player(fully_connected=False, centered=True)
@@ -90,25 +90,25 @@ def start_training_from_structured_configs():
     #     obs_temperature_input=True,
     #     max_batch_size=batch_size,
     # )
-    # eval_func_cfg = InferenceServerEvalConfig(
-    #     random_symmetry=False,
-    #     temperature_input=temperature_input,
-    #     single_temperature=single_temperature,
-    #     min_clip_value=-math.inf,
-    #     max_clip_value=math.inf,
-    #     policy_prediction=net_cfg.predict_policy,
-    #     utility_norm=UtilityNorm.FULL_COOP,
-    # )
-    eval_func_cfg = ResponseInferenceServerEvalConfig(
+    eval_func_cfg = InferenceServerEvalConfig(
         random_symmetry=False,
+        temperature_input=temperature_input,
+        single_temperature=single_temperature,
         min_clip_value=-math.inf,
-        max_clip_value=50,
-        policy_prediction=True,
+        max_clip_value=math.inf,
+        policy_prediction=net_cfg.predict_policy,
+        utility_norm=UtilityNorm.FULL_COOP,
     )
+    # eval_func_cfg = ResponseInferenceServerEvalConfig(
+    #     random_symmetry=False,
+    #     min_clip_value=-math.inf,
+    #     max_clip_value=50,
+    #     policy_prediction=True,
+    # )
 
     # sel_func_cfg = DecoupledUCTSelectionConfig(exp_bonus=1.414)  # 1.4)
     # sel_func_cfg = SampleSelectionConfig(dirichlet_alpha=math.inf, dirichlet_eps=0.25, temperature=1.0)
-    # sel_func_cfg = AlphaZeroDecoupledSelectionConfig(exp_bonus=1.414, dirichlet_alpha=0.3, dirichlet_eps=0.25)
+    sel_func_cfg = AlphaZeroDecoupledSelectionConfig(exp_bonus=1.414, dirichlet_alpha=0.3, dirichlet_eps=0.25)
     # sel_func_cfg = Exp3SelectionConfig(random_prob=0.1)
     # sel_func_cfg = RegretMatchingSelectionConfig(random_prob=0.1)
     # sel_func_cfg = UncertaintySelectionConfig(informed=True)
@@ -118,43 +118,43 @@ def start_training_from_structured_configs():
     #     init_temperatures=[15 for _ in range(game_cfg.num_players)],
     #     sbr_mode=SbrMode.NAGURNEY,
     # )
-    backup_func_cfg = EnemyExploitationBackupConfig(
-        exploit_temperature=10,
-        average_eval=False,
-    )
+    # backup_func_cfg = EnemyExploitationBackupConfig(
+    #     exploit_temperature=10,
+    #     average_eval=False,
+    # )
     # backup_func_cfg = RNADBackupConfig(
     #     num_iterations=1000,
     #     reg_factor=0.2,
     # )
     # backup_func_cfg = UncertaintyBackupConfig(lr=0.3, temperature=3, informed=True, use_children=False)
-    # backup_func_cfg = StandardBackupConfig()
+    backup_func_cfg = StandardBackupConfig()
     # backup_func_cfg = Exp3BackupConfig()
     # backup_func_cfg = RegretMatchingBackupConfig(avg_backup=True)
-    extraction_func_cfg = SpecialExtractConfig(
-        utility_norm=UtilityNorm.NONE,
-        min_clip_value=-math.inf,
-        max_clip_value=30,
-    )
-    # extraction_func_cfg = StandardExtractConfig()
+    # extraction_func_cfg = SpecialExtractConfig(
+    #     utility_norm=UtilityNorm.NONE,
+    #     min_clip_value=-math.inf,
+    #     max_clip_value=30,
+    # )
+    extraction_func_cfg = StandardExtractConfig()
     # extraction_func_cfg = MeanPolicyExtractConfig()
     # extraction_func_cfg = PolicyExtractConfig()
-    # search_cfg = MCTSConfig(
-    #     eval_func_cfg=eval_func_cfg,
-    #     sel_func_cfg=sel_func_cfg,
-    #     backup_func_cfg=backup_func_cfg,
-    #     extract_func_cfg=extraction_func_cfg,
-    #     expansion_depth=0,
-    #     use_hot_start=False,
-    #     optimize_fully_explored=False,
-    #     discount=0.95,
-    # )
-    search_cfg = FixedDepthConfig(
+    search_cfg = MCTSConfig(
         eval_func_cfg=eval_func_cfg,
+        sel_func_cfg=sel_func_cfg,
         backup_func_cfg=backup_func_cfg,
         extract_func_cfg=extraction_func_cfg,
-        average_eval=True,
+        expansion_depth=0,
+        use_hot_start=False,
+        optimize_fully_explored=False,
         discount=0.9,
     )
+    # search_cfg = FixedDepthConfig(
+    #     eval_func_cfg=eval_func_cfg,
+    #     backup_func_cfg=backup_func_cfg,
+    #     extract_func_cfg=extraction_func_cfg,
+    #     average_eval=True,
+    #     discount=0.9,
+    # )
     # search_cfg = SMOOSConfig(
     #     eval_func_cfg=eval_func_cfg,
     #     exp_factor=0.15,
@@ -172,24 +172,24 @@ def start_training_from_structured_configs():
     worker_cfg = WorkerConfig(
         search_cfg=search_cfg,
         policy_eval_cfg=policy_eval_cfg,
-        temp_scaling_cfgs=(
-            TemperatureAnnealingConfig(
-                init_temp=5,
-                end_times_min=[2, 5],
-                anneal_temps=[5, 0],
-                anneal_types=[AnnealingType.CONST, AnnealingType.LINEAR],
-                cyclic=False,
-                sampling=False,
-            ),
-            TemperatureAnnealingConfig(
-                init_temp=10,
-                end_times_min=[1],
-                anneal_temps=[10],
-                anneal_types=[AnnealingType.CONST],
-                cyclic=True,
-                sampling=False,
-            ),
-        ),
+        # temp_scaling_cfgs=(
+        #     TemperatureAnnealingConfig(
+        #         init_temp=5,
+        #         end_times_min=[2, 5],
+        #         anneal_temps=[5, 0],
+        #         anneal_types=[AnnealingType.CONST, AnnealingType.LINEAR],
+        #         cyclic=False,
+        #         sampling=False,
+        #     ),
+        #     TemperatureAnnealingConfig(
+        #         init_temp=10,
+        #         end_times_min=[1],
+        #         anneal_temps=[10],
+        #         anneal_types=[AnnealingType.CONST],
+        #         cyclic=True,
+        #         sampling=False,
+        #     ),
+        # ),
         # anneal_cfgs=None,
         # anneal_cfgs=[TemperatureAnnealingConfig(
         #     init_temp=0,
@@ -199,15 +199,15 @@ def start_training_from_structured_configs():
         #     cyclic=True,
         #     sampling=True,
         # )],
-        anneal_cfgs=[TemperatureAnnealingConfig(
-            init_temp=0,
-            end_times_min=[1],
-            anneal_temps=[1],
-            anneal_types=[AnnealingType.COSINE],
-            cyclic=True,
-            sampling=True,
-        ) for _ in range(game_cfg.num_players)],
-        search_iterations=1,
+        # anneal_cfgs=[TemperatureAnnealingConfig(
+        #     init_temp=0,
+        #     end_times_min=[1],
+        #     anneal_temps=[1],
+        #     anneal_types=[AnnealingType.COSINE],
+        #     cyclic=True,
+        #     sampling=True,
+        # ) for _ in range(game_cfg.num_players)],
+        search_iterations=500,
         temperature=1,
         max_random_start_steps=0,
         use_symmetries=True,
@@ -274,7 +274,7 @@ def start_training_from_structured_configs():
         id=0,
         updater_bucket_size=100,
         worker_episode_bucket_size=5,
-        wandb_mode='online',
+        wandb_mode='offline',
     )
     saver_cfg = SaverConfig(
         save_interval_sec=10,
@@ -297,7 +297,7 @@ def start_training_from_structured_configs():
         collector_cfg=collector_cfg,
         inf_cfg=inf_cfg,
         max_batch_size=batch_size,
-        max_eval_per_worker=batch_size * 2,
+        max_eval_per_worker=3,
         data_qsize=10,
         info_qsize=100,
         updater_in_qsize=100,
@@ -317,8 +317,8 @@ def start_training_from_structured_configs():
         compile_model=False,
         compile_mode='max-autotune',
         merge_inference_update_gpu=True,
-        # proxy_net_path=None,
-        proxy_net_path=str(Path(__file__).parent / 'outputs' / 'proxy2.pt'),
+        proxy_net_path=None,
+        # proxy_net_path=str(Path(__file__).parent / 'outputs' / 'proxy2.pt'),
     )
     # initialize yaml file and hydra
     print(os.getcwd())
