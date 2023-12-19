@@ -611,7 +611,7 @@ class ResponseInferenceEvalFunc(EvalFunc):
                     and np.all(self.output_rdy_arr_resp_np[self.start_idx:end_idx_resp] == 1):
                 break
             # wait again
-            # time.sleep(self.cfg.active_wait_time)
+            time.sleep(self.cfg.active_wait_time)
         if self.stop_flag.value:  # program terminated
             return
         # gather outputs and clear rdy arr
