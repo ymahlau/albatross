@@ -12,32 +12,31 @@ import torch
 import multiprocessing as mp
 
 from src.depth.result_struct import DepthResultStruct, joint_action_from_struct, aggregate_structs, DepthResultEntry
-from src.game import GameConfig, Game
-from src.game.initialization import get_game_from_config, game_config_from_structured
+from src.game.game import Game, GameConfig
+from src.game.initialization import get_game_from_config
 from src.game.utils import step_with_draw_prevention
 from src.misc.utils import set_seed
 from src.network.initialization import get_network_from_file
 from src.search import Search, SearchConfig
-from src.search.initialization import get_search_from_config, search_config_from_structured
+from src.search.initialization import get_search_from_config
 from src.search.utils import compute_q_values_as_arr, ja_value_array
 
 # global variables that need to be initialized by init function in each process
-global_search_dict: Optional[dict[str, Search, int, int]] = None
+global_search_dict: Optional[dict[str, tuple[Search, int, int]]] = None
 
 
 def compute_different_depths(
         game: Game,
         episode: int,
         turn: int,
-        include_values: bool,
-        include_policies: bool,
-        include_q_values: bool,
         include_obs: bool,
         include_ja_values: bool,
 ) -> DepthResultStruct:  # sample size: num_player at turn
     player_turn = game.players_at_turn()
     # iterate through all searches
     entry_dict = {}
+    if global_search_dict is None:
+        raise Exception('This should never happen')
     for name, v in global_search_dict.items():
         # print(f"{datetime.now()} - Starting search: {name}", flush=True)
         search, iterations, save_every_k = v
@@ -53,25 +52,22 @@ def compute_different_depths(
             if search.root is None:
                 raise Exception("root is None, this should never happen")
             # add to result lists
-            if include_values:
-                values.append(cur_values[player_turn])
-            if include_policies:
-                policies.append(cur_policies)
-            if include_q_values:
-                cur_q_list = []
-                for player in game.players_at_turn():
-                    qs = compute_q_values_as_arr(search.root, player, cur_policies)
-                    cur_q_list.append(qs)
-                cur_q_arr = np.asarray(cur_q_list, dtype=float)
-                q_list.append(cur_q_arr)
+            values.append(cur_values[player_turn])
+            policies.append(cur_policies)
+            cur_q_list = []
+            for player in game.players_at_turn():
+                qs = compute_q_values_as_arr(search.root, player, cur_policies)
+                cur_q_list.append(qs)
+            cur_q_arr = np.asarray(cur_q_list, dtype=float)
+            q_list.append(cur_q_arr)
         ja_values, ja_actions = None, None
         if include_ja_values:
-            ja_values, ja_actions = ja_value_array(search.root)
+            ja_values, ja_actions = ja_value_array(search.root) # type: ignore
         result_entry = DepthResultEntry(
             k=np.asarray(save_every_k, dtype=int),
-            values=np.stack(values, axis=1) if include_values else None,
-            policies=np.stack(policies, axis=1) if include_policies else None,
-            q_values=np.stack(q_list, axis=1) if include_q_values else None,
+            values=np.stack(values, axis=1),
+            policies=np.stack(policies, axis=1),
+            q_values=np.stack(q_list, axis=1),
             ja_values=ja_values,
             ja_actions=ja_actions,
         )
@@ -81,8 +77,7 @@ def compute_different_depths(
     # observation
     obs = None
     if include_obs:
-        obs_tensor, _, _ = game.get_obs(0)
-        obs = obs_tensor.numpy()
+        obs, _, _ = game.get_obs(0)
     # legal actions filter
     legal_actions = np.zeros(shape=(game.num_players_at_turn(), game.num_actions), dtype=bool)
     for player_idx, player in enumerate(game.players_at_turn()):
@@ -93,7 +88,6 @@ def compute_different_depths(
         episode=np.asarray([episode for _ in player_turn], dtype=int),
         turn=np.asarray([turn for _ in player_turn], dtype=int),
         player=np.asarray(game.players_at_turn(), dtype=int),
-        game_length=None,
         results=entry_dict,
         legal_actions=legal_actions,
         obs=obs,
@@ -110,9 +104,6 @@ def compute_steps_async(
         step_search: Optional[str],
         draw_prevention: bool,
         seed: int,
-        include_values: bool,
-        include_policies: bool,
-        include_q_values: bool,
         include_ja_values: bool,
         include_obs: bool,
         min_available_actions: int,
@@ -120,6 +111,8 @@ def compute_steps_async(
 ) -> DepthResultStruct:
     # set seed (important to prevent all workers doing the exact same work)
     set_seed(seed)
+    if global_search_dict is None:
+        raise Exception("This should never happen")
     # computes num_steps observations
     sample_counter = 0
     turn_counter = 0
@@ -148,10 +141,7 @@ def compute_steps_async(
                 game=game,
                 episode=episode_counter,
                 turn=turn_counter,
-                include_values=include_values,
-                include_policies=include_policies,
                 include_obs=include_obs,
-                include_q_values=include_q_values,
                 include_ja_values=include_ja_values,
             )
             episode_result_list.append(cur_result)
@@ -174,7 +164,6 @@ def compute_steps_async(
         episode_agg = aggregate_structs(episode_result_list)
         example_k = list(global_search_dict.keys())[0]
         game_lengths = np.ones((episode_agg.results[example_k].values.shape[0],), dtype=int) * turn_counter
-        episode_agg.game_length = game_lengths
         result_list.append(episode_agg)
         # reset variables
         game.reset()
@@ -229,9 +218,6 @@ class DepthSearchConfig:
     save_path: Optional[str]
     restrict_cpu: bool
     seed: Optional[int]
-    include_values: bool
-    include_policies: bool
-    include_q_values: bool
     include_ja_values: bool
     include_obs: bool
     min_available_actions: int  # inclusive bound
@@ -244,21 +230,6 @@ class DepthSearchConfig:
         for k, v in self.search_specs.items():
             if v[2] % v[3] != 0:
                 raise ValueError(f"Iteration count needs to be divisible by k")
-
-def depth_search_config_from_structured(cfg):
-    search_spec_dict = {}
-    for k, v in cfg.search_specs.items():
-        search_spec_dict[k] = (
-            search_config_from_structured(v[0]),
-            v[1],
-            v[2],
-            v[3],
-        )
-    kwargs = dict(cfg)
-    kwargs['search_specs'] = search_spec_dict
-    kwargs['game_cfg'] = game_config_from_structured(cfg.game_cfg)
-    result_cfg = DepthSearchConfig(**kwargs)
-    return result_cfg
 
 
 def compute_different_depths_parallel(
@@ -290,9 +261,6 @@ def compute_different_depths_parallel(
             'step_iterations': cfg.step_iterations,  # if none, use gt result
             'step_search': cfg.step_search,
             'draw_prevention': cfg.draw_prevention,
-            'include_values': cfg.include_values,
-            'include_policies': cfg.include_policies,
-            'include_q_values': cfg.include_q_values,
             'include_ja_values': cfg.include_ja_values,
             'include_obs': cfg.include_obs,
             'min_available_actions': cfg.min_available_actions,

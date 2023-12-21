@@ -131,6 +131,7 @@ data:
     __module__: src.trainer.config
     __name__: InferenceServerConfig
     data:
+      poll_every_sec: 5
       statistics_every_sec: 60
       use_gpu: true
   info_qsize: 100
@@ -375,7 +376,7 @@ data:
             __module__: src.search.config
             __name__: InferenceServerEvalConfig
             data:
-              active_wait_time: 0.05
+              active_wait_time: 0
               init_temperatures: null
               max_clip_value: 30
               min_clip_value: -30

@@ -14,17 +14,19 @@ from src.misc.replay_buffer import ReplayBuffer, ReplayBufferConfig, ReplayBuffe
 @dataclass()
 class DepthResultEntry:
     k: np.ndarray  # shape (), scalar: save every k search iterations
-    values: Optional[np.ndarray]  # shape (num_samples, num_iter/k,)
-    policies: Optional[np.ndarray]  # shape (num_samples, num_iter/k, num_actions)
-    q_values: Optional[np.ndarray]  # shape (num_samples, num_iter/k, num_actions)
+    values: np.ndarray  # shape (num_samples, num_iter/k,)
+    policies: np.ndarray  # shape (num_samples, num_iter/k, num_actions)
+    q_values: np.ndarray  # shape (num_samples, num_iter/k, num_actions)
     ja_values: Optional[np.ndarray]  # shape (num_samples, num_actions^num_player, num_player) -> p0 is current player
-    ja_actions: Optional[np.ndarray]  # shape (num_samples, num_actions^num_player, num_player)
+    ja_actions:  Optional[np.ndarray]  # shape (num_samples, num_actions^num_player, num_player)
 
     def get_aa_ja_and_values(
             self,
             index: int,
     ) -> tuple[list[list[int]], list[tuple[int, ...]], np.ndarray]:
         # computes available actions, joint action list and joint action value array
+        if self.ja_actions is None or self.ja_values is None:
+            raise Exception("Cannot comput aa and ja values if they are none")
         ja = self.ja_actions[index]
         ja_value = self.ja_values[index]
         num_p_at_turn = ja.shape[-1]
@@ -43,7 +45,6 @@ class DepthResultStruct:
     episode: np.ndarray  # shape num_samples
     turn: np.ndarray  # shape num_samples
     player: np.ndarray  # shape num_samples
-    game_length: Optional[np.ndarray]  # shape num_samples, optional is just for intermediate computation
     results: dict[str, DepthResultEntry]
     legal_actions: np.ndarray  # shape (num_samples, num_actions)
     obs: Optional[np.ndarray]  # shape (num_samples, num_symmetries, *obs_shape)
@@ -53,19 +54,15 @@ class DepthResultStruct:
             'episode': self.episode,
             'turn': self.turn,
             'player': self.player,
-            'game_length': self.game_length,
             'legal_actions': self.legal_actions,
         }
         if self.obs is not None:
             save_dict['obs'] = self.obs
         for name, entry in self.results.items():
             save_dict[f'{name}_k'] = entry.k
-            if entry.values is not None:
-                save_dict[f'{name}_values'] = entry.values
-            if entry.policies is not None:
-                save_dict[f'{name}_policies'] = entry.policies
-            if entry.q_values is not None:
-                save_dict[f'{name}_q_values'] = entry.q_values
+            save_dict[f'{name}_values'] = entry.values
+            save_dict[f'{name}_policies'] = entry.policies
+            save_dict[f'{name}_q_values'] = entry.q_values
             if entry.ja_values is not None:
                 save_dict[f'{name}_ja_values'] = entry.ja_values
             if entry.ja_actions is not None:
@@ -82,9 +79,9 @@ class DepthResultStruct:
         result_dict = {}
         for name in loaded['names']:
             result_dict[name] = DepthResultEntry(
-                values=loaded[f'{name}_values'] if f'{name}_values' in loaded else None,
-                policies=loaded[f'{name}_policies'] if f'{name}_policies' in loaded else None,
-                q_values=loaded[f'{name}_q_values'] if f'{name}_q_values' in loaded else None,
+                values=loaded[f'{name}_values'],
+                policies=loaded[f'{name}_policies'],
+                q_values=loaded[f'{name}_q_values'],
                 k=loaded[f'{name}_k'],
                 ja_values=loaded[f'{name}_ja_values'] if f'{name}_ja_values' in loaded else None,
                 ja_actions=loaded[f'{name}_ja_actions'] if f'{name}_ja_actions' in loaded else None,
@@ -93,7 +90,6 @@ class DepthResultStruct:
             episode=loaded['episode'],
             turn=loaded['turn'],
             player=loaded['player'],
-            game_length=loaded['game_length'],
             results=result_dict,
             legal_actions=loaded['legal_actions'],
             obs=loaded['obs'] if 'obs' in loaded else None,
@@ -134,17 +130,13 @@ class DepthResultStruct:
         self.episode = self.episode[index_arr]
         self.turn = self.turn[index_arr]
         self.player = self.player[index_arr]
-        self.game_length = self.game_length[index_arr]
         self.legal_actions = self.legal_actions[index_arr]
         if self.obs is not None:
             self.obs = self.obs[index_arr]
-        for name, entry in self.results.items():
-            if entry.values is not None:
-                entry.values = entry.values[index_arr]
-            if entry.policies is not None:
-                entry.policies = entry.policies[index_arr]
-            if entry.q_values is not None:
-                entry.q_values = entry.q_values[index_arr]
+        for entry in self.results.values():
+            entry.values = entry.values[index_arr]
+            entry.policies = entry.policies[index_arr]
+            entry.q_values = entry.q_values[index_arr]
             if entry.ja_values is not None:
                 entry.ja_values = entry.ja_values[index_arr]
             if entry.ja_actions is not None:
@@ -164,18 +156,15 @@ class DepthResultStruct:
             num_players=np.max(self.player).item() + 1,
             num_symmetries=1,
             capacity=self.obs.shape[0],
-            single_temperature=True,
         )
         content = ReplayBufferContent(
-            dc_obs=torch.tensor(self.obs, dtype=torch.float32),
-            dc_val=torch.tensor(entry.values, dtype=torch.float32).unsqueeze(-1),
-            dc_pol=torch.tensor(entry.policies, dtype=torch.float32),
-            dc_len=torch.tensor(self.game_length, dtype=torch.float32).unsqueeze(-1),
-            dc_temp=torch.zeros(self.episode.shape, dtype=torch.float32).unsqueeze(-1),
-            mc_ids=torch.zeros(self.episode.shape, dtype=torch.float32).unsqueeze(-1),
-            mc_turns=torch.tensor(self.turn, dtype=torch.float32).unsqueeze(-1),
-            mc_player=torch.tensor(self.player, dtype=torch.float32).unsqueeze(-1),
-            mc_symmetry=torch.zeros(self.episode.shape, dtype=torch.float32).unsqueeze(-1),
+            dc_obs=self.obs,
+            dc_val=entry.values[:, np.newaxis],
+            dc_pol=entry.policies,
+            mc_ids=np.zeros(self.episode.shape, dtype=float)[..., np.newaxis],
+            mc_turns=self.turn[..., np.newaxis],
+            mc_player=self.player[..., np.newaxis],
+            mc_symmetry=np.zeros(self.episode.shape, dtype=float)[..., np.newaxis],
             capacity_reached=True,
             idx=0,
             game_idx=0,
@@ -204,44 +193,33 @@ def aggregate_structs(struct_list: list[DepthResultStruct]) -> DepthResultStruct
     full_legal_actions = np.concatenate([s.legal_actions for s in struct_list], axis=0)
     for s in struct_list:
         del s.legal_actions
-    full_game_length = None
-    if struct_list[0].game_length is not None:
-        full_game_length = np.concatenate([s.game_length for s in struct_list], axis=0)
-        for s in struct_list:
-            del s.game_length
     # observations are optional
     full_obs = None
     if struct_list[0].obs is not None:
-        full_obs = np.concatenate([s.obs for s in struct_list], axis=0)
+        full_obs = np.concatenate([s.obs for s in struct_list], axis=0) # type: ignore
         for s in struct_list:
             del s.obs
     # result struct entries for every search
     new_entries = {}
     name_list = list(struct_list[0].results.keys())
     for name in name_list:
-        full_values = None
-        if struct_list[0].results[name].values is not None:
-            full_values = np.concatenate([s.results[name].values for s in struct_list], axis=0)
-            for s in struct_list:
-                del s.results[name].values
-        full_policies = None
-        if struct_list[0].results[name].policies is not None:
-            full_policies = np.concatenate([s.results[name].policies for s in struct_list], axis=0)
-            for s in struct_list:
-                del s.results[name].policies
-        full_q_values = None
-        if struct_list[0].results[name].q_values is not None:
-            full_q_values = np.concatenate([s.results[name].q_values for s in struct_list], axis=0)
-            for s in struct_list:
-                del s.results[name].q_values
+        full_values = np.concatenate([s.results[name].values for s in struct_list], axis=0)
+        for s in struct_list:
+            del s.results[name].values
+        full_policies = np.concatenate([s.results[name].policies for s in struct_list], axis=0)
+        for s in struct_list:
+            del s.results[name].policies
+        full_q_values = np.concatenate([s.results[name].q_values for s in struct_list], axis=0)
+        for s in struct_list:
+            del s.results[name].q_values
         full_ja_values = None
         if struct_list[0].results[name].ja_values is not None:
-            full_ja_values = np.concatenate([s.results[name].ja_values for s in struct_list], axis=0)
+            full_ja_values = np.concatenate([s.results[name].ja_values for s in struct_list], axis=0) # type: ignore
             for s in struct_list:
                 del s.results[name].ja_values
         full_ja_actions = None
         if struct_list[0].results[name].ja_actions is not None:
-            full_ja_actions = np.concatenate([s.results[name].ja_actions for s in struct_list], axis=0)
+            full_ja_actions = np.concatenate([s.results[name].ja_actions for s in struct_list], axis=0) # type: ignore
             for s in struct_list:
                 del s.results[name].ja_actions
         k = struct_list[0].results[name].k
@@ -261,7 +239,6 @@ def aggregate_structs(struct_list: list[DepthResultStruct]) -> DepthResultStruct
         episode=full_episodes,
         turn=full_turns,
         player=full_player,
-        game_length=full_game_length,
         results=new_entries,
         legal_actions=full_legal_actions,
         obs=full_obs,

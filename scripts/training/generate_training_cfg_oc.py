@@ -262,7 +262,7 @@ def generate_training_structured_configs():
                 beta1=0.9,
                 beta2=0.99,
             )
-            buffer_size = int(1e5)
+            buffer_size = int(5e4)
             collector_cfg = CollectorConfig(
                 buffer_size=buffer_size,
                 quick_start_buffer_path=None,
@@ -297,8 +297,8 @@ def generate_training_structured_configs():
                 use_gpu=True,
             )
             trainer_cfg = AlphaZeroTrainerConfig(
-                num_worker=100,  # IMPORTANT
-                num_inference_server=2,
+                num_worker=75,  # IMPORTANT
+                num_inference_server=1,
                 save_state=False,
                 save_state_after_seconds=30,
                 net_cfg=net_cfg,

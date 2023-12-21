@@ -195,10 +195,6 @@ def run_worker(
                     game=game,
                     iterations=worker_cfg.search_iterations,
                 )
-                # if worker_id == 0:
-                #     stats.infos.append((values, action_probs, cur_temp_list))
-                # if values[0] > 1.2:
-                #     print(f"{values[0]:.2f}, {values[1]:.2f}, {action_probs=}".replace("\n", ""), flush=True)
                 if debug:
                     print(f"{values=}")
                     print(f"{action_probs=}")
@@ -247,6 +243,19 @@ def run_worker(
                 reward_list.append(rewards)
                 stats.reward_sum += np.sum(rewards).item()
                 stats.step_time_sum += time.time() - step_time_start
+                # when using td0, send data immediately
+                if game_list and worker_cfg.policy_eval_cfg.eval_type == PolicyEvalType.TD_0:
+                    data_conv_time_start = time.time()
+                    if annealer_list is None:
+                        temp_list = None # type: ignore
+                    sample = convert_training_data(game_list, value_list, reward_list, policy_list, trainer_cfg, temp_list)
+                    stats.data_conv_time_sum += time.time() - data_conv_time_start
+                    idle_time_start = time.time()
+                    send_obj_to_queue(sample, data_queue, stop_flag)
+                    stats.idle_time_sum += time.time() - idle_time_start
+                    # reinit
+                    game_list, value_list, reward_list, policy_list = [], [], [], []
+                    temp_list: list[list[float]] = []
             # after end of episode
             if debug:
                 game.render()
@@ -273,9 +282,6 @@ def run_worker(
                 send_info(stats, info_queue, stop_flag, temps)
                 if stop_flag.value:
                     break
-                # if worker_id == 0 and stats.infos:
-                #     with open("/tmp/infos.pkl", 'wb') as f:
-                #         pickle.dump(stats.infos, f)
     except KeyboardInterrupt:
         print('Detected Keyboard Interrupt in Worker Process\n', flush=True)
     game.close()
@@ -387,15 +393,6 @@ def convert_training_data(
 ) -> BufferInputSample:
     value_tensor_list, policy_tensor_list, obs_tensor_list = [], [], []
     turns_list, player_list, symmetry_list = [], [], []
-    # find game length for all players
-    len_per_player = [-1 for _ in range(game_list[0].num_players)]
-    for i, game in enumerate(game_list):
-        for player in game.players_not_at_turn():
-            if len_per_player[player] == -1:
-                len_per_player[player] = i
-    for i, pl in enumerate(len_per_player):
-        if pl == -1:
-            len_per_player[i] = len(game_list)
     # policy evaluation
     eval_value_list = compute_policy_evaluation(game_list, value_list, reward_list, trainer_cfg.worker_cfg)
     # construct

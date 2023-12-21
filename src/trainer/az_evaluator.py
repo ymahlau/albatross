@@ -272,6 +272,7 @@ def do_evaluation(
                 if verbose_level >= 2:
                     print(joint_action_list, flush=True)
                     game.render()
+                    print('#########################', flush=True)
                 step_counter += 1
             # add rewards of player 0 to sum
             cum_rewards = game.get_cum_rewards()

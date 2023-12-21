@@ -7,7 +7,7 @@
 #SBATCH --mem=100G
 #SBATCH --verbose
 #SBATCH --gres=gpu:rtx3090:2
-#SBATCH --array=0-9
+#SBATCH --array=0-4
 echo "Hier beginnt die Ausführung/Berechnung"
 module load GCC/11.2.0
 cd ..

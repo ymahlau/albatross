@@ -26,6 +26,12 @@ def serialize_obj(obj) -> Any:
         return serialize_dataclass(wrapped)
     elif dataclasses.is_dataclass(obj):
         return serialize_dataclass(obj)
+    elif isinstance(obj, dict):
+        return {
+            '__dict__': {
+                k: serialize_obj(v) for k, v in obj.items()
+            }
+        }
     return obj
 
 
@@ -52,6 +58,11 @@ def deserialize_obj(data: Any) -> Any:
         m = importlib.import_module(data['__module__'])
         c = getattr(m, data['__name__'])
         return c[data['value']]
+    elif isinstance(data, dict) and '__dict__' in data and len(data) == 1:
+        # dict conversion
+        return {
+            k: deserialize_obj(v) for k, v in data['__dict__'].items()
+        }
     elif isinstance(data, list):
         # convert every item in list
         return [deserialize_obj(v) for v in data]

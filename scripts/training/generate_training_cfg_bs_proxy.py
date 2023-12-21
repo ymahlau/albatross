@@ -13,7 +13,7 @@ from src.equilibria.logit import SbrMode
 from src.game.battlesnake.battlesnake import BattleSnakeGame
 from src.game.battlesnake.bootcamp.test_envs_3x3 import perform_choke_2_player
 from src.game.battlesnake.bootcamp.test_envs_5x5 import perform_choke_5x5_4_player
-from src.game.battlesnake.bootcamp.test_envs_7x7 import survive_on_7x7, survive_on_7x7_4_player, survive_on_7x7_4_player_royale, survive_on_7x7_constrictor
+from src.game.battlesnake.bootcamp.test_envs_7x7 import survive_on_7x7, survive_on_7x7_4_player, survive_on_7x7_4_player_royale, survive_on_7x7_constrictor, survive_on_7x7_constrictor_4_player
 from src.game.overcooked.config import CrampedRoomOvercookedConfig
 from src.game.values import UtilityNorm
 from src.misc.const import PHI
@@ -51,6 +51,7 @@ def start_training_from_structured_configs():
     cfg_dict = {
         'nd7': survive_on_7x7(),
         '4nd7': survive_on_7x7_4_player(),
+        '4d7': survive_on_7x7_constrictor_4_player(),
     }
     for seed in range(5):
         for mode_str, game_cfg in cfg_dict.items():

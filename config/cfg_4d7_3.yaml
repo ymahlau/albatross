@@ -1,0 +1,423 @@
+__module__: src.trainer.config
+__name__: AlphaZeroTrainerConfig
+data:
+  collector_cfg:
+    __module__: src.trainer.config
+    __name__: CollectorConfig
+    data:
+      buffer_size: 2000000
+      log_every_sec: 120
+      quick_start_buffer_path: null
+      start_wait_n_samples: 2000000
+  compile_mode: max-autotune
+  compile_model: false
+  data_qsize: 10
+  distributor_out_qsize: 10
+  evaluator_cfg:
+    __module__: src.trainer.config
+    __name__: EvaluatorConfig
+    data:
+      enemy_cfgs:
+      - __module__: src.agent.one_shot
+        __name__: LegalRandomAgentConfig
+        data:
+          name: LegalRandomAgent
+      - __module__: src.agent.search_agent
+        __name__: AreaControlSearchAgentConfig
+        data:
+          deterministic: false
+          name: AreaControlAgent
+          search_cfg:
+            __module__: src.search.config
+            __name__: MCTSConfig
+            data:
+              backup_func_cfg:
+                __module__: src.search.config
+                __name__: StandardBackupConfig
+                data: {}
+              discount: 0.99
+              eval_func_cfg:
+                __module__: src.search.config
+                __name__: AreaControlEvalConfig
+                data:
+                  health_threshold: 1.0
+                  utility_norm:
+                    __module__: src.game.values
+                    __name__: UtilityNorm
+                    value: NONE
+              expansion_depth: 0
+              extract_func_cfg:
+                __module__: src.search.config
+                __name__: StandardExtractConfig
+                data: {}
+              optimize_fully_explored: false
+              sel_func_cfg:
+                __module__: src.search.config
+                __name__: DecoupledUCTSelectionConfig
+                data:
+                  exp_bonus: 1.414
+              use_hot_start: true
+      enemy_iterations: 2000
+      eval_rate_sec: 20
+      num_episodes:
+      - 100
+      - 100
+      prevent_draw: true
+      sample_temperatures:
+      - .inf
+      - .inf
+      save_checkpoints: false
+      self_play: false
+      switch_pos: false
+  game_cfg:
+    __module__: src.game.battlesnake.battlesnake_conf
+    __name__: BattleSnakeConfig
+    data:
+      all_actions_legal: false
+      constrictor: true
+      ec:
+        __module__: src.game.battlesnake.battlesnake_enc
+        __name__: SimpleConstrictorEncodingConfig
+        data:
+          centered: true
+          compress_enemies: true
+          fixed_food_spawn_chance: -1
+          flatten: false
+          include_area_control: false
+          include_board: true
+          include_current_food: false
+          include_distance_map: false
+          include_food_distance: false
+          include_hazards: false
+          include_next_food: false
+          include_num_food_on_board: false
+          include_number_of_turns: false
+          include_snake_body: false
+          include_snake_body_as_one_hot: true
+          include_snake_head: true
+          include_snake_health: false
+          include_snake_length: false
+          include_snake_tail: false
+          include_tail_distance: false
+          single_temperature_input: true
+          temperature_input: false
+      food_spawn_chance: 0
+      h: 7
+      hazard_damage: 14
+      init_food_pos: []
+      init_hazards: []
+      init_snake_health:
+      - 50
+      - 50
+      - 50
+      - 50
+      init_snake_len:
+      - 50
+      - 50
+      - 50
+      - 50
+      init_snake_pos: null
+      init_snakes_alive:
+      - true
+      - true
+      - true
+      - true
+      init_turns_played: 0
+      max_snake_health:
+      - 50
+      - 50
+      - 50
+      - 50
+      min_food: 0
+      num_actions: 4
+      num_players: 4
+      reward_cfg:
+        __module__: src.game.battlesnake.battlesnake_rewards
+        __name__: KillBattleSnakeRewardConfig
+        data:
+          living_reward: 0.0
+          terminal_reward: 1.0
+      royale: false
+      shrink_n_turns: 25
+      w: 7
+      wrapped: false
+  inf_cfg:
+    __module__: src.trainer.config
+    __name__: InferenceServerConfig
+    data:
+      poll_every_sec: 5
+      statistics_every_sec: 60
+      use_gpu: true
+  info_qsize: 100
+  init_new_network_params: false
+  logger_cfg:
+    __module__: src.trainer.config
+    __name__: LoggerConfig
+    data:
+      buffer_gen: false
+      id: 3
+      name: 4d7
+      project_name: battlesnake
+      updater_bucket_size: 1000
+      wandb_mode: offline
+      worker_episode_bucket_size: 20
+  max_batch_size: 4000
+  max_cpu_evaluator: 1
+  max_cpu_inference_server: 4
+  max_cpu_log_dist_save_collect: 1
+  max_cpu_updater: 2
+  max_cpu_worker: 30
+  max_eval_per_worker: 1028
+  merge_inference_update_gpu: false
+  net_cfg:
+    __module__: src.network.mobilenet_v3
+    __name__: MobileNetConfig7x7Incumbent
+    data:
+      activation_type:
+        __module__: src.network.utils
+        __name__: ActivationType
+        value: HARDSWISH
+      eq_type:
+        __module__: src.network.vision_net
+        __name__: EquivarianceType
+        value: NONE
+      game_cfg: null
+      layer_specs:
+      - - 64
+        - 128
+        - 64
+        - 3
+        - 1
+        - 0
+      - - 64
+        - 128
+        - 64
+        - 5
+        - 1
+        - 0
+      - - 64
+        - 192
+        - 128
+        - 3
+        - 2
+        - 0
+      - - 128
+        - 320
+        - 128
+        - 3
+        - 1
+        - 1
+      - - 128
+        - 320
+        - 128
+        - 5
+        - 1
+        - 1
+      - - 128
+        - 320
+        - 192
+        - 3
+        - 2
+        - 1
+      - - 192
+        - 384
+        - 192
+        - 3
+        - 1
+        - 1
+      - - 192
+        - 384
+        - 192
+        - 3
+        - 1
+        - 1
+      lff_feature_expansion: 27
+      lff_features: false
+      norm_type:
+        __module__: src.network.utils
+        __name__: NormalizationType
+        value: GROUP_NORM
+      policy_head_cfg:
+        __module__: src.network.fcn
+        __name__: HeadConfig
+        data:
+          activation_type:
+            __module__: src.network.utils
+            __name__: ActivationType
+            value: LEAKY_RELU
+          dropout_p: 0.2
+          final_activation:
+            __module__: src.network.utils
+            __name__: ActivationType
+            value: NONE
+          hidden_size: null
+          normalization_type:
+            __module__: src.network.utils
+            __name__: NormalizationType
+            value: GROUP_NORM
+          num_layers: 1
+      predict_policy: true
+      value_head_cfg:
+        __module__: src.network.fcn
+        __name__: HeadConfig
+        data:
+          activation_type:
+            __module__: src.network.utils
+            __name__: ActivationType
+            value: LEAKY_RELU
+          dropout_p: 0.2
+          final_activation:
+            __module__: src.network.utils
+            __name__: ActivationType
+            value: TANH
+          hidden_size: null
+          normalization_type:
+            __module__: src.network.utils
+            __name__: NormalizationType
+            value: GROUP_NORM
+          num_layers: 1
+  num_inference_server: 2
+  num_worker: 100
+  only_generate_buffer: false
+  prev_run_dir: null
+  prev_run_idx: null
+  proxy_net_path: null
+  restrict_cpu: true
+  save_state: false
+  save_state_after_seconds: 18000
+  saver_cfg:
+    __module__: src.trainer.config
+    __name__: SaverConfig
+    data:
+      save_all_checkpoints: false
+      save_interval_sec: 600
+  single_sbr_temperature: true
+  temperature_input: false
+  updater_cfg:
+    __module__: src.trainer.config
+    __name__: UpdaterConfig
+    data:
+      gradient_max_norm: 1
+      mse_policy_loss: false
+      optim_cfg:
+        __module__: src.supervised.optim
+        __name__: OptimizerConfig
+        data:
+          anneal_cfg:
+            __module__: src.supervised.annealer
+            __name__: TemperatureAnnealingConfig
+            data:
+              anneal_temps:
+              - 0.001
+              - 1.0e-06
+              anneal_types:
+              - __module__: src.supervised.annealer
+                __name__: AnnealingType
+                value: LINEAR
+              - __module__: src.supervised.annealer
+                __name__: AnnealingType
+                value: COSINE
+              cyclic: false
+              end_times_min:
+              - 60
+              - 2800
+              init_temp: 0
+              sampling: false
+          beta1: 0.9
+          beta2: 0.99
+          fused: false
+          optim_type:
+            __module__: src.supervised.optim
+            __name__: OptimType
+            value: ADAM_W
+          weight_decay: 1.0e-05
+      policy_loss_factor: 1
+      updates_until_distribution: 20
+      use_gpu: true
+      utility_loss:
+        __module__: src.game.values
+        __name__: UtilityNorm
+        value: NONE
+      utility_loss_factor: 0
+      value_reg_loss_factor: 0
+  updater_in_qsize: 100
+  updater_out_qsize: 10
+  validator_data_qsize: 100
+  worker_cfg:
+    __module__: src.trainer.config
+    __name__: WorkerConfig
+    data:
+      anneal_cfgs: null
+      epsilon_exp_prob: 0
+      exploration_prob: 0.5
+      max_game_length: 8
+      max_random_start_steps: 1
+      policy_eval_cfg:
+        __module__: src.trainer.policy_eval
+        __name__: PolicyEvalConfig
+        data:
+          eval_type:
+            __module__: src.trainer.policy_eval
+            __name__: PolicyEvalType
+            value: TD_0
+          lambda_val: 0.5
+      prevent_draw: true
+      quick_start: false
+      search_cfg:
+        __module__: src.search.config
+        __name__: FixedDepthConfig
+        data:
+          average_eval: false
+          backup_func_cfg:
+            __module__: src.search.config
+            __name__: LogitBackupConfig
+            data:
+              epsilon: 0
+              hp_0: null
+              hp_1: null
+              init_random: true
+              init_temperatures:
+              - 10
+              - 10
+              - 10
+              - 10
+              num_iterations: 150
+              sbr_mode:
+                __module__: src.equilibria.logit
+                __name__: SbrMode
+                value: NAGURNEY
+              use_cpp: true
+          discount: 0.99
+          eval_func_cfg:
+            __module__: src.search.config
+            __name__: InferenceServerEvalConfig
+            data:
+              active_wait_time: 0
+              init_temperatures: null
+              max_clip_value: 30
+              min_clip_value: -30
+              policy_prediction: true
+              random_symmetry: false
+              single_temperature: true
+              temperature_input: false
+              utility_norm:
+                __module__: src.game.values
+                __name__: UtilityNorm
+                value: NONE
+          extract_func_cfg:
+            __module__: src.search.config
+            __name__: SpecialExtractConfig
+            data:
+              max_clip_value: 30
+              min_clip_value: -30
+              utility_norm:
+                __module__: src.game.values
+                __name__: UtilityNorm
+                value: NONE
+      search_iterations: 1
+      temp_scaling_cfgs: null
+      temperature: 1
+      use_symmetries: true
+hydra:
+  run:
+    dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_4d7_3

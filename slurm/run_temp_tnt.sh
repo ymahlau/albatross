@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --job-name=temp.py
 #SBATCH --output=slurm-%j-%a-out.txt
-#SBATCH --time=24:00:00 # (HH:MM:SS)
-#SBATCH --partition=cpu_normal
+#SBATCH --time=infinite # (HH:MM:SS), infinite
+#SBATCH --partition=cpu_long
 #SBATCH --cpus-per-task=8
 #SBATCH --mem-per-cpu=2G
 #SBATCH --verbose

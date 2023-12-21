@@ -1,17 +1,19 @@
 import os
 import sys
 from pathlib import Path
+import hydra
 
 from omegaconf import OmegaConf
 import multiprocessing as mp
-from src.depth.depth_parallel import DepthSearchConfig, depth_search_config_from_structured, \
-    compute_different_depths_parallel
+from src.depth.depth_parallel import DepthSearchConfig, compute_different_depths_parallel
+from src.misc.serialization import deserialize_dataclass
 
 
 def main(cfg: DepthSearchConfig):
     print(os.getcwd(), flush=True)
     print(OmegaConf.to_yaml(cfg), flush=True)
-    depth_cfg = depth_search_config_from_structured(cfg)
+    cfg_dict = OmegaConf.to_container(cfg, resolve=True)
+    depth_cfg = deserialize_dataclass(cfg_dict)
     compute_different_depths_parallel(depth_cfg)
 
 if __name__ == '__main__':

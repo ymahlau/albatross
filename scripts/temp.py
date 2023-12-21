@@ -60,21 +60,21 @@ def old():
 
 def main():
     bc_path = Path(__file__).parent.parent / 'bc_state_dicts'
-    bc_agent = bc_agent_from_file(bc_path / 'cr_0.pkl')
+    bc_agent = bc_agent_from_file(bc_path / 'fc_1.pkl')
     
     net_path = Path(__file__).parent.parent / 'a_saved_runs' / 'overcooked'
-    proxy_net = get_network_from_file(net_path / 'proxy_cr_0' / 'latest.pt')
+    proxy_net = get_network_from_file(net_path / 'proxy_fc_1' / 'latest.pt')
     proxy_net = proxy_net.eval()
     proxy_net_agent_cfg = NetworkAgentConfig(
         net_cfg=proxy_net.cfg,
         temperature_input=True,
         single_temperature=True,
-        init_temperatures=[5, 5],
+        init_temperatures=[0, 0],
     )
     proxy_net_agent = NetworkAgent(proxy_net_agent_cfg)
     proxy_net_agent.replace_net(proxy_net)
     
-    net = get_network_from_file(net_path / 'resp_cr_0' / 'latest.pt')
+    net = get_network_from_file(net_path / 'resp_fc_1' / 'latest.pt')
     net = net.eval()
     net_agent_cfg = NetworkAgentConfig(
         net_cfg=net.cfg,
@@ -95,23 +95,23 @@ def main():
         num_player=2,
         agent_cfg=alb_network_agent_cfg,
         device_str='cpu',
-        response_net_path=str(net_path / 'resp_cr_0' / 'latest.pt'),
-        proxy_net_path=str(net_path / 'proxy_cr_0' / 'latest.pt'),
+        response_net_path=str(net_path / 'resp_fc_1' / 'latest.pt'),
+        proxy_net_path=str(net_path / 'proxy_fc_1' / 'latest.pt'),
         # noise_std=2,
         # fixed_temperatures=[0.1, 0.1],
         num_samples=20,
         init_temp=0,
-        num_likelihood_bins=int(2e2),
+        num_likelihood_bins=int(2e3),
         sample_from_likelihood=True,
     )
     alb_online_agent = AlbatrossAgent(alb_online_agent_cfg)
     
     
     # game_cfg = AsymmetricAdvantageOvercookedConfig(
-    # game_cfg = ForcedCoordinationOvercookedConfig(
+    game_cfg = ForcedCoordinationOvercookedConfig(
     # game_cfg = CounterCircuitOvercookedConfig(
     # game_cfg = CoordinationRingOvercookedConfig(
-    game_cfg = CrampedRoomOvercookedConfig(
+    # game_cfg = CrampedRoomOvercookedConfig(
         temperature_input=True,
         single_temperature_input=True,
         reward_cfg=OvercookedRewardConfig(

@@ -145,6 +145,7 @@ data:
     __module__: src.trainer.config
     __name__: InferenceServerConfig
     data:
+      poll_every_sec: 5
       statistics_every_sec: 60
       use_gpu: true
   info_qsize: 100

@@ -98,7 +98,7 @@ class AlbatrossAgent(Agent):
                 self.enemy_actions[p].append(action_idx)
         if self.cfg.fixed_temperatures is not None:  # fixed temperatures
             base_temperatures = self.cfg.fixed_temperatures
-        elif self.cfg.noise_std is not None and game.turns_played != 0:
+        elif game.turns_played != 0 and not self.cfg.sample_from_likelihood:
             # do mle for all enemies
             base_temperatures = []
             for p in range(game.num_players):
@@ -136,7 +136,8 @@ class AlbatrossAgent(Agent):
                         resolution=self.cfg.num_likelihood_bins,
                     )
                 )
-                probs = np.exp(log_probs)
+                epsilon = 1e-6  # numerical stability and sampling
+                probs = np.exp(log_probs) + epsilon
                 probs = probs / np.sum(probs)  # normalize
                 # sample
                 cur_temps = np.random.choice(bins, size=(self.cfg.num_samples,), replace=False, p=probs)
