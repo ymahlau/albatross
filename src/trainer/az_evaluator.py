@@ -231,6 +231,7 @@ def do_evaluation(
         switch_positions: bool,
         verbose_level: int = 0,
         own_temperature: float = math.inf,
+        own_iterations: int = 1,
 ) -> tuple[list[list[float]], list[list[int]]]:
     results = []
     episode_lengths = []
@@ -252,7 +253,7 @@ def do_evaluation(
                 joint_action_list: list[int] = []
                 for player in game.players_at_turn():
                     if player == agent_pos:  # agent to evaluate always plays as player 0
-                        probs, _ = evaluee(game, player=player, iterations=1)
+                        probs, _ = evaluee(game, player=player, iterations=own_iterations)
                         probs[game.illegal_actions(player)] = 0
                         probs /= probs.sum()
                         if verbose_level >= 2:

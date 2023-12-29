@@ -155,10 +155,10 @@ data:
       worker_episode_bucket_size: 20
   max_batch_size: 4000
   max_cpu_evaluator: 1
-  max_cpu_inference_server: 2
+  max_cpu_inference_server: 4
   max_cpu_log_dist_save_collect: 1
   max_cpu_updater: 2
-  max_cpu_worker: 22
+  max_cpu_worker: 34
   max_eval_per_worker: 9826
   merge_inference_update_gpu: false
   net_cfg:
@@ -268,8 +268,8 @@ data:
             __name__: NormalizationType
             value: GROUP_NORM
           num_layers: 1
-  num_inference_server: 1
-  num_worker: 50
+  num_inference_server: 2
+  num_worker: 100
   only_generate_buffer: false
   prev_run_dir: null
   prev_run_idx: null
@@ -320,9 +320,9 @@ data:
               cyclic: false
               end_times_min:
               - 60
-              - 600
-              - 700
-              - 1400
+              - 1200
+              - 1300
+              - 2800
               init_temp: 0
               sampling: false
           beta1: 0.9
@@ -449,8 +449,8 @@ data:
                 value: LINEAR
               cyclic: false
               end_times_min:
-              - 600
               - 1200
+              - 2400
               init_temp: 5
               sampling: false
           - __module__: src.supervised.annealer

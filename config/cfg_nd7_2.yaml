@@ -312,7 +312,7 @@ data:
               cyclic: false
               end_times_min:
               - 60
-              - 2800
+              - 5600
               init_temp: 0
               sampling: false
           beta1: 0.9

@@ -306,7 +306,7 @@ data:
               cyclic: false
               end_times_min:
               - 60
-              - 1400
+              - 2800
               init_temp: 0
               sampling: false
           beta1: 0.9

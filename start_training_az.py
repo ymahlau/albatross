@@ -36,7 +36,7 @@ if __name__ == '__main__':
     sys.argv.pop(1)
 
     pref_lists = [
-        ['4d7'],
+        ['nd7'],
         list(range(5)),
     ]
     prod = list(itertools.product(*pref_lists))

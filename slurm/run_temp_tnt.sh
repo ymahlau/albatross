@@ -1,16 +1,16 @@
 #!/bin/bash
 #SBATCH --job-name=temp.py
 #SBATCH --output=slurm-%j-%a-out.txt
-#SBATCH --time=infinite # (HH:MM:SS), infinite
-#SBATCH --partition=cpu_long
-#SBATCH --cpus-per-task=8
+#SBATCH --time=24:00:00 # (HH:MM:SS), infinite
+#SBATCH --partition=cpu_normal
+#SBATCH --cpus-per-task=2
 #SBATCH --mem-per-cpu=2G
 #SBATCH --verbose
 #SBATCH --nodes=1
-#SBATCH --array=0-24
+#SBATCH --array=0-149
 cd ..
 echo "Hier beginnt die Ausführung/Berechnung"
-srun -c 8 -v /home/mahlau/nobackup/env/miniforge3/envs/albatross-env/bin/python start_temp.py $SLURM_ARRAY_TASK_ID
+srun -c 2 -v /home/mahlau/nobackup/env/miniforge3/envs/albatross-env/bin/python start_temp.py $SLURM_ARRAY_TASK_ID
 
 # interactive session with:
 #  srun --partition=amo,tnt,ai,haku,lena --mincpus 8 --mem 20G --time=2:00:00 --pty bash -l -i

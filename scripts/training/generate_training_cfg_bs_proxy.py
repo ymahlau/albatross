@@ -50,8 +50,8 @@ def start_training_from_structured_configs():
     
     cfg_dict = {
         'nd7': survive_on_7x7(),
-        '4nd7': survive_on_7x7_4_player(),
-        '4d7': survive_on_7x7_constrictor_4_player(),
+        # '4nd7': survive_on_7x7_4_player(),
+        # '4d7': survive_on_7x7_constrictor_4_player(),
     }
     for seed in range(5):
         for mode_str, game_cfg in cfg_dict.items():
@@ -182,7 +182,7 @@ def start_training_from_structured_configs():
                 temp_scaling_cfgs=(
                     TemperatureAnnealingConfig(
                         init_temp=5,
-                        end_times_min=[600, 1200],
+                        end_times_min=[1200, 2400],
                         anneal_temps=[5, 0],
                         anneal_types=[AnnealingType.CONST, AnnealingType.LINEAR],
                         cyclic=False,
@@ -243,7 +243,7 @@ def start_training_from_structured_configs():
                 optim_type=OptimType.ADAM_W,
                 anneal_cfg=TemperatureAnnealingConfig(
                     init_temp=0,
-                    end_times_min=[60, 600, 700, 1400],
+                    end_times_min=[60, 1200, 1300, 2800],
                     anneal_temps=[1e-3, 1e-5, 1e-3, 1e-6],
                     anneal_types=[AnnealingType.LINEAR, AnnealingType.COSINE, AnnealingType.LINEAR, AnnealingType.COSINE],
                 ),
@@ -293,8 +293,8 @@ def start_training_from_structured_configs():
             )
             max_eval = game_cfg.num_players * ((game_cfg.num_actions ** game_cfg.num_players) + 1) ** worker_cfg.search_iterations
             trainer_cfg = AlphaZeroTrainerConfig(
-                num_worker=50,  # IMPORTANT
-                num_inference_server=1,
+                num_worker=100,  # IMPORTANT
+                num_inference_server=2,
                 save_state=False,
                 save_state_after_seconds=18000,
                 net_cfg=net_cfg,
@@ -318,10 +318,10 @@ def start_training_from_structured_configs():
                 only_generate_buffer=False,
                 restrict_cpu=True,  # only works on LINUX
                 max_cpu_updater=2,
-                max_cpu_worker=22,
+                max_cpu_worker=34,
                 max_cpu_evaluator=1,
                 max_cpu_log_dist_save_collect=1,
-                max_cpu_inference_server=2,
+                max_cpu_inference_server=4,
                 temperature_input=temperature_input,
                 single_sbr_temperature=single_temperature,
                 compile_model=False,

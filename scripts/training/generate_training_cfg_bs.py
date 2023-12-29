@@ -50,8 +50,8 @@ def start_training_from_structured_configs():
     
     cfg_dict = {
         'nd7': survive_on_7x7(),
-        '4nd7': survive_on_7x7_4_player(),
-        '4d7': survive_on_7x7_constrictor_4_player(),
+        # '4nd7': survive_on_7x7_4_player(),
+        # '4d7': survive_on_7x7_constrictor_4_player(),
         
     }
     for seed in range(5):
@@ -250,7 +250,7 @@ def start_training_from_structured_configs():
                 # ),
                 anneal_cfg=TemperatureAnnealingConfig(
                     init_temp=0,
-                    end_times_min=[60, 2800],
+                    end_times_min=[60, 5600],
                     anneal_temps=[1e-3, 1e-6],
                     anneal_types=[AnnealingType.LINEAR, AnnealingType.COSINE],
                 ),
