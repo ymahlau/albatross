@@ -79,6 +79,7 @@ class AreaControlEvalFunc(EvalFunc):
 
             if game.cfg.constrictor:
                 health_factor = np.zeros_like(game.player_healths(), dtype=float)
+                health_factor = health_factor[node.game.players_at_turn()]
             else:
                 health_arr = np.asarray(game.player_healths()).astype(float)
                 health_relative = health_arr / np.asarray(node.game.cfg.max_snake_health)
