@@ -45,42 +45,4 @@ def board_from_slow(game: OvercookedGameSlow) -> list[list[int]]:
             row_list.append(charmap[char])
         result_list.append(row_list)
     return result_list
-
-def update_pot_state_arr(game: OvercookedGameSlow, state_arr: np.ndarray) -> np.ndarray:
-    w, h = game.gridworld.shape
-    state_arr = state_arr.reshape(h, w)
-    a = 1
-    
-
-def overcooked_fast_from_slow(
-    game: OvercookedGameSlow,
-) -> OvercookedGameFast:
-    # IMPORTANT: reset will produce a different result than the original as this changes the base config
-    w, h = game.gridworld.shape
-    board = board_from_slow(game)
-    assert game.env is not None
-    players = game.env.state.players
-    player_items = [
-        OvercookedGameFast.get_item_code_from_name(players[0].held_object.name if players[0].held_object is not None else None),
-        OvercookedGameFast.get_item_code_from_name(players[0].held_object.name if players[0].held_object is not None else None)
-    ]
-    ors = [
-        OvercookedGameFast.get_code_from_or(players[0].orientation),
-        OvercookedGameFast.get_code_from_or(players[1].orientation)
-    ]
-    player_pos = (
-        (players[0].position[0], players[0].position[1], ors[0], player_items[0]),
-        (players[1].position[0], players[1].position[1], ors[1], player_items[1]),
-    )
-    base_cfg = OvercookedGameConfig(
-        w=w,
-        h=h,
-        board=board,
-        start_pos=player_pos,
-    )
-    new_game = OvercookedGameFast(base_cfg)
-    state_arr = new_game.get_state_array()
-    new_state_arr = update_pot_state_arr(game, state_arr)
-    new_game.update_tile_states(new_state_arr.tolist())
-    return new_game
     
