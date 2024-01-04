@@ -50,11 +50,11 @@ def generate_training_structured_configs():
     """
     
     cfg_dict = {
-        'aa': (AsymmetricAdvantageOvercookedConfig(), OvercookedResNetConfig9x9()),
-        'cc': (CounterCircuitOvercookedConfig(), OvercookedResNetConfig8x8()),
-        'co': (CoordinationRingOvercookedConfig(), OvercookedResNetConfig5x5()),
+        # 'aa': (AsymmetricAdvantageOvercookedConfig(), OvercookedResNetConfig9x9()),
+        # 'cc': (CounterCircuitOvercookedConfig(), OvercookedResNetConfig8x8()),
+        # 'co': (CoordinationRingOvercookedConfig(), OvercookedResNetConfig5x5()),
         'cr': (CrampedRoomOvercookedConfig(), OvercookedResNetConfig5x5()),
-        'fc': (ForcedCoordinationOvercookedConfig(), OvercookedResNetConfig5x5()),
+        # 'fc': (ForcedCoordinationOvercookedConfig(), OvercookedResNetConfig5x5()),
     }
     for name, (game_cfg, net_cfg) in cfg_dict.items():
         for seed in range(5):
@@ -129,7 +129,7 @@ def generate_training_structured_configs():
             #     sbr_mode=SbrMode.NAGURNEY,
             # )
             backup_func_cfg = EnemyExploitationBackupConfig(
-                exploit_temperature=10,
+                exploit_temperature=math.inf,
                 average_eval=False,
             )
             # backup_func_cfg = RNADBackupConfig(
@@ -282,7 +282,7 @@ def generate_training_structured_configs():
             logger_cfg = LoggerConfig(
                 project_name="overcooked",
                 buffer_gen=False,
-                name=f'resp_{name}',
+                name=f'resp_brle_{name}',
                 id=seed,
                 updater_bucket_size=1000,
                 worker_episode_bucket_size=5,

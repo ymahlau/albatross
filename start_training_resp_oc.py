@@ -36,12 +36,12 @@ if __name__ == '__main__':
     sys.argv.pop(1)
 
     pref_lists = [
-        ['cc', 'co', 'fc'],
+        ['cr'],
         list(range(5)),
     ]
     prod = list(itertools.product(*pref_lists))
     tpl = prod[arr_id]
     # config_name = f"{config_prefix}_{tpl[0]}_{tpl[1]}_{tpl[2]}"
-    config_name = f"cfg_resp_{tpl[0]}_{tpl[1]}"
+    config_name = f"cfg_resp_brle_{tpl[0]}_{tpl[1]}"
     print(f"{config_name=}", flush=True)
     hydra.main(config_path=str(config_path), config_name=config_name, version_base=None)(main)()
