@@ -78,16 +78,18 @@ class AreaControlEvalFunc(EvalFunc):
             ac_board_relative = ac_at_turn_relative / (game.cfg.w * game.cfg.h)
 
             if game.cfg.constrictor:
-                health_factor = np.zeros_like(game.player_healths(), dtype=float)
-                health_factor = health_factor[node.game.players_at_turn()]
+                result = ac_board_relative
+                # health_factor = np.zeros_like(game.player_healths(), dtype=float)
+                # health_factor = health_factor[node.game.players_at_turn()]
             else:
                 health_arr = np.asarray(game.player_healths()).astype(float)
                 health_relative = health_arr / np.asarray(node.game.cfg.max_snake_health)
                 health_clipped = np.minimum(1.0, health_relative / self.cfg.health_threshold)
                 health_at_turn = health_clipped[node.game.players_at_turn()]
                 health_factor = health_at_turn - (np.sum(health_at_turn) / node.game.num_players_at_turn())
+                result = (ac_board_relative + health_factor) / 2
             
-            result = (ac_board_relative + health_factor) / 2
+            # result = (ac_board_relative + health_factor) / 2
             values = np.zeros(shape=(node.game.num_players,), dtype=float)
             values[node.game.players_at_turn()] = result
             update_node(node, values, self.cfg.utility_norm)

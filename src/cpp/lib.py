@@ -242,6 +242,7 @@ class CPPLibrary:
         self.lib.equals_overcooked_cpp.restype = ct.c_bool
         self.lib.get_player_infos_cpp.argtypes = [ct.POINTER(Struct), ct.POINTER(ct.c_int)]
         self.lib.get_state_oc_cpp.argtypes = [ct.POINTER(Struct), ct.POINTER(ct.c_int)]
+        self.lib.update_tile_states_overcooked_cpp.argtypes = [ct.POINTER(Struct), ct.POINTER(ct.c_int)]
 
     def get_area_control(
             self,

@@ -1,6 +1,7 @@
 from datetime import datetime
 import itertools
 import math
+import os
 from pathlib import Path
 import pickle
 
@@ -18,22 +19,24 @@ from src.trainer.az_evaluator import do_evaluation
 
 
 def evaluate_bs_depth_func(experiment_id: int):
-    num_games = 100
+    num_games_per_part = 10
+    num_parts = 10
     search_iterations = np.arange(50, 2001, 50)
     save_path = Path(__file__).parent.parent.parent / 'a_data' / 'bs_depth'
-    base_name = 'bs_az_alb_area_50_to_2000_inf'
+    base_name = 'bs_az_alb_area_50_to_2000_retrained'
+    eval_az = False
     
     game_dict = {
-        'd7': survive_on_7x7_constrictor(),
+        # 'd7': survive_on_7x7_constrictor(),
         'nd7': survive_on_7x7(),
-        '4nd7': survive_on_7x7_4_player(),
-        '4d7': survive_on_7x7_constrictor_4_player(),
+        # '4nd7': survive_on_7x7_4_player(),
+        # '4d7': survive_on_7x7_constrictor_4_player(),
     }
     
     pref_lists = [
         list(game_dict.keys()),
         list(range(5)),
-        list(range(int(num_games/10)))
+        list(range(int(num_parts)))
     ]
     prod = list(itertools.product(*pref_lists))
     prefix, seed, cur_game_id = prod[experiment_id]
@@ -61,8 +64,8 @@ def evaluate_bs_depth_func(experiment_id: int):
         device_str='cpu',
         response_net_path=str(resp_path),
         proxy_net_path=str(proxy_path),
-        noise_std=None,
-        num_samples=1,
+        noise_std=2,
+        num_samples=10,
         init_temp=5,
     )
     alb_online_agent = AlbatrossAgent(alb_online_agent_cfg)
@@ -81,6 +84,20 @@ def evaluate_bs_depth_func(experiment_id: int):
     
     print(f'{datetime.now()} - Started evaluation of {prefix} with {seed=}', flush=True)
     full_result_list_alb, full_length_list_alb, full_result_list_az, full_length_list_az = [], [], [], []
+    
+    full_save_path = save_path / f'{base_name}_{prefix}_{seed}_{cur_game_id}.pkl'
+    if os.path.exists(full_save_path):
+        with open(full_save_path, 'rb') as f:
+            last_result_dict = pickle.load(f)
+        full_result_list_alb = last_result_dict['results_alb'].tolist()
+        full_length_list_alb = last_result_dict['lengths_alb'].tolist()
+        if eval_az:
+            full_result_list_az = last_result_dict['results_az'].tolist()
+            full_length_list_az = last_result_dict['lengths_az'].tolist()
+        
+        num_complete_iterations = len(full_result_list_alb)
+        search_iterations = search_iterations[num_complete_iterations:]
+    
     for iteration_idx, cur_iterations in enumerate(search_iterations):
         print(f'Started evaluation with: {iteration_idx=}, {cur_iterations=}')
         
@@ -88,7 +105,7 @@ def evaluate_bs_depth_func(experiment_id: int):
             game=game,
             evaluee=alb_online_agent,
             opponent_list=[base_agent],
-            num_episodes=[10],
+            num_episodes=[num_games_per_part],
             enemy_iterations=cur_iterations,
             temperature_list=[math.inf],
             own_temperature=math.inf,
@@ -100,30 +117,32 @@ def evaluate_bs_depth_func(experiment_id: int):
         full_result_list_alb.append(results_alb)
         full_length_list_alb.append(game_length_alb)
         
-        results_az, game_length_az = do_evaluation(
-            game=game,
-            evaluee=az_agent,
-            opponent_list=[base_agent],
-            num_episodes=[10],
-            enemy_iterations=cur_iterations,
-            temperature_list=[math.inf],
-            own_temperature=math.inf,
-            prevent_draw=True,
-            switch_positions=False,
-            verbose_level=1,
-            own_iterations=1,
-        )
-        full_result_list_az.append(results_az)
-        full_length_list_az.append(game_length_az)
+        if eval_az:
+            results_az, game_length_az = do_evaluation(
+                game=game,
+                evaluee=az_agent,
+                opponent_list=[base_agent],
+                num_episodes=[num_games_per_part],
+                enemy_iterations=cur_iterations,
+                temperature_list=[math.inf],
+                own_temperature=math.inf,
+                prevent_draw=True,
+                switch_positions=False,
+                verbose_level=1,
+                own_iterations=1,
+            )
+            full_result_list_az.append(results_az)
+            full_length_list_az.append(game_length_az)
         
         save_dict = {
             'results_alb': np.asarray(full_result_list_alb),
             'lengths_alb': np.asarray(full_length_list_alb),
-            'results_az': np.asarray(full_result_list_az),
-            'lengths_az': np.asarray(full_length_list_az),
-            
         }
-        with open(save_path / f'{base_name}_{prefix}_{seed}_{cur_game_id}.pkl', 'wb') as f:
+        if eval_az:
+            save_dict['results_az'] = np.asarray(full_result_list_az)
+            save_dict['lengths_az'] = np.asarray(full_length_list_az)
+        
+        with open(full_save_path, 'wb') as f:
             pickle.dump(save_dict, f)
     
 

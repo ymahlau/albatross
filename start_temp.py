@@ -3,6 +3,7 @@ from pathlib import Path
 
 import multiprocessing as mp
 from scripts.depth.evaluate_bs_depth import evaluate_bs_depth_func
+from scripts.depth.kl_div_vs_base import save_policies_at_depth
 from scripts.eval.overcooked_bc_eval import evaluate_alb_proxy, evaluate_bc_bc, evaluate_overcooked_response, evaluate_overcooked_response_mle, evaluate_overcooked_response_normal, evaluate_proxy_bc, evaluate_proxy_proxy, evaluate_resp10_bc, evaluate_resp_proxy, evaluate_resp_resp, evaluate_resp_resp_10
 from scripts.eval.overcooked_proxy_temps import eval_proxy_different_temps, eval_resp_proxy_different_temps
 
@@ -36,6 +37,7 @@ if __name__ == '__main__':
     # evaluate_proxy_bc(experiment_id)
     # eval_resp_proxy_different_temps(experiment_id)
     evaluate_bs_depth_func(experiment_id)
+    # save_policies_at_depth(experiment_id)
     
     
     # num_iterations = int(sys.argv[1])

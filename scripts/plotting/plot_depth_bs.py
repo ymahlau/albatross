@@ -17,18 +17,26 @@ def plot_bs_depth():
     num_seeds = 5
     depths = np.asarray(list(range(50, 2001, 50)), dtype=int)
     
-    game_abbrevs = ['4nd7', 'd7', 'nd7']
+    game_abbrevs = ['4nd7', 'd7', 'nd7', '4d7']
+    # game_abbrevs = ['4d7']
+    
+    alb_base_name = 'bs_az_alb_area_50_to_2000_sampl'
+    az_base_name = 'bs_az_alb_area_50_to_2000_inf'
     
     for abbrev in game_abbrevs:
         full_list_alb, full_list_az, length_list_alb, length_list_az  = [], [], [], []
         for seed in range(num_seeds):
             for part in range(num_parts):
-                file_name = f'bs_az_alb_area_50_to_2000_inf_{abbrev}_{seed}_{part}.pkl'
-                with open(data_path / file_name, 'rb') as f:
+                file_name_alb = f'{alb_base_name}_{abbrev}_{seed}_{part}.pkl'
+                with open(data_path / file_name_alb, 'rb') as f:
                     cur_dict = pickle.load(f)
                 full_list_alb.append(cur_dict['results_alb'])
-                full_list_az.append(cur_dict['results_az'])
                 length_list_alb.append(cur_dict['lengths_alb'])
+                
+                file_name_az = f'{az_base_name}_{abbrev}_{seed}_{part}.pkl'
+                with open(data_path / file_name_az, 'rb') as f:
+                    cur_dict = pickle.load(f)
+                full_list_az.append(cur_dict['results_az'])
                 length_list_az.append(cur_dict['lengths_az'])
         full_arr_alb = np.concatenate(full_list_alb, axis=2)[:, 0, :]
         full_arr_az = np.concatenate(full_list_az, axis=2)[:, 0, :]
@@ -74,7 +82,8 @@ def plot_bs_depth():
         plt.yticks(fontsize=fontsize)
         plt.legend(fontsize=fontsize)
         plt.tight_layout()
-        plt.savefig(img_path / f'inf_{abbrev}_depths.png')
+        # plt.savefig(img_path / f'inf_100g_{abbrev}_depths.png')
+        plt.savefig(img_path / f'sampl_{abbrev}_depths.png')
 
 
 if __name__ == '__main__':

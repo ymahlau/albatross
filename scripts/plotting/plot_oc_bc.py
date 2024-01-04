@@ -1,12 +1,10 @@
-
-
-
 from pathlib import Path
 import pickle
 from matplotlib import pyplot as plt
 import numpy as np
 import seaborn
 
+from src.misc.const import COLORS
 
 data_pecan = [
     (135.53223, 138.23088, 141.82909),
@@ -64,6 +62,17 @@ name_dict = {
     'cc': 'Counter Circ.',
 }
 
+def calculate_benchmark_improvement():
+    # pecan_data = data_pecan
+    alb_data = load_albatross_data('resp_mle_bc_1')
+    means_alb = np.asarray(alb_data)[:, 1]
+    means_pecan = np.asarray(data_pecan)[:, 1]
+    improvs = means_alb / means_pecan
+    avg_improv_perc = np.mean(improvs) - 1 # type: ignore
+    print(avg_improv_perc)
+    
+    
+
 def load_albatross_data(base_name: str):
     data_path = Path(__file__).parent.parent.parent / 'a_data' / 'oc'
     full_list = []
@@ -83,7 +92,7 @@ def load_albatross_data(base_name: str):
     return np.asarray(full_list)
 
 def main():
-    img_name = 'temp.png'
+    img_name = 'oc_main.pdf'
     method_dict = {
         # 'Alb+BC': load_albatross_data('resp_20from200'),
         # 'Alb+Alb': load_albatross_data('resp_20from200_self'),
@@ -95,14 +104,14 @@ def main():
         # 'AlbN+BC': load_albatross_data('resp_20n1_bc'),
         # 'Alb10+Alb10': load_albatross_data('resp_resp_10'),
         # 'AlbMLE+BC': load_albatross_data('resp_mle_bc'),
-        'AlbMLE1+BC': load_albatross_data('resp_mle_bc_1'),
+        'Albatross': load_albatross_data('resp_mle_bc_1'),
         # 'Proxy10+BC': load_albatross_data('proxy_bc_10_inf'),
-        'PECAN+BC': data_pecan,
-        'MEP+BC': data_mep,
-        'TrajeDi+BC': data_trajdi,
-        'FCP+BC': data_fcp,
-        'PBT+BC': data_pbt,
-        'PPO+BC': data_sp,
+        'PECAN': data_pecan,
+        'MEP': data_mep,
+        'TrajeDi': data_trajdi,
+        'FCP': data_fcp,
+        'PBT': data_pbt,
+        'PPO': data_sp,
     }
     
     # Sample data
@@ -143,12 +152,16 @@ def main():
             yerr=[min_err[:, i], max_err[:, i]],
             label=setting,
             capsize=3,  # Specify the cap size for error bars
+            color=COLORS[i],
         )
 
     # Adding labels and title
-    plt.xticks(bar_positions + bar_width * 3, layouts)
-    plt.legend(loc='center', bbox_to_anchor=(0.5, 1.1), ncol=int(len(method_dict)/3))
-
+    plt.xticks(bar_positions * 1.05 + bar_width * 2.5, layouts, fontsize='x-large')
+    plt.yticks(fontsize='x-large')
+    # plt.legend(loc='center', bbox_to_anchor=(0.5, 1.1), ncol=int(len(method_dict)/3))
+    plt.legend(ncol=1, fontsize='xx-large')
+    plt.ylim(0, 300)
+    
     # Displaying the plot
     img_path = Path(__file__).parent.parent.parent / 'a_img' / 'oc' / img_name
     plt.tight_layout()
@@ -157,4 +170,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+    # calculate_benchmark_improvement()
 

@@ -561,3 +561,10 @@ void get_state_oc(OvercookedGameState* state, int* state_arr){
         state_arr[idx] = state->tile_states[idx];
     }
 }
+
+
+void update_tile_states(OvercookedGameState* state, int* state_arr){
+    for (int idx = 0; idx < state->w * state->h; idx++){
+        state->tile_states[idx] = state_arr[idx];
+    }
+}

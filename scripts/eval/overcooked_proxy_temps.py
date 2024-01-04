@@ -20,7 +20,7 @@ from src.trainer.az_evaluator import do_evaluation
 def eval_proxy_different_temps(experiment_id: int):
     num_games = 100
     save_path = Path(__file__).parent.parent.parent / 'a_data' / 'oc'
-    base_name = 'proxy_proxy_temps_1'
+    base_name = 'proxy_proxy_temps_1_ood'
     
     game_dicts = {
         'aa': AsymmetricAdvantageOvercookedConfig(),
@@ -68,7 +68,9 @@ def eval_proxy_different_temps(experiment_id: int):
     
     print(f'{datetime.now()} - Started evaluation of {prefix} with {seed=}', flush=True)
     full_result_list = []
-    for t_idx, t in enumerate(np.linspace(0, 10, 100)):
+    # temperatures = np.linspace(0, 10, 100)
+    temperatures = np.linspace(-5, 0, 15)[:-1].tolist() + np.linspace(10, 15, 15)[1:].tolist()
+    for t_idx, t in enumerate(temperatures):
         print(f'Started evaluation with: {t_idx=}, {t=}')
         proxy_net_agent.reset_episode()
         proxy_net_agent.set_temperatures([t, t])
@@ -92,7 +94,7 @@ def eval_proxy_different_temps(experiment_id: int):
 def eval_resp_proxy_different_temps(experiment_id: int):
     num_games = 100
     save_path = Path(__file__).parent.parent.parent / 'a_data' / 'oc'
-    base_name = 'resp_proxy_temps_inf_1'
+    base_name = 'resp_proxy_temps_inf_1_ood'
     
     game_dicts = {
         'aa': AsymmetricAdvantageOvercookedConfig(),
@@ -129,6 +131,8 @@ def eval_resp_proxy_different_temps(experiment_id: int):
         response_net_path=str(resp_path),
         proxy_net_path=str(proxy_path),
         noise_std=None,
+        min_temp=-5,
+        max_temp=15,
         # fixed_temperatures=[10, 10],
         num_samples=1,
         init_temp=0,
@@ -162,7 +166,9 @@ def eval_resp_proxy_different_temps(experiment_id: int):
     
     print(f'{datetime.now()} - Started evaluation of {prefix} with {seed=}', flush=True)
     full_result_list = []
-    for t_idx, t in enumerate(np.linspace(0, 10, 100)):
+    # temperatures = np.linspace(0, 10, 100)
+    temperatures = np.linspace(-5, 0, 15)[:-1].tolist() + np.linspace(10, 15, 15)[1:].tolist()
+    for t_idx, t in enumerate(temperatures):
         print(f'Started evaluation with: {t_idx=}, {t=}')
         proxy_net_agent.reset_episode()
         proxy_net_agent.set_temperatures([t, t])

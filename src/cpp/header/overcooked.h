@@ -87,7 +87,7 @@ void construct_overcooked_encoding(OvercookedGameState* state, float* arr, int p
 bool equals_overcooked(OvercookedGameState* state, OvercookedGameState* other);
 void get_player_infos(OvercookedGameState* state, int* info_arr);
 void get_state_oc(OvercookedGameState* state, int* state_arr);
-
+void update_tile_states(OvercookedGameState* state, int* state_arr);
 
 #endif //BATTLESNAKECPP_OVERCOOKED_H
 

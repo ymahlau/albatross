@@ -441,5 +441,9 @@ extern "C" {
     void get_state_oc_cpp(OvercookedGameState* state, int* state_arr){
         get_state_oc(state, state_arr);
     }
+
+    void update_tile_states_overcooked_cpp(OvercookedGameState* state, int* state_arr){
+        update_tile_states(state, state_arr);
+    }
 }
 

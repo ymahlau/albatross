@@ -26,3 +26,5 @@ dependencies:
     - wandb
     - seaborn
     - rliable
+    - pygame
+    - ipywidgets

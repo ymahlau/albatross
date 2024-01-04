@@ -150,8 +150,12 @@ class NetworkAgent(Agent):
         perm_probs = apply_permutation(action_probs, inv_perm)
         # filter and sample
         player_idx = game.players_at_turn().index(player)
-        filtered_probs = filter_illegal_and_normalize(perm_probs, game)[player_idx]
-        return filtered_probs, {'values': self.net.retrieve_value_tensor(out_tensor).numpy()}
+        filtered_probs = filter_illegal_and_normalize(perm_probs, game)
+        info_dict = {
+            "all_action_probs": filtered_probs,
+            'values': self.net.retrieve_value_tensor(out_tensor).numpy()
+        }
+        return filtered_probs[player_idx], info_dict
 
 @dataclass
 class BCNetworkAgentConfig(AgentConfig):

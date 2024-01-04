@@ -9,6 +9,7 @@ import numpy as np
 import torch
 
 from src.agent import AgentConfig, Agent
+from src.equilibria.logit import SbrMode
 from src.game.game import Game
 from src.game.battlesnake.battlesnake import BattleSnakeGame
 from src.game.overcooked.overcooked import OvercookedGame
@@ -193,7 +194,7 @@ class AlbatrossAgent(Agent):
             p: game.available_actions(p) for p in game.players_at_turn()
         }
         info_dict = {
-            "all_action_probs": action_probs,
+            "all_action_probs": action_probs,  # this actually only contains player probs
         }
         return action_probs, info_dict
 
@@ -209,6 +210,7 @@ class AlbatrossAgent(Agent):
             game.cfg.single_temperature_input = True
         # search
         _, action_probs, _ = self.proxy_search(game, iterations=1)
+        action_probs = action_probs / np.sum(action_probs, axis=-1)[:, np.newaxis]
         # compute q from root
         q_dict: dict[int, list[float]] = {}
         for p in game.players_at_turn():
@@ -238,10 +240,14 @@ class AlbatrossAgent(Agent):
                 init_temperatures=temperatures,
             ),
             backup_func_cfg=LogitBackupConfig(
-                num_iterations=100,
+                num_iterations=150,
                 init_temperatures=temperatures,
+                sbr_mode=SbrMode.NAGURNEY,
             ),
-            extract_func_cfg=SpecialExtractConfig()
+            extract_func_cfg=SpecialExtractConfig(
+                min_clip_value=-1,
+                max_clip_value=20,
+            )
         )
         search = FixedDepthSearch(search_cfg)
         return search

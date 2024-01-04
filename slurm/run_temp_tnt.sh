@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=temp.py
+#SBATCH --job-name=nd7_depth
 #SBATCH --output=slurm-%j-%a-out.txt
 #SBATCH --time=24:00:00 # (HH:MM:SS), infinite
 #SBATCH --partition=cpu_normal
@@ -7,7 +7,8 @@
 #SBATCH --mem-per-cpu=2G
 #SBATCH --verbose
 #SBATCH --nodes=1
-#SBATCH --array=150-199
+#SBATCH --exclude=helena1,helena2,helena3,helena4,cc1l01,nox
+#SBATCH --array=0-49
 cd ..
 echo "Hier beginnt die Ausführung/Berechnung"
 srun -c 2 -v /home/mahlau/nobackup/env/miniforge3/envs/albatross-env/bin/python start_temp.py $SLURM_ARRAY_TASK_ID
@@ -19,3 +20,4 @@ srun -c 2 -v /home/mahlau/nobackup/env/miniforge3/envs/albatross-env/bin/python 
 # squeue --state=R -p tnt -o "%.8u %.10i %.10l %.10M %.10m %.12c %.10R"
 # scontrol show job <id>
 # --qos='_mahlauya+'
+# for fast cpu: #SBATCH --exclude=helena1,helena2,helena3,helena4,cc1l01,nox

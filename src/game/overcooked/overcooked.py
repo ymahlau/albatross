@@ -236,7 +236,7 @@ class OvercookedGame(Game):
         return arr
     
     @staticmethod
-    def get_or_from_code(orientation: int):
+    def get_or_from_code(orientation: int) -> tuple[int, int]:
         if orientation == 0:
             return (0, -1)
         elif orientation == 1:
@@ -245,6 +245,19 @@ class OvercookedGame(Game):
             return (1, 0)
         elif orientation == 3:
             return (-1, 0)
+        else:
+            raise Exception(f"Unknown orientation: {orientation}")
+    
+    @staticmethod
+    def get_code_from_or(orientation: tuple[int, int]) -> int:
+        if orientation == (0, -1):
+            return 0
+        elif orientation == (0, 1):
+            return 1
+        elif orientation == (1, 0):
+            return 2
+        elif orientation == (-1, 0):
+            return 3
         else:
             raise Exception(f"Unknown orientation: {orientation}")
     
@@ -275,6 +288,18 @@ class OvercookedGame(Game):
                 '_cooking_tick': 20,
             }
         raise Exception(f"unknown item code: {item_code}")
+    
+    @staticmethod
+    def get_item_code_from_name(item_name: Optional[str]) -> int:
+        if item_name is None:
+            return 0
+        elif item_name == 'onion':
+            return 1
+        elif item_name == 'dish':
+            return 2
+        elif item_name == 'soup':
+            return 3
+        raise Exception(f"unknown item name: {item_name}")
     
     @staticmethod
     def get_pot_state_from_code(pot_code: int, x: int, y: int):
@@ -317,7 +342,6 @@ class OvercookedGame(Game):
                 elif board_arr[x, y] == 4:  # pot
                     if state_arr[x, y] != 0:
                         object_list.append(self.get_pot_state_from_code(state_arr[x, y], x, y))
-                    
         
         state_dict = {
             'players': player_list,
@@ -327,4 +351,12 @@ class OvercookedGame(Game):
             'timestep': self.turns_played,
         }
         return state_dict
+    
+    def update_tile_states(self, state_arr: list[list[int]]):
+        state_np = np.asarray(state_arr, dtype=ct.c_int)
+        state_pt = state_np.ctypes.data_as(ct.POINTER(ct.c_int))
+        CPP_LIB.lib.update_tile_states_overcooked_cpp(
+            self.state_p,
+            state_pt,
+        )
 
