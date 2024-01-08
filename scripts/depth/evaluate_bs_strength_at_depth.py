@@ -7,14 +7,27 @@ from omegaconf import OmegaConf
 import yaml
 
 from src.game.battlesnake.bootcamp.test_envs_5x5 import survive_on_5x5
-from src.depth.depth_parallel import DepthSearchConfig
-from src.game.battlesnake.bootcamp.test_envs_7x7 import survive_on_7x7
+from src.depth.depth_parallel import DepthSearchConfig, compute_different_depths_parallel
+from src.game.battlesnake.bootcamp.test_envs_7x7 import survive_on_7x7, survive_on_7x7_4_player, survive_on_7x7_constrictor, survive_on_7x7_constrictor_4_player
 from src.misc.serialization import serialize_dataclass
 from src.search.config import DecoupledUCTSelectionConfig, AreaControlEvalConfig, StandardBackupConfig, \
     StandardExtractConfig, MCTSConfig
 from start_depth import main
 
 def eval_bs_depth():
+    game_dict = {
+        'd7': survive_on_7x7_constrictor(),
+        'nd7': survive_on_7x7(),
+        '4nd7': survive_on_7x7_4_player(),
+        '4d7': survive_on_7x7_constrictor_4_player(),
+    }
+    base_name = 'debug'
+    
+    pref_lists = [
+        list(game_dict.keys()),
+        list(range(20)),
+    ]
+    
     game_cfg = survive_on_7x7()
 
     sel_func_cfg = DecoupledUCTSelectionConfig()
@@ -33,7 +46,6 @@ def eval_bs_depth():
     search_spec = {
         'duct': (mcts_cfg, None, 100, 5)
     }
-
     save_path = Path(__file__).parent.parent.parent.parent / 'a_data' / 'debug_data'
     cfg = DepthSearchConfig(
         game_cfg=game_cfg,
@@ -45,7 +57,7 @@ def eval_bs_depth():
         step_search='duct',
         draw_prevention=True,
         save_path=str(save_path),
-        restrict_cpu=False,
+        restrict_cpu=True,
         seed=42,
         include_ja_values=True,
         include_obs=True,
@@ -53,22 +65,25 @@ def eval_bs_depth():
         min_available_actions=2,
         max_available_actions=3,
     )
+    
+    compute_different_depths_parallel(cfg)
+    
     # initialize yaml file and hydra    
-    exported_dict = serialize_dataclass(cfg)
-    yaml_str = yaml.dump(exported_dict)
-    yaml_str += 'hydra:\n  run:\n    dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}'
-    config_name = 'debug_config'
-    config_dir = Path(__file__).parent.parent.parent / 'config'
-    cur_config_file = config_dir / f'{config_name}.yaml'
-    with open(cur_config_file, 'w') as f:
-        f.write(yaml_str)
+    # exported_dict = serialize_dataclass(cfg)
+    # yaml_str = yaml.dump(exported_dict)
+    # yaml_str += 'hydra:\n  run:\n    dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}'
+    # config_name = 'debug_config'
+    # config_dir = Path(__file__).parent.parent.parent / 'config'
+    # cur_config_file = config_dir / f'{config_name}.yaml'
+    # with open(cur_config_file, 'w') as f:
+    #     f.write(yaml_str)
 
-    sys.argv = [
-        'cmd',  # this is ignored
-        'hydra.job.chdir=True',
-        # ... other dynamically added parameters
-    ]
-    hydra.main(config_path=str(config_dir), config_name=config_name, version_base=None)(main)()
+    # sys.argv = [
+    #     'cmd',  # this is ignored
+    #     'hydra.job.chdir=True',
+    #     # ... other dynamically added parameters
+    # ]
+    # hydra.main(config_path=str(config_dir), config_name=config_name, version_base=None)(main)()
 
 
 if __name__ == '__main__':

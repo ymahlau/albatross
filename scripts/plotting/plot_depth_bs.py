@@ -17,11 +17,11 @@ def plot_bs_depth():
     num_seeds = 5
     depths = np.asarray(list(range(50, 2001, 50)), dtype=int)
     
-    game_abbrevs = ['4nd7', 'd7', 'nd7', '4d7']
-    # game_abbrevs = ['4d7']
+    # game_abbrevs = ['4nd7', 'd7', 'nd7', '4d7']
+    game_abbrevs = ['4d7']
     
-    alb_base_name = 'bs_az_alb_area_50_to_2000_sampl'
-    az_base_name = 'bs_az_alb_area_50_to_2000_inf'
+    alb_base_name = 'bs_az_alb_area_50_to_2000_inf_100games'
+    az_base_name = 'bs_az_alb_area_50_to_2000_inf_100games'
     
     for abbrev in game_abbrevs:
         full_list_alb, full_list_az, length_list_alb, length_list_az  = [], [], [], []
@@ -83,7 +83,7 @@ def plot_bs_depth():
         plt.legend(fontsize=fontsize)
         plt.tight_layout()
         # plt.savefig(img_path / f'inf_100g_{abbrev}_depths.png')
-        plt.savefig(img_path / f'sampl_{abbrev}_depths.png')
+        plt.savefig(img_path / f'inf_100g_{abbrev}_depths.pdf')
 
 
 if __name__ == '__main__':

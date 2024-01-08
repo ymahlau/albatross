@@ -176,7 +176,7 @@ def plot_both():
         if idx == 0:
             plt.legend(fontsize=fontsize)
             plt.ylabel('Reward', fontsize=fontsize)
-            plt.xlabel('Temperature', fontsize=fontsize)
+        plt.xlabel('Temperature', fontsize=fontsize)
         plt.tight_layout()
         plt.savefig(img_path / f'both_resp_proxy_{prefix}.pdf', bbox_inches='tight', pad_inches=0.0)
 
@@ -281,4 +281,4 @@ def plot_both_ood():
 if __name__ == '__main__':
     # plot_proxy_vs_proxy()
     # plot_resp_vs_proxy()
-    plot_both_ood()
+    plot_both()

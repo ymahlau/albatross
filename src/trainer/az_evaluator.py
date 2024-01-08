@@ -281,6 +281,9 @@ def do_evaluation(
                 print(f"{datetime.now()} - {ep}: {cum_rewards}", flush=True)
             cur_results.append(cum_rewards[0].item())
             cur_lengths.append(step_counter)
+        evaluee.reset_episode()
+        for enemy in opponent_list:
+            enemy.reset_episode()
         results.append(cur_results)
         episode_lengths.append(cur_lengths)
     return results, episode_lengths

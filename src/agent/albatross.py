@@ -1,4 +1,5 @@
 import copy
+import os
 import pickle
 import random
 from dataclasses import field, dataclass
@@ -114,9 +115,11 @@ class AlbatrossAgent(Agent):
                     utilities=self.enemy_util[p],
                 )
                 base_temperatures.append(temp_estimate)
+                self.temp_estimates[p].append(temp_estimate)
         # sampling
         temperatures = None
-        if game.turns_played == 0 or (self.cfg.noise_std is None and not self.cfg.sample_from_likelihood):
+        if game.turns_played == 0 or self.cfg.fixed_temperatures is not None \
+                or (self.cfg.noise_std is None and not self.cfg.sample_from_likelihood):
             # do not sample, just use base temperatures
             temperatures = np.asarray([base_temperatures])
         elif self.cfg.sample_from_likelihood:
@@ -220,12 +223,26 @@ class AlbatrossAgent(Agent):
         return q_dict
 
     def reset_episode(self):
-        if self.cfg.estimate_log_path is not None:
-            for v_list in self.temp_estimates.values():
-                if v_list:
-                    rnd = random.randint(0, 2 ** 32 - 1)
-                    with open(self.cfg.estimate_log_path + f"{rnd}.pkl", "wb") as f:
-                        pickle.dump(v_list, f)
+        if self.cfg.estimate_log_path is not None and self.last_player_at_turn:
+            if os.path.exists(self.cfg.estimate_log_path):
+                with open(self.cfg.estimate_log_path, 'rb') as f:
+                    prev_dict = pickle.load(f)
+            else:
+                prev_dict = {
+                    'temp_estimates': [],
+                    'enemy_actions': [],
+                    'enemy_util': []
+                }
+            prev_dict['temp_estimates'].append(self.temp_estimates)
+            prev_dict['enemy_actions'].append(self.enemy_actions)
+            prev_dict['enemy_util'].append(self.enemy_util)
+            with open(self.cfg.estimate_log_path, 'wb') as f:
+                pickle.dump(prev_dict, f)
+            # for v_list in self.temp_estimates.values():
+            #     if v_list:
+            #         rnd = random.randint(0, 2 ** 32 - 1)
+            #         with open(self.cfg.estimate_log_path + f"{rnd}.pkl", "wb") as f:
+            #             pickle.dump(v_list, f)
         self.temp_estimates = {p: [] for p in range(self.cfg.num_player)}
         self.enemy_actions = {p: [] for p in range(self.cfg.num_player)}
         self.enemy_util = {p: [] for p in range(self.cfg.num_player)}

@@ -19,18 +19,18 @@ from src.trainer.az_evaluator import do_evaluation
 
 
 def evaluate_bs_depth_func(experiment_id: int):
-    num_games_per_part = 10
+    num_games_per_part = 100
     num_parts = 10
     search_iterations = np.arange(50, 2001, 50)
     save_path = Path(__file__).parent.parent.parent / 'a_data' / 'bs_depth'
-    base_name = 'bs_az_alb_area_50_to_2000_retrained'
+    base_name = 'bs_alb_fixed'
     eval_az = False
     
     game_dict = {
-        # 'd7': survive_on_7x7_constrictor(),
+        '4nd7': survive_on_7x7_4_player(),
+        'd7': survive_on_7x7_constrictor(),
         'nd7': survive_on_7x7(),
-        # '4nd7': survive_on_7x7_4_player(),
-        # '4d7': survive_on_7x7_constrictor_4_player(),
+        '4d7': survive_on_7x7_constrictor_4_player(),
     }
     
     pref_lists = [
@@ -50,6 +50,9 @@ def evaluate_bs_depth_func(experiment_id: int):
     resp_path = net_path / f'{prefix}_resp_{seed}' / 'latest.pt'
     proxy_path = net_path / f'{prefix}_proxy_{seed}' / 'latest.pt'
     az_path = net_path / f'{prefix}_{seed}' / 'latest.pt'
+    temp_path = Path(__file__).parent.parent.parent / 'a_data' / 'bs_depth_strength_mean'
+    with open(temp_path / f'{prefix}.pkl', 'rb') as f:
+        mean_temps = pickle.load(f)
     
     net = get_network_from_file(resp_path).eval()
     alb_network_agent_cfg = NetworkAgentConfig(
@@ -64,8 +67,8 @@ def evaluate_bs_depth_func(experiment_id: int):
         device_str='cpu',
         response_net_path=str(resp_path),
         proxy_net_path=str(proxy_path),
-        noise_std=2,
-        num_samples=10,
+        noise_std=None,
+        num_samples=1,
         init_temp=5,
     )
     alb_online_agent = AlbatrossAgent(alb_online_agent_cfg)
@@ -89,16 +92,24 @@ def evaluate_bs_depth_func(experiment_id: int):
     if os.path.exists(full_save_path):
         with open(full_save_path, 'rb') as f:
             last_result_dict = pickle.load(f)
-        full_result_list_alb = last_result_dict['results_alb'].tolist()
-        full_length_list_alb = last_result_dict['lengths_alb'].tolist()
+        # full_result_list_alb = last_result_dict['results_alb'].tolist()
+        # full_length_list_alb = last_result_dict['lengths_alb'].tolist()
         if eval_az:
             full_result_list_az = last_result_dict['results_az'].tolist()
             full_length_list_az = last_result_dict['lengths_az'].tolist()
         
-        num_complete_iterations = len(full_result_list_alb)
+        num_complete_iterations = len(full_result_list_az)
         search_iterations = search_iterations[num_complete_iterations:]
     
+    
     for iteration_idx, cur_iterations in enumerate(search_iterations):
+        # cur save path
+        # cur_log_path = save_path / f'{base_name}_log_{prefix}_{seed}_{cur_game_id}_{cur_iterations}.pkl'
+        # alb_online_agent.cfg.estimate_log_path = str(cur_log_path)
+        
+        cur_temp = mean_temps[cur_iterations.item()]
+        alb_online_agent.cfg.fixed_temperatures = [cur_temp for _ in range(game_cfg.num_players)]
+        
         print(f'Started evaluation with: {iteration_idx=}, {cur_iterations=}')
         
         results_alb, game_length_alb = do_evaluation(
@@ -138,6 +149,7 @@ def evaluate_bs_depth_func(experiment_id: int):
             'results_alb': np.asarray(full_result_list_alb),
             'lengths_alb': np.asarray(full_length_list_alb),
         }
+        # save_dict = {}
         if eval_az:
             save_dict['results_az'] = np.asarray(full_result_list_az)
             save_dict['lengths_az'] = np.asarray(full_length_list_az)
@@ -147,4 +159,4 @@ def evaluate_bs_depth_func(experiment_id: int):
     
 
 if __name__ == '__main__':
-    evaluate_bs_depth_func(150)
+    evaluate_bs_depth_func(175)

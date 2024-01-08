@@ -602,7 +602,7 @@ def evaluate_overcooked_response_mle(experiment_id):
     print(f'{datetime.now()} - Started eval script', flush=True)
     num_games = 100
     save_path = Path(__file__).parent.parent.parent / 'a_data' / 'oc'
-    base_name = 'resp_mle_bc_1'
+    base_name = 'resp_brle_mle_bc_1'
     
     game_dicts = {
         'aa': AsymmetricAdvantageOvercookedConfig(),
@@ -613,7 +613,8 @@ def evaluate_overcooked_response_mle(experiment_id):
     }
     
     pref_lists = [
-        ['aa', 'cc', 'co', 'cr', 'fc'],
+        # ['aa', 'cc', 'co', 'cr', 'fc'],
+        ['cr'],
         list(range(5)),
     ]
     prod = list(itertools.product(*pref_lists))
@@ -623,7 +624,7 @@ def evaluate_overcooked_response_mle(experiment_id):
 
     net_path = Path(__file__).parent.parent.parent / 'a_saved_runs' / 'overcooked'
     proxy_path = net_path / f'proxy_{prefix}_{seed}' / 'latest.pt'
-    resp_path = net_path / f'resp_{prefix}_{seed}' / 'latest.pt'
+    resp_path = net_path / f'resp_brle_{prefix}_{seed}' / 'latest.pt'
 
     net = get_network_from_file(resp_path).eval()
     alb_network_agent_cfg = NetworkAgentConfig(

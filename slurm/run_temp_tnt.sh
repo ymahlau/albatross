@@ -1,14 +1,13 @@
 #!/bin/bash
-#SBATCH --job-name=nd7_depth
+#SBATCH --job-name=albfix
 #SBATCH --output=slurm-%j-%a-out.txt
-#SBATCH --time=24:00:00 # (HH:MM:SS), infinite
-#SBATCH --partition=cpu_normal
+#SBATCH --time=infinite # (HH:MM:SS), infinite
+#SBATCH --partition=cpu_long
 #SBATCH --cpus-per-task=2
 #SBATCH --mem-per-cpu=2G
 #SBATCH --verbose
 #SBATCH --nodes=1
-#SBATCH --exclude=helena1,helena2,helena3,helena4,cc1l01,nox
-#SBATCH --array=0-49
+#SBATCH --array=50-199
 cd ..
 echo "Hier beginnt die Ausführung/Berechnung"
 srun -c 2 -v /home/mahlau/nobackup/env/miniforge3/envs/albatross-env/bin/python start_temp.py $SLURM_ARRAY_TASK_ID
