@@ -5,8 +5,8 @@ import multiprocessing as mp
 from scripts.depth.estimate_area_strength import evaluate_bs_depth_strength
 from scripts.depth.evaluate_bs_depth import evaluate_bs_depth_func
 from scripts.depth.kl_div_vs_base import save_policies_at_depth
-from scripts.eval.overcooked_bc_eval import evaluate_alb_proxy, evaluate_bc_bc, evaluate_overcooked_response, evaluate_overcooked_response_mle, evaluate_overcooked_response_normal, evaluate_proxy_bc, evaluate_proxy_proxy, evaluate_resp10_bc, evaluate_resp_proxy, evaluate_resp_resp, evaluate_resp_resp_10
-from scripts.eval.overcooked_proxy_temps import eval_proxy_different_temps, eval_resp_proxy_different_temps
+from scripts.eval_oc.overcooked_bc_eval import evaluate_alb_proxy, evaluate_bc_bc, evaluate_overcooked_response, evaluate_overcooked_response_mle, evaluate_overcooked_response_normal, evaluate_proxy_bc, evaluate_proxy_proxy, evaluate_resp10_bc, evaluate_resp_proxy, evaluate_resp_resp, evaluate_resp_resp_10
+from scripts.eval_oc.overcooked_proxy_temps import eval_proxy_different_temps, eval_resp_proxy_different_temps
 
 # from scripts.logit_solver.run_logit_experiments import generate_experiment_data, create_logit_data_func
 

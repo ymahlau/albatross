@@ -198,6 +198,7 @@ class AlbatrossAgent(Agent):
         }
         info_dict = {
             "all_action_probs": action_probs,  # this actually only contains player probs
+            "temperatures": temperatures,
         }
         return action_probs, info_dict
 

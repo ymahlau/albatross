@@ -153,7 +153,37 @@ def main():
     # print(game.get_cum_rewards())
 
 
-if __name__ == '__main__':
-    main()
+def main2():
+    save_path = Path(__file__).parent.parent / 'a_data' / 'temp'
+    base_name = '500_nodraw'
+    prefix = "nd7"
     
+    num_seeds = 5
+    num_parts = 10
+    # for seed in range(num_seeds):
+    #     for part in range(num_parts):
+    #         cur_path = save_path / f'{base_name}_{prefix}_{seed}_{part}.pkl'
+    #         with open(cur_path, 'rb') as f:
+    #             cur_dict = pickle.load(f)
+    full_list_alb, full_list_az, length_list_alb, length_list_az  = [], [], [], []
+    for seed in range(num_seeds):
+        for part in range(num_parts):
+            cur_path = save_path / f'{base_name}_{prefix}_{seed}_{part}.pkl'
+            with open(cur_path, 'rb') as f:
+                cur_dict = pickle.load(f)
+            full_list_alb.append(cur_dict['results_alb'])
+            length_list_alb.append(cur_dict['lengths_alb'])
+            
+            full_list_az.append(cur_dict['results_az'])
+            length_list_az.append(cur_dict['lengths_az'])
+    full_arr_alb = np.concatenate(full_list_alb, axis=2)[:, 0, :]
+    full_arr_az = np.concatenate(full_list_az, axis=2)[:, 0, :]
+    length_arr_alb = np.concatenate(length_list_alb, axis=2)[:, 0, :]
+    length_arr_az = np.concatenate(length_list_az, axis=2)[:, 0, :]
+
+    a = 1
+
+
+if __name__ == '__main__':
+    main2()
     

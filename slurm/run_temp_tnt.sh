@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=albfix
+#SBATCH --job-name=nodraw
 #SBATCH --output=slurm-%j-%a-out.txt
 #SBATCH --time=infinite # (HH:MM:SS), infinite
 #SBATCH --partition=cpu_long

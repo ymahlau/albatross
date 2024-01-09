@@ -19,12 +19,13 @@ from src.trainer.az_evaluator import do_evaluation
 
 
 def evaluate_bs_depth_func(experiment_id: int):
-    num_games_per_part = 100
     num_parts = 10
     search_iterations = np.arange(50, 2001, 50)
+    # search_iterations = np.asarray([500])
     save_path = Path(__file__).parent.parent.parent / 'a_data' / 'bs_depth'
-    base_name = 'bs_alb_fixed'
-    eval_az = False
+    # save_path = Path(__file__).parent.parent.parent / 'a_data' / 'temp'
+    base_name = 'nodraw_bs'
+    eval_az = True
     
     game_dict = {
         '4nd7': survive_on_7x7_4_player(),
@@ -41,6 +42,10 @@ def evaluate_bs_depth_func(experiment_id: int):
     prod = list(itertools.product(*pref_lists))
     prefix, seed, cur_game_id = prod[experiment_id]
     assert isinstance(prefix, str)
+    num_games_per_part = 100
+    if 'n' in prefix:
+        num_games_per_part = 50
+    
     # we do not want to set the same seed in every game and repeat the same play.
     # Therefore, set a different seed for every game and base seed
     set_seed((seed + 1) * cur_game_id)  
@@ -107,8 +112,8 @@ def evaluate_bs_depth_func(experiment_id: int):
         # cur_log_path = save_path / f'{base_name}_log_{prefix}_{seed}_{cur_game_id}_{cur_iterations}.pkl'
         # alb_online_agent.cfg.estimate_log_path = str(cur_log_path)
         
-        cur_temp = mean_temps[cur_iterations.item()]
-        alb_online_agent.cfg.fixed_temperatures = [cur_temp for _ in range(game_cfg.num_players)]
+        # cur_temp = mean_temps[cur_iterations.item()]
+        # alb_online_agent.cfg.fixed_temperatures = [cur_temp for _ in range(game_cfg.num_players)]
         
         print(f'Started evaluation with: {iteration_idx=}, {cur_iterations=}')
         
@@ -120,7 +125,7 @@ def evaluate_bs_depth_func(experiment_id: int):
             enemy_iterations=cur_iterations,
             temperature_list=[math.inf],
             own_temperature=math.inf,
-            prevent_draw=True,
+            prevent_draw=False,
             switch_positions=False,
             verbose_level=1,
             own_iterations=1,
@@ -137,7 +142,7 @@ def evaluate_bs_depth_func(experiment_id: int):
                 enemy_iterations=cur_iterations,
                 temperature_list=[math.inf],
                 own_temperature=math.inf,
-                prevent_draw=True,
+                prevent_draw=False,
                 switch_positions=False,
                 verbose_level=1,
                 own_iterations=1,
@@ -159,4 +164,4 @@ def evaluate_bs_depth_func(experiment_id: int):
     
 
 if __name__ == '__main__':
-    evaluate_bs_depth_func(175)
+    evaluate_bs_depth_func(0)
