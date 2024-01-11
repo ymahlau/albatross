@@ -22,9 +22,10 @@ def evaluate_bs_depth_func(experiment_id: int):
     num_parts = 10
     search_iterations = np.arange(50, 2001, 50)
     # search_iterations = np.asarray([500])
+    # search_iterations = np.arange(100, 1001, 100)
     save_path = Path(__file__).parent.parent.parent / 'a_data' / 'bs_depth'
     # save_path = Path(__file__).parent.parent.parent / 'a_data' / 'temp'
-    base_name = 'nodraw_bs'
+    base_name = 'base_sampl'
     eval_az = True
     
     game_dict = {
@@ -43,8 +44,8 @@ def evaluate_bs_depth_func(experiment_id: int):
     prefix, seed, cur_game_id = prod[experiment_id]
     assert isinstance(prefix, str)
     num_games_per_part = 100
-    if 'n' in prefix:
-        num_games_per_part = 50
+    # if 'n' in prefix:
+    #     num_games_per_part = 50
     
     # we do not want to set the same seed in every game and repeat the same play.
     # Therefore, set a different seed for every game and base seed
@@ -97,8 +98,8 @@ def evaluate_bs_depth_func(experiment_id: int):
     if os.path.exists(full_save_path):
         with open(full_save_path, 'rb') as f:
             last_result_dict = pickle.load(f)
-        # full_result_list_alb = last_result_dict['results_alb'].tolist()
-        # full_length_list_alb = last_result_dict['lengths_alb'].tolist()
+        full_result_list_alb = last_result_dict['results_alb'].tolist()
+        full_length_list_alb = last_result_dict['lengths_alb'].tolist()
         if eval_az:
             full_result_list_az = last_result_dict['results_az'].tolist()
             full_length_list_az = last_result_dict['lengths_az'].tolist()
@@ -123,7 +124,7 @@ def evaluate_bs_depth_func(experiment_id: int):
             opponent_list=[base_agent],
             num_episodes=[num_games_per_part],
             enemy_iterations=cur_iterations,
-            temperature_list=[math.inf],
+            temperature_list=[1],
             own_temperature=math.inf,
             prevent_draw=False,
             switch_positions=False,
@@ -140,7 +141,7 @@ def evaluate_bs_depth_func(experiment_id: int):
                 opponent_list=[base_agent],
                 num_episodes=[num_games_per_part],
                 enemy_iterations=cur_iterations,
-                temperature_list=[math.inf],
+                temperature_list=[1],
                 own_temperature=math.inf,
                 prevent_draw=False,
                 switch_positions=False,

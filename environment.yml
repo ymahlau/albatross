@@ -28,3 +28,4 @@ dependencies:
     - rliable
     - pygame
     - ipywidgets
+    - trueskill

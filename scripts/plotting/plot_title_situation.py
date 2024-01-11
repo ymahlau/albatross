@@ -36,7 +36,21 @@ def get_game_situation() -> OvercookedGame:
     game.render()
     return game
 
-def main():
+def get_game_situation_with_sprites() -> OvercookedGame:
+    game_cfg = AsymmetricAdvantageOvercookedConfig(temperature_input=True, single_temperature_input=False)
+    game_cfg.start_pos = (
+        (5, 2, 3, 1),
+        (3, 2, 2, 0),
+    )
+    game = OvercookedGame(game_cfg)
+    state_arr = game.get_state_array()
+    state_arr = state_arr.reshape((game_cfg.h, game_cfg.w))
+    state_arr[2, 4] = 4
+    game.update_tile_states(state_arr.reshape(-1).tolist())
+    game.render()
+    return game
+
+def print_probs():
     game = get_game_situation()
     
     # img_path = Path(__file__).parent.parent.parent / 'a_img' / 'misc' / 'situation_aa.png'
@@ -62,7 +76,14 @@ def main():
     probs = np.exp(logits) / np.sum(np.exp(logits), axis=-1)[:, np.newaxis]
     print(probs[0])
     
-    
+
+def print_situation():
+    img_path = Path(__file__).parent.parent.parent / 'a_img' / 'misc' / 'situation_aa_4.png'
+    game = get_game_situation_with_sprites()
+    slow_game = overcooked_slow_from_fast(game, 'aa')
+    render_oc(slow_game, img_path)
 
 if __name__ == '__main__':
-    main()
+    # print_probs()
+    print_situation()
+    
