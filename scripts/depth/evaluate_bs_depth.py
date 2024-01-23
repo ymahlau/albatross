@@ -20,12 +20,12 @@ from src.trainer.az_evaluator import do_evaluation
 
 def evaluate_bs_depth_func(experiment_id: int):
     num_parts = 10
-    search_iterations = np.arange(50, 2001, 50)
+    search_iterations = np.arange(3000, 20001, 1000)
     # search_iterations = np.asarray([500])
     # search_iterations = np.arange(100, 1001, 100)
     save_path = Path(__file__).parent.parent.parent / 'a_data' / 'bs_depth'
     # save_path = Path(__file__).parent.parent.parent / 'a_data' / 'temp'
-    base_name = 'base_sampl'
+    base_name = 'upper_base_sampl'
     eval_az = True
     
     game_dict = {
@@ -43,13 +43,13 @@ def evaluate_bs_depth_func(experiment_id: int):
     prod = list(itertools.product(*pref_lists))
     prefix, seed, cur_game_id = prod[experiment_id]
     assert isinstance(prefix, str)
-    num_games_per_part = 100
+    num_games_per_part = 50
     # if 'n' in prefix:
     #     num_games_per_part = 50
     
     # we do not want to set the same seed in every game and repeat the same play.
     # Therefore, set a different seed for every game and base seed
-    set_seed((seed + 1) * cur_game_id)  
+    set_seed(cur_game_id + seed * num_parts)   
     game_cfg = game_dict[prefix]
 
     net_path = Path(__file__).parent.parent.parent / 'a_saved_runs' / 'battlesnake'
@@ -110,8 +110,8 @@ def evaluate_bs_depth_func(experiment_id: int):
     
     for iteration_idx, cur_iterations in enumerate(search_iterations):
         # cur save path
-        # cur_log_path = save_path / f'{base_name}_log_{prefix}_{seed}_{cur_game_id}_{cur_iterations}.pkl'
-        # alb_online_agent.cfg.estimate_log_path = str(cur_log_path)
+        cur_log_path = save_path / f'{base_name}_log_{prefix}_{seed}_{cur_game_id}_{cur_iterations}.pkl'
+        alb_online_agent.cfg.estimate_log_path = str(cur_log_path)
         
         # cur_temp = mean_temps[cur_iterations.item()]
         # alb_online_agent.cfg.fixed_temperatures = [cur_temp for _ in range(game_cfg.num_players)]

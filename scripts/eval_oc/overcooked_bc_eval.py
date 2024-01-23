@@ -1,5 +1,3 @@
-
-
 from datetime import datetime
 import itertools
 import math

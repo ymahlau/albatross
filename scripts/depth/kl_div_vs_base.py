@@ -25,7 +25,7 @@ from src.network.initialization import get_network_from_file
 from src.misc.plotting import plot_filled_std_curves
 from src.misc.const import COLORS, LIGHT_COLORS, LINESTYLES
 
-def do_evaluation(
+def kl_evaluation(
         game: Game,
         evaluee: Agent,
         opponent: Agent,
@@ -109,7 +109,7 @@ def save_policies_at_depth(experiment_id: int):
     assert isinstance(prefix, str)
     # we do not want to set the same seed in every game and repeat the same play.
     # Therefore, set a different seed for every game and base seed
-    set_seed((seed + 1) * cur_game_id)  
+    set_seed(cur_game_id + seed * num_parts)
     game_cfg = game_dict[prefix]
 
     net_path = Path(__file__).parent.parent.parent / 'a_saved_runs' / 'battlesnake'
@@ -155,7 +155,7 @@ def save_policies_at_depth(experiment_id: int):
     for iteration_idx, cur_iterations in enumerate(search_iterations):
         print(f'Started evaluation with: {iteration_idx=}, {cur_iterations=}')
         
-        az_pol, base_pol = do_evaluation(
+        az_pol, base_pol = kl_evaluation(
             game=game,
             evaluee=az_agent,
             opponent=base_agent,

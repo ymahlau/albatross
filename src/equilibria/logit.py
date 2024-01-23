@@ -13,10 +13,10 @@ class SbrMode(Enum):
     BB = 'BB'
     POLYAK = 'POLYAK'  # n^-2/3 as step size
     NAGURNEY = 'NAGURNEY'  # step size by 1, 1/2, 1/2, 1/3, 1/3, 1/3, ... n times 1/n
-    BB_POLYAK = 'BB_POLYAK'
+    SRA = 'SRA'
+    BB_POLYAK = 'BB_POLYAK'  # combination of different methods, does not work very well
     BB_NAGURNEY = 'BB_NAGURNEY'
     BB_MSA = 'BB_MSA'
-    SRA = 'SRA'
     SRA_NAGURNEY = 'SRA_NAGURNEY'
 
 
@@ -80,9 +80,9 @@ def compute_logit_equilibrium(
         # the paper proposes gamma in [0.01, 0.5] and GAMMA in [1.5, 2]
         sbr_code = 9
         if hp_0 is None:
-            hp_0 = 0.5
+            hp_0 = 0.3
         if hp_1 is None:
-            hp_1 = 1.5
+            hp_1 = 1.8
         if hp_0 < 0.01 or hp_0 > 0.5:
             raise ValueError(f"Invalid EMA hyperparameter: {hp_0=}")
         if hp_1 < 1.5 or hp_1 > 2:

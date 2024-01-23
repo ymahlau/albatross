@@ -49,7 +49,7 @@ def evaluate_bs_depth_strength(experiment_id: int):
     assert isinstance(prefix, str)
     # we do not want to set the same seed in every game and repeat the same play.
     # Therefore, set a different seed for every game and base seed
-    set_seed((seed + 1) * cur_game_id)  
+    set_seed(cur_game_id + seed * num_parts)   
     game_cfg = game_dict[prefix]
 
     net_path = Path(__file__).parent.parent.parent / 'a_saved_runs' / 'battlesnake'

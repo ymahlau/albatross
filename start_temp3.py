@@ -43,7 +43,7 @@ if __name__ == '__main__':
     # evaluate_resp_resp_10(experiment_id)
     # evaluate_proxy_bc(experiment_id)
     # eval_resp_proxy_different_temps(experiment_id)
-    evaluate_bs_depth_func(experiment_id)
+    # evaluate_bs_depth_func(experiment_id)
     # save_policies_at_depth(experiment_id)
     # evaluate_bs_depth_strength(experiment_id)
     # estimate_bc_strength(experiment_id)
@@ -53,7 +53,7 @@ if __name__ == '__main__':
     # step_size_experiment()
     # eval_albfix_vs_bc(experiment_id)
     # alb_vs_proxy_at_temps(experiment_id)
-    # albfix_vs_proxy_at_temps(experiment_id)
+    albfix_vs_proxy_at_temps(experiment_id)
     
     
     # num_iterations = int(sys.argv[1])

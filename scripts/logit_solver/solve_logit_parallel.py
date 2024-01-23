@@ -92,28 +92,27 @@ def compute_equilibrium_data_parallel(
         with open(gt_path, 'rb') as f:
             gt_data = pickle.load(f)
     with mp.Pool(processes=num_procs, initargs=init_args, initializer=init_process) as pool:
-        result_list_unfinished = []
-        temperature_list = []
-        game_cfg_list = []
+        result_dict = dict()  # game_id -> res, temp, cfg
         for game_id in range(cfg.num_games):
             if gt_data is None:
                 game_cfg = get_random_matrix_cfg(
                     nfg_type=cfg.nfg_type,
                     num_actions_per_player=[cfg.num_actions for _ in range(cfg.num_player)]
                 )
+                temperature = random.random() * (cfg.temperature_range[1] - cfg.temperature_range[0])
+                temperature += cfg.temperature_range[0]
             else:
                 game_cfg = gt_data.game_cfgs[game_id]
-            temperature = random.random() * (cfg.temperature_range[1] - cfg.temperature_range[0])
-            temperature += cfg.temperature_range[0]
+                temperature = gt_data.temperatures[game_id].item()
             result_tpl_unfinished = pool.apply_async(
                 func=solve_nfg,
                 kwds={'cfg': game_cfg, 'temperature': temperature, 'game_id': game_id}
             )
-            result_list_unfinished.append(result_tpl_unfinished)
-            temperature_list.append(temperature)
-            game_cfg_list.append(game_cfg)
+            result_dict[game_id] = (result_tpl_unfinished, temperature, game_cfg)
         # wait for children to finish
-        result_list = [res.get(timeout=None) for res in result_list_unfinished]
+        result_list = [result_dict[game_id][0].get(timeout=None) for game_id in range(cfg.num_games)]
+    temperature_list = [result_dict[game_id][1] for game_id in range(cfg.num_games)]
+    game_cfg_list = [result_dict[game_id][2] for game_id in range(cfg.num_games)]
     # aggregate results
     full_values = np.stack([r[0] for r in result_list])
     full_policies = np.stack([r[1] for r in result_list])

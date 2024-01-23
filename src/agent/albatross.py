@@ -31,7 +31,7 @@ class AlbatrossAgentConfig(AgentConfig):
     name: str = 'Albatross'
     min_temp: float = 0
     max_temp: float = 10
-    init_temp: float = 10
+    init_temp: float = 5
     num_iterations: int = 10  # only used for mle
     fixed_temperatures: Optional[list[float]] = None
     estimate_log_path: Optional[str] = None

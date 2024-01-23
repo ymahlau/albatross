@@ -29,3 +29,4 @@ dependencies:
     - pygame
     - ipywidgets
     - trueskill
+    - textalloc
