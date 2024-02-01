@@ -153,6 +153,30 @@ def main():
     # print(game.get_cum_rewards())
 
 
+def copy_files():
+    orig_dir = Path(__file__).parent.parent / 'a_saved_runs'
+    new_dir = Path(__file__).parent.parent / 'trained_models'
+    num_seeds = 5
+    oc_names = [
+        'proxy_aa', 'proxy_cc', 'proxy_cr', 'proxy_co', 'proxy_fc',
+        'resp_aa', 'resp_cc', 'resp_cr', 'resp_co', 'resp_fc',
+        'resp_brle_cr'
+    ]
+    bs_names = [
+        'd7', 'nd7', '4nd7',
+        'd7_proxy', 'nd7_proxy', '4nd7_proxy',
+        'd7_resp', 'nd7_resp', '4nd7_resp',
+    ]
+    for seed in range(num_seeds):
+        for ocn in oc_names:
+            full_orig = orig_dir / 'overcooked' / f'{ocn}_{seed}' / 'latest.pt'
+            full_new = new_dir / 'overcooked' / f'{ocn}_{seed}.pt'
+            shutil.copy(full_orig, full_new)
+        for bsn in bs_names:
+            full_orig = orig_dir / 'battlesnake' / f'{bsn}_{seed}' / 'latest.pt'
+            full_new = new_dir / 'battlesnake' / f'{bsn}_{seed}.pt'
+            shutil.copy(full_orig, full_new)
+
 def main2():
     save_path = Path(__file__).parent.parent / 'a_data' / 'temp'
     base_name = '500_nodraw'
@@ -185,5 +209,6 @@ def main2():
 
 
 if __name__ == '__main__':
-    main2()
+    # main2()
+    copy_files()
     
