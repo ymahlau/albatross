@@ -36,5 +36,5 @@ def clean_dir(directory_path):
             clean_dir(item_path)
 
 if __name__ == '__main__':
-    parent_dir = '/home/mahlau/nobackup/runs'
+    parent_dir = 'path'
     clean_dir(parent_dir)

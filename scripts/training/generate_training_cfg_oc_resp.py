@@ -330,7 +330,7 @@ def generate_training_structured_configs():
                 compile_mode='max-autotune',
                 merge_inference_update_gpu=False,
                 # proxy_net_path=None,
-                proxy_net_path=f"/bigwork/nhmlmahy/a_saved_runs/overcooked/proxy_{name}_{seed}/latest.pt",
+                proxy_net_path=f"path to proxy",
             )
             # initialize yaml file and hydra
             print(os.getcwd())

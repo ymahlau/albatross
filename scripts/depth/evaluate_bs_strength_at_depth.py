@@ -12,7 +12,6 @@ from src.game.battlesnake.bootcamp.test_envs_7x7 import survive_on_7x7, survive_
 from src.misc.serialization import serialize_dataclass
 from src.search.config import DecoupledUCTSelectionConfig, AreaControlEvalConfig, StandardBackupConfig, \
     StandardExtractConfig, MCTSConfig
-from start_depth import main
 
 def eval_bs_depth():
     game_dict = {

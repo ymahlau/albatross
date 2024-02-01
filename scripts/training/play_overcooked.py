@@ -12,8 +12,7 @@ from src.network.initialization import get_network_from_file
 
 
 def play_overcooked_example():
-    # path = Path(__file__).parent.parent.parent / 'outputs' / 'luis_proxy_aa_0.pt'
-    path = Path(__file__).parent.parent.parent / 'a_models' / 'luis_proxy_aa_0.pt'
+    path = 'path'
     temperature_input = True
     single_temperature = True
     

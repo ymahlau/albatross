@@ -20,7 +20,6 @@ from src.trainer.az_evaluator import do_evaluation
 
 
 def play_battlesnake_example():
-    # path = Path(__file__).parent.parent.parent / 'outputs' / 'luis_proxy_aa_0.pt'
     
     prefix = 'nd7'
     seed = 0

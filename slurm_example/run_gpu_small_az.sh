@@ -2,7 +2,7 @@
 #SBATCH --job-name=nd7_4nd7
 #SBATCH --output=slurm-%j-%a-out.txt
 #SBATCH --time=96:00:00 # (HH:MM:SS)
-#SBATCH --partition=tnt
+#SBATCH --partition=partition_name
 #SBATCH --cpus-per-task=42
 #SBATCH --mem=100G
 #SBATCH --verbose
