@@ -11,7 +11,7 @@ logging_data/models
 /multirun
 /models
 
-
+/slurm_old
 imp_marl/results_scripts/logs
 
 a_saved_runs
