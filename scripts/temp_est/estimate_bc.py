@@ -131,7 +131,7 @@ def plot_bc_estimate_per_turn():
         full_arr = np.asarray(estimation_list).reshape(-1, 399)
         
         plt.clf()
-        plt.figure(figsize=(5, 5))
+        plt.figure(figsize=(5, 4))
         seaborn.set_theme(style='whitegrid')
         
         x = np.arange(1, 400)
@@ -139,24 +139,25 @@ def plot_bc_estimate_per_turn():
             x=x,
             mean=full_arr.mean(axis=0),
             std=full_arr.std(axis=0),
-            color='xkcd:red',
-            lighter_color='xkcd:light red',
+            color=COLORS[0],
+            lighter_color=LIGHT_COLORS[0],
             linestyle='solid',
             label='Maximum Likelihood\nEstimation',
             min_val=0,
         )
         
-        fontsize = 'x-large'
+        fontsize = 'xx-large'
         plt.xlim(x[0], x[-1])
         plt.ylim(0, 4)
-        plt.xticks(fontsize='large')
+        plt.xticks([50, 150, 250, 350], fontsize=fontsize)
         plt.yticks(fontsize=fontsize)
-        # plt.title(full_name, fontsize=fontsize)
-        plt.ylabel('Temperature Estimate', fontsize=fontsize)
+        plt.ylabel('Temp. Estimate', fontsize=fontsize)
         plt.xlabel('Episode Step', fontsize=fontsize)
-        plt.legend(fontsize=fontsize)
+        # if prefix == 'cr':
+        # plt.legend(fontsize='x-large')
+        # plt.title(full_name, fontsize=fontsize)
         plt.tight_layout()
-        plt.savefig(img_path / f'{base_name}_{prefix}.pdf', bbox_inches='tight', pad_inches=0.0)
+        plt.savefig(img_path / f'{base_name}_{prefix}.pdf', bbox_inches='tight', pad_inches=0.03)
         
 
 def compute_bc_strength():

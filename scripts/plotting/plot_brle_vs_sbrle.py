@@ -35,7 +35,7 @@ def plot_brle():
     
     plt.boxplot(data, labels=labels, showfliers=True)
     
-    fontsize = 'medium'
+    fontsize = 'x-large'
     # plt.xlabel('Temperature', fontsize=fontsize)
     # plt.xticks([])
     plt.ylabel('Reward', fontsize=fontsize)
@@ -43,7 +43,7 @@ def plot_brle():
     plt.yticks(fontsize=fontsize)
     # plt.legend(fontsize=fontsize)
     plt.tight_layout()
-    plt.savefig(img_path / f'brle.pdf')
+    plt.savefig(img_path / f'brle.pdf', bbox_inches='tight', pad_inches=0.03)
 
 
 if __name__ == '__main__':

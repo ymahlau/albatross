@@ -190,9 +190,11 @@ def eval_resp_proxy_different_temps(experiment_id: int):
             pickle.dump(full_result_list, f)
 
 def eval_resp_fixed_proxy(experiment_id: int):
-    num_games = 100
-    save_path = Path(__file__).parent.parent.parent / 'a_data' / 'oc'
-    base_name = 'resp_proxy_fix_temps_1_1'
+    num_games_per_part = 20
+    num_parts = 5
+    temperatures = np.linspace(0, 10, 20)
+    save_path = Path(__file__).parent.parent.parent / 'a_data' / 'oc_behavior'
+    base_name = 'resp_proxy'
     
     game_dicts = {
         'aa': AsymmetricAdvantageOvercookedConfig(),
@@ -205,10 +207,11 @@ def eval_resp_fixed_proxy(experiment_id: int):
     pref_lists = [
         ['aa', 'cc', 'co', 'cr', 'fc'],
         list(range(5)),
+        list(range(num_parts)),
     ]
     prod = list(itertools.product(*pref_lists))
-    prefix, seed = prod[experiment_id]
-    set_seed(seed)
+    prefix, seed, cur_game_id = prod[experiment_id]
+    set_seed(cur_game_id + seed * num_parts)
     game_cfg = game_dicts[prefix]
 
     net_path = Path(__file__).parent.parent.parent / 'a_saved_runs' / 'overcooked'
@@ -264,7 +267,6 @@ def eval_resp_fixed_proxy(experiment_id: int):
     
     print(f'{datetime.now()} - Started evaluation of {prefix} with {seed=}', flush=True)
     full_result_list = []
-    temperatures = np.linspace(0, 10, 100)
     # temperatures = np.linspace(-5, 0, 15)[:-1].tolist() + np.linspace(10, 15, 15)[1:].tolist()
     for t_idx, t in enumerate(temperatures):
         print(f'Started evaluation with: {t_idx=}, {t=}')
@@ -272,11 +274,14 @@ def eval_resp_fixed_proxy(experiment_id: int):
         proxy_net_agent.set_temperatures([t, t])
         alb_online_agent.cfg.fixed_temperatures = [t, t]
         
+        cur_log_path = save_path / f'{base_name}_log_{prefix}_{seed}_{cur_game_id}_{t_idx}.pkl'
+        alb_online_agent.cfg.estimate_log_path = str(cur_log_path)
+        
         results, _ = do_evaluation(
             game=game,
             evaluee=alb_online_agent,
             opponent_list=[proxy_net_agent],
-            num_episodes=[num_games],
+            num_episodes=[num_games_per_part],
             enemy_iterations=0,
             temperature_list=[1],
             own_temperature=1,

@@ -1,3 +1,4 @@
+import copy
 from pathlib import Path
 import pickle
 from matplotlib import pyplot as plt
@@ -139,8 +140,11 @@ def main():
 
     plt.clf()
     seaborn.set_theme(style='whitegrid')
-    plt.figure(figsize=(10, 10), dpi=600)
+    plt.figure(figsize=(10, 8), dpi=600)
     
+    color_cpy = copy.deepcopy(COLORS)
+    color_cpy[0] = COLORS[1]
+    color_cpy[1] = COLORS[0]
     
     # Creating grouped bar plot
     for i, setting in enumerate(methods):
@@ -152,7 +156,7 @@ def main():
             yerr=[min_err[:, i], max_err[:, i]],
             label=setting,
             capsize=3,  # Specify the cap size for error bars
-            color=COLORS[i],
+            color=color_cpy[i],
         )
 
     # Adding labels and title
@@ -165,7 +169,7 @@ def main():
     # Displaying the plot
     img_path = Path(__file__).parent.parent.parent / 'a_img' / 'oc' / img_name
     plt.tight_layout()
-    plt.savefig(img_path)
+    plt.savefig(img_path, bbox_inches='tight', pad_inches=0.05)
 
 
 if __name__ == '__main__':

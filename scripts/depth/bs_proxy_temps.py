@@ -234,10 +234,17 @@ def plot_both_bs():
     img_path = Path(__file__).parent.parent.parent / 'a_img' / 'bs_proxy_temps'
     
     game_dict = {
-        '4nd7': survive_on_7x7_4_player(),
         'd7': survive_on_7x7_constrictor(),
-        'nd7': survive_on_7x7(),
         '4d7': survive_on_7x7_constrictor_4_player(),
+        'nd7': survive_on_7x7(),
+        '4nd7': survive_on_7x7_4_player(),
+    }
+    
+    full_names = {
+        'd7': 'Deterministic 2-Player',
+        '4d7': 'Deterministic 4-Player',
+        'nd7': 'Stochastic 2-Player',
+        '4nd7': 'Stochastic 4-Player',
     }
     
     for idx, prefix in enumerate(game_dict.keys()):
@@ -257,7 +264,7 @@ def plot_both_bs():
         data_arr_fix = np.asarray(fix_data)[:, :, 0, :].mean(axis=-1)
         
         plt.clf()
-        plt.figure(figsize=(5, 5))
+        plt.figure()
         seaborn.set_theme(style='whitegrid')
         
         
@@ -265,10 +272,10 @@ def plot_both_bs():
             x=temperatures,
             mean=data_arr.mean(axis=0),
             std=data_arr.std(axis=0),
-            color=COLORS[0],
-            lighter_color=LIGHT_COLORS[0],
+            color=COLORS[1],
+            lighter_color=LIGHT_COLORS[1],
             linestyle=LINESTYLES[0],
-            label='Proxy + Alb.' if idx == 0 else None,
+            label='Alb. vs. Proxy' if idx == 0 else None,
             min_val=0,
         )
         
@@ -276,10 +283,10 @@ def plot_both_bs():
             x=temperatures,
             mean=data_arr_fix.mean(axis=0),
             std=data_arr_fix.std(axis=0),
-            color=COLORS[2],
-            lighter_color=LIGHT_COLORS[2],
-            linestyle=LINESTYLES[2],
-            label='Proxy + Alb.*' if idx == 0 else None,
+            color=COLORS[0],
+            lighter_color=LIGHT_COLORS[0],
+            linestyle=LINESTYLES[1],
+            label='Alb.* vs. Proxy' if idx == 0 else None,
             min_val=0,
         )
         
@@ -287,10 +294,10 @@ def plot_both_bs():
         plt.xlim(temperatures[0], temperatures[-1])
         plt.xticks(fontsize=fontsize)
         plt.yticks(fontsize=fontsize)
-        plt.title(prefix, fontsize=fontsize)
+        # plt.title(full_names[prefix], fontsize=fontsize)
         if idx == 0:
-            plt.legend(fontsize='x-large', loc='lower right', bbox_to_anchor=(1.01, -0.01))
-            plt.ylabel('Reward', fontsize=fontsize)
+            plt.legend(fontsize='x-large')
+        plt.ylabel('Reward', fontsize=fontsize)
         plt.xlabel('Temperature', fontsize=fontsize)
         plt.tight_layout()
         plt.savefig(img_path / f'bs_resp_proxy_{prefix}.pdf', bbox_inches='tight', pad_inches=0.0)

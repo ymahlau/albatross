@@ -7,9 +7,10 @@ from scripts.depth.estimate_area_strength import evaluate_bs_depth_strength
 from scripts.depth.estimate_az_strength import estimate_az
 from scripts.depth.evaluate_bs_depth import evaluate_bs_depth_func
 from scripts.depth.kl_div_vs_base import save_policies_at_depth
+from scripts.eval_oc.entropy_proxy import entropy_proxy_eval
 from scripts.eval_oc.overcooked_albfix_bc import eval_albfix_vs_bc
 from scripts.eval_oc.overcooked_bc_eval import evaluate_alb_proxy, evaluate_bc_bc, evaluate_overcooked_response, evaluate_overcooked_response_mle, evaluate_overcooked_response_normal, evaluate_proxy_bc, evaluate_proxy_proxy, evaluate_resp10_bc, evaluate_resp_proxy, evaluate_resp_resp, evaluate_resp_resp_10
-from scripts.eval_oc.overcooked_proxy_temps import eval_proxy_different_temps, eval_resp_proxy_different_temps
+from scripts.eval_oc.overcooked_proxy_temps import eval_proxy_different_temps, eval_resp_fixed_proxy, eval_resp_proxy_different_temps
 from scripts.logit_solver.run_logit_experiments import generate_gt_data, step_size_experiment
 from scripts.temp_est.estimate_bc import estimate_bc_strength
 from scripts.temp_est.estimate_proxy_oc import estimate_oc_proxy_strength
@@ -43,7 +44,7 @@ if __name__ == '__main__':
     # evaluate_resp_resp_10(experiment_id)
     # evaluate_proxy_bc(experiment_id)
     # eval_resp_proxy_different_temps(experiment_id)
-    evaluate_bs_depth_func(experiment_id)
+    # evaluate_bs_depth_func(experiment_id)
     # save_policies_at_depth(experiment_id)
     # evaluate_bs_depth_strength(experiment_id)
     # estimate_bc_strength(experiment_id)
@@ -54,6 +55,8 @@ if __name__ == '__main__':
     # eval_albfix_vs_bc(experiment_id)
     # alb_vs_proxy_at_temps(experiment_id)
     # albfix_vs_proxy_at_temps(experiment_id)
+    # entropy_proxy_eval(experiment_id)
+    eval_resp_fixed_proxy(experiment_id)
     
     
     # num_iterations = int(sys.argv[1])

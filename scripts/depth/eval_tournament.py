@@ -441,17 +441,19 @@ def plot_trueskill_vs_temperature():
     seaborn.set_theme(style='whitegrid')
     
     cmap = seaborn.color_palette("coolwarm_r", as_cmap=True)
-    palette = seaborn.color_palette("coolwarm_r", 100)
-
-    plt.plot(x_range, [mean_vals[-2], mean_vals[-2]], color=palette[-1], linestyle='dashed', label='Albatross')
+    # palette = seaborn.color_palette("coolwarm", 100)
     
-    plt.scatter(az_temp, mean_vals[-1], color=palette[-1], label='AlphaZero', marker='*', s=130, edgecolors=(0, 0, 0, 1), clip_on=False, zorder=10)
+    plt.scatter([10], [mean_vals[-2]], color=COLORS[1], marker='*', label='Albatross (ours)', s=130, edgecolors=(0, 0, 0, 1))
+    plt.scatter(az_temp, mean_vals[-1], color=COLORS[2], label='AlphaZero', marker='v', s=90, edgecolors=(0, 0, 0, 1), clip_on=False, zorder=10)
     
-    scatter = plt.scatter(x, y, c=depths, cmap=cmap, norm=LogNorm(), label='Monte Carlo Tree Search', s=75, alpha=0.9, edgecolors=(0, 0, 0, 1))
+    scatter = plt.scatter(x, y, c=depths, cmap=cmap, norm=LogNorm(), label='MCTS + Value Heuristic', s=75, alpha=0.9, edgecolors=(0, 0, 0, 1))
     plt.colorbar(scatter, label='MCTS Iterations')
     
+    # plt.plot(x_range, [mean_vals[-2], mean_vals[-2]], color=COLORS[1], linestyle='dashed', label='Albatross (ours)')
+    
+    
     fontsize = 'medium'
-    plt.xlabel('Temperature (Estimated Skill)', fontsize=fontsize)
+    plt.xlabel('Temperature (Estimated Rationality)', fontsize=fontsize)
     plt.ylabel('TrueSkill Score', fontsize=fontsize)
 
     plt.xticks(fontsize=fontsize)

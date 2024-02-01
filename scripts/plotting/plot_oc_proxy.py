@@ -159,8 +159,8 @@ def plot_both():
             x=temperatures,
             mean=result_arr_proxy.mean(axis=-1),
             std=result_arr_proxy.std(axis=-1),
-            color=COLORS[1],
-            lighter_color=LIGHT_COLORS[1],
+            color=COLORS[3],
+            lighter_color=LIGHT_COLORS[3],
             linestyle=LINESTYLES[1],
             label='Proxy + Proxy' if idx == 0 else None,
             min_val=0,
@@ -170,8 +170,8 @@ def plot_both():
             x=temperatures,
             mean=result_arr_resp.mean(axis=-1),
             std=result_arr_resp.std(axis=-1),
-            color=COLORS[0],
-            lighter_color=LIGHT_COLORS[0],
+            color=COLORS[1],
+            lighter_color=LIGHT_COLORS[1],
             linestyle=LINESTYLES[0],
             label='Proxy + Alb.' if idx == 0 else None,
             min_val=0,
@@ -181,8 +181,8 @@ def plot_both():
             x=temperatures,
             mean=result_arr_resp_fix.mean(axis=-1),
             std=result_arr_resp_fix.std(axis=-1),
-            color=COLORS[2],
-            lighter_color=LIGHT_COLORS[2],
+            color=COLORS[0],
+            lighter_color=LIGHT_COLORS[0],
             linestyle=LINESTYLES[2],
             label='Proxy + Alb.*' if idx == 0 else None,
             min_val=0,
@@ -192,9 +192,9 @@ def plot_both():
         plt.xlim(temperatures[0], temperatures[-1])
         plt.xticks(fontsize=fontsize)
         plt.yticks(fontsize=fontsize)
-        plt.title(full_name, fontsize=fontsize)
+        # plt.title(full_name, fontsize=fontsize)
         if idx == 0:
-            plt.legend(fontsize='x-large', loc='lower right', bbox_to_anchor=(1.01, -0.01))
+            plt.legend(fontsize='xx-large', loc='lower right', bbox_to_anchor=(1.035, -0.035))
             plt.ylabel('Reward', fontsize=fontsize)
         plt.xlabel('Temperature', fontsize=fontsize)
         plt.tight_layout()

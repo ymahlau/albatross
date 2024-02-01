@@ -162,32 +162,35 @@ def plot_albfix_bs_bc():
         true_temp = temp_arr[:, -1].mean()
         
         plt.clf()
-        plt.figure(figsize=(5, 5))
+        plt.figure(figsize=(5, 4))
         seaborn.set_theme(style='whitegrid')
         
         plot_filled_std_curves(
             x=temperatures,
             mean=full_arr.mean(axis=0),
             std=full_arr.std(axis=0),
-            color=COLORS[0],
-            lighter_color=LIGHT_COLORS[0],
+            color=COLORS[1],
+            lighter_color=LIGHT_COLORS[1],
             linestyle=LINESTYLES[0],
             label='Alb. + BC',
             min_val=0,
         )
-        plt.axvline(x=true_temp, color='xkcd:red', linestyle='solid', label='True Temp.')
+        plt.axvline(x=true_temp, color=COLORS[0], linestyle='solid', label='True Temp.')
         
-        fontsize = 'x-large'
+        fontsize = 'xx-large'
         plt.xlim(temperatures[0], temperatures[-1])
         plt.xticks(fontsize=fontsize)
         plt.yticks(fontsize=fontsize)
-        # plt.title(name_dict[prefix], fontsize=fontsize)
-        # plt.legend(fontsize='x-large', loc='lower right', bbox_to_anchor=(1.01, -0.01))
-        plt.legend(fontsize='x-large')
+
         plt.ylabel('Reward', fontsize=fontsize)
         plt.xlabel('Fixed Temperature Input', fontsize=fontsize)
+        
+        # if prefix == 'aa':
+        # plt.legend(fontsize='x-large', loc='upper right', bbox_to_anchor=(1, 1.))
+        # plt.title(name_dict[prefix], fontsize=fontsize)
+        
         plt.tight_layout()
-        plt.savefig(img_path / f'legend_{base_name}_{prefix}.pdf', bbox_inches='tight', pad_inches=0.0)
+        plt.savefig(img_path / f'{base_name}_{prefix}.pdf', bbox_inches='tight', pad_inches=0.03)
 
 if __name__ == '__main__':
     # eval_albfix_vs_bc(0)
