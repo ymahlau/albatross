@@ -30,6 +30,7 @@ The training framework of Albatross is a multiprocessing framework. An update pr
 
 #### Compile C++ Module
 Firstly, it is necessary to compile the c++ modules as most algorithms and game dynamics are implemented in that language.
+For this purpose, you need a g++ compiler on your system (for C++ version 11).
 ```
 # Windows
 cd src/cpp/alglib
