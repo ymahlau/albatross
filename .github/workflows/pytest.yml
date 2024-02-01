@@ -17,9 +17,9 @@ jobs:
         with:
           python-version: '3.11'
       - name: setup git mail
-        run: git config --global user.email "mahlauyannik@gmail.com"
+        run: git config --global user.email "email"
       - name: Setup git user name
-        run: git config --global user.name "ymahlau"
+        run: git config --global user.name "username"
       - name: See python path
         run: echo $CONDA/bin/python
       - name: Install dependencies
