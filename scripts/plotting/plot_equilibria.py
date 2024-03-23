@@ -174,18 +174,18 @@ def plot_equilibria_zero_sum():
     fig = plt.figure()
     plt.tight_layout()
     
-    plt.plot(x_prob, br_utils, color=COLORS[2], linestyle='dashed', zorder=10, label='BR / SE')
+    plt.plot(x_prob, br_utils, color=COLORS[2], linestyle='dashed', zorder=10, label='BR')
     # NE/SE
-    plt.scatter(ne_pol[0][0], ne_val[0], color='xkcd:almost black', marker='o', s=50, zorder=11, label='NE / SSE')
+    plt.scatter(ne_pol[0][0], ne_val[0], color='xkcd:almost black', marker='o', s=50, zorder=11, label='NE')
     
     # Responses
     plt.plot(x_prob, sbr_utils, color='xkcd:almost black', linestyle='dashdot', zorder=10, label='SBR')
-    plt.plot(x_prob, sbr_qs[:, 0], color='xkcd:grey', linestyle='dotted', zorder=10, label=None)
-    plt.plot(x_prob, sbr_qs[:, 1], color='xkcd:grey', linestyle='dotted', zorder=10, label=None)
+    # plt.plot(x_prob, sbr_qs[:, 0], color='xkcd:grey', linestyle='dotted', zorder=10, label='U(a, SBR(a))')
+    # plt.plot(x_prob, sbr_qs[:, 1], color='xkcd:grey', linestyle='dotted', zorder=10, label=None)
     # LE
     plt.scatter(le_pol[0][0], le_val[0], color='xkcd:almost black', marker='*', s=80, zorder=11, label='LE')
     # QNE
-    plt.scatter(qne_pol[0][0], qne_val[0], color='xkcd:almost black', marker='s', s=50, zorder=11, label='QNE')
+    # plt.scatter(qne_pol[0][0], qne_val[0], color='xkcd:almost black', marker='s', s=50, zorder=11, label='QNE')
     # QSE
     plt.scatter(qse_pol[0][0], qse_val[0], color='xkcd:almost black', marker='v', s=70, zorder=11, label='QSE')
     # sbrle
@@ -204,7 +204,7 @@ def plot_equilibria_zero_sum():
     # plt.scatter(sbrle_pol[0], sbrle_val, color='black', marker='p', s=50, zorder=11, label='SBRLE')
     
     fontsize='large'
-    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='medium')
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='medium', frameon=False)
     # plt.legend(loc='upper center', bbox_to_anchor=(0.5, 1.15), ncol=4, fontsize='medium')
     plt.xlabel('Probability of Action a', fontsize=fontsize)
     plt.ylabel('Expected Utility (Player 1)', fontsize=fontsize)

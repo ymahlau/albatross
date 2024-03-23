@@ -19,20 +19,23 @@ from src.trainer.az_evaluator import do_evaluation
 
 
 def evaluate_bs_depth_func(experiment_id: int):
-    num_parts = 10
-    search_iterations = np.arange(3000, 20001, 1000)
+    num_parts = 5
+    # search_iterations = np.arange(3000, 20001, 1000)
     # search_iterations = np.asarray([500])
     # search_iterations = np.arange(100, 1001, 100)
+    # search_iterations = [int(5e4), int(1e5), int(5e5), int(1e6)]
+    # search_iterations = [int(5e5), int(1e6)]
+    search_iterations = [int(5e6)]
     save_path = Path(__file__).parent.parent.parent / 'a_data' / 'bs_depth'
     # save_path = Path(__file__).parent.parent.parent / 'a_data' / 'temp'
-    base_name = 'upper_base_sampl'
+    base_name = 'upper4_base_sampl'
     eval_az = True
     
     game_dict = {
-        '4nd7': survive_on_7x7_4_player(),
+        # '4nd7': survive_on_7x7_4_player(),
         'd7': survive_on_7x7_constrictor(),
-        'nd7': survive_on_7x7(),
-        '4d7': survive_on_7x7_constrictor_4_player(),
+        # 'nd7': survive_on_7x7(),
+        # '4d7': survive_on_7x7_constrictor_4_player(),
     }
     
     pref_lists = [
@@ -56,9 +59,9 @@ def evaluate_bs_depth_func(experiment_id: int):
     resp_path = net_path / f'{prefix}_resp_{seed}' / 'latest.pt'
     proxy_path = net_path / f'{prefix}_proxy_{seed}' / 'latest.pt'
     az_path = net_path / f'{prefix}_{seed}' / 'latest.pt'
-    temp_path = Path(__file__).parent.parent.parent / 'a_data' / 'bs_depth_strength_mean'
-    with open(temp_path / f'{prefix}.pkl', 'rb') as f:
-        mean_temps = pickle.load(f)
+    # temp_path = Path(__file__).parent.parent.parent / 'a_data' / 'bs_depth_strength_mean'
+    # with open(temp_path / f'{prefix}.pkl', 'rb') as f:
+    #     mean_temps = pickle.load(f)
     
     net = get_network_from_file(resp_path).eval()
     alb_network_agent_cfg = NetworkAgentConfig(
