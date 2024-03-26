@@ -366,7 +366,7 @@ data:
     __module__: src.trainer.config
     __name__: SaverConfig
     data:
-      save_all_checkpoints: false
+      save_all_checkpoints: true
       save_interval_sec: 600
   single_sbr_temperature: true
   temperature_input: false
@@ -496,5 +496,7 @@ data:
       temperature: 1
       use_symmetries: true
 hydra:
+  job:
+    chdir: true
   run:
     dir: ./outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}_4dc11_2
