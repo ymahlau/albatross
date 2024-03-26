@@ -1,7 +1,7 @@
 from src.game.battlesnake.battlesnake_conf import BattleSnakeConfig
 from src.game.battlesnake.battlesnake_enc import SimpleBattleSnakeEncodingConfig, VanillaBattleSnakeEncodingConfig, \
     SimpleConstrictorEncodingConfig
-from src.game.battlesnake.battlesnake_rewards import StandardBattleSnakeRewardConfig, KillBattleSnakeRewardConfig
+from src.game.battlesnake.battlesnake_rewards import CooperationBattleSnakeRewardConfig, StandardBattleSnakeRewardConfig, KillBattleSnakeRewardConfig
 
 
 def perform_choke_11x11(centered: bool) -> BattleSnakeConfig:
@@ -113,6 +113,21 @@ def survive_on_11x11_4_player_royale() -> BattleSnakeConfig:
         shrink_n_turns=25,
         hazard_damage=15,
         reward_cfg=KillBattleSnakeRewardConfig(),
+    )
+    return gc
+
+def survive_on_11x11_constrictor_4_player_coop() -> BattleSnakeConfig:
+    ec = SimpleConstrictorEncodingConfig()
+    rc = CooperationBattleSnakeRewardConfig()
+    
+    gc = BattleSnakeConfig(
+        w=11,
+        h=11,
+        num_players=4,
+        ec=ec,
+        reward_cfg=rc,
+        all_actions_legal=False,
+        constrictor=True,
     )
     return gc
 

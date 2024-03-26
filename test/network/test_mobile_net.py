@@ -8,12 +8,13 @@ from src.game.battlesnake.bootcamp.test_envs_11x11 import survive_on_11x11
 from src.game.battlesnake.bootcamp.test_envs_3x3 import perform_choke_2_player
 from src.game.battlesnake.bootcamp.test_envs_5x5 import perform_choke_5x5_4_player, survive_on_5x5_constrictor
 from src.game.battlesnake.bootcamp.test_envs_7x7 import survive_on_7x7
+from src.game.battlesnake.bootcamp.test_envs_9x9 import survive_on_9x9_constrictor_4_player_coop
 from src.game.initialization import get_game_from_config
 from src.game.overcooked_slow.layouts import CrampedRoomOvercookedSlowConfig, AsymmetricAdvantageOvercookedSlowConfig
 from src.network.initialization import get_network_from_config
 from src.network.mobilenet_v3 import MobileNetConfig3x3, MobileNetConfig7x7, MobileNetConfig5x5, \
     MobileNetConfig5x5Large, MobileNetConfig11x11, MobileNetConfig11x11Extrapolated, MobileNetConfig5x5Extrapolated, \
-    MobileNetConfig7x7Incumbent, MobileNetConfigOvercookedCramped, MobileNetConfigOvercookedAsymmetricAdvantage
+    MobileNetConfig7x7Incumbent, MobileNetConfig9x9Incumbent, MobileNetConfigOvercookedCramped, MobileNetConfigOvercookedAsymmetricAdvantage
 from src.network.resnet import ResNetConfig3x3, ResNetConfig7x7Large
 from src.network.vision_net import EquivarianceType
 
@@ -187,6 +188,18 @@ class TestMobileNet(unittest.TestCase):
         game.render()
         net_conf = MobileNetConfigOvercookedAsymmetricAdvantage(game_cfg=game_cfg)
         net = get_network_from_config(net_conf)
+        print(f"{net.num_params()=}")
+        in_tensor, _, _ = game.get_obs()
+        out = net(torch.tensor(in_tensor))
+        print(f"{out=}")
+        
+    def test_mobile_9x9(self):
+        game_cfg = survive_on_9x9_constrictor_4_player_coop()
+        game = get_game_from_config(game_cfg)
+        game.render()
+        
+        net_cfg = MobileNetConfig9x9Incumbent(game_cfg=game_cfg)
+        net = get_network_from_config(net_cfg)
         print(f"{net.num_params()=}")
         in_tensor, _, _ = game.get_obs()
         out = net(torch.tensor(in_tensor))

@@ -138,7 +138,7 @@ class BattleSnakeRewardFunctionKill(BattleSnakeRewardFunction):
 @dataclass
 class CooperationBattleSnakeRewardConfig(BattleSnakeRewardConfig):
     living_reward: float = field(default=0.02)
-    terminal_reward: float = -0.5
+    terminal_reward: float = -0.25
 
 class BattleSnakeRewardFunctionCooperation(BattleSnakeRewardFunction):
     def __init__(self, cfg: CooperationBattleSnakeRewardConfig):
@@ -154,12 +154,15 @@ class BattleSnakeRewardFunctionCooperation(BattleSnakeRewardFunction):
     ) -> np.ndarray:
         num_at_turn = len(players_at_turn)
         num_at_turn_last = len(players_at_turn_last)
+        num_dead = num_at_turn_last - num_at_turn
         # all players get negative terminal reward if a snake died
-        if num_at_turn != num_at_turn_last:
-            rewards = np.ones(shape=(num_players,), dtype=float) * self.cfg.terminal_reward
-        # add living reward if no one died
-        else:
-            rewards = self.cfg.living_reward * np.ones(shape=(num_players,), dtype=float)
+        rewards = np.zeros(shape=(num_players,), dtype=float)
+        player_died = [p for p in players_at_turn_last if p not in players_at_turn]
+        for p in player_died:
+            rewards[p] += self.cfg.terminal_reward * num_at_turn_last
+        for p in players_at_turn:
+            rewards[p] += self.cfg.terminal_reward * num_dead
+            rewards[p] += self.cfg.living_reward
         return rewards
 
 

@@ -337,6 +337,55 @@ class MobileNetConfig7x7Incumbent(MobileNetConfig):
     value_head_cfg: HeadConfig = field(
         default_factory=lambda: HeadConfig(num_layers=1, final_activation=ActivationType.TANH)
     )
+    
+    
+# in_channels, exp_channels, out_channels, kernel_size, stride, se
+incumbent_9x9 = [
+    [64,  128, 64,  3, 1, 0],
+    [64,  128, 64,  5, 1, 0],  # 19
+    [64,  192, 128, 3, 2, 0],  # 10
+    [128, 320, 128, 3, 1, 1],
+    [128, 320, 128, 5, 1, 1],
+    [128, 320, 192, 3, 2, 1],  # 5
+    [192, 384, 192, 3, 1, 1],
+    [192, 384, 192, 3, 2, 1],  # 3
+    [192, 384, 192, 3, 1, 1],
+]
+@dataclass
+class MobileNetConfig9x9Incumbent(MobileNetConfig):
+    layer_specs: list[list[int]] = field(default_factory=lambda: incumbent_9x9)
+    lff_features: bool = field(default=False)
+    lff_feature_expansion: int = field(default=27)
+    policy_head_cfg: HeadConfig = field(
+        default_factory=lambda: HeadConfig(num_layers=1, final_activation=ActivationType.NONE)
+    )
+    value_head_cfg: HeadConfig = field(
+        default_factory=lambda: HeadConfig(num_layers=1, final_activation=ActivationType.TANH)
+    )
+    
+# in_channels, exp_channels, out_channels, kernel_size, stride, se
+incumbent_11x11 = [
+    [64,  128, 64,  3, 1, 0],
+    [64,  128, 64,  5, 1, 0],  # 21
+    [64,  192, 128, 3, 2, 0],  # 11
+    [128, 320, 128, 3, 1, 1],
+    [128, 320, 128, 5, 1, 1],
+    [128, 320, 192, 3, 2, 1],  # 6
+    [192, 384, 192, 3, 1, 1],
+    [192, 384, 192, 3, 2, 1],  # 3
+    [192, 384, 192, 3, 1, 1],
+]
+@dataclass
+class MobileNetConfig11x11Incumbent(MobileNetConfig):
+    layer_specs: list[list[int]] = field(default_factory=lambda: incumbent_11x11)
+    lff_features: bool = field(default=False)
+    lff_feature_expansion: int = field(default=27)
+    policy_head_cfg: HeadConfig = field(
+        default_factory=lambda: HeadConfig(num_layers=1, final_activation=ActivationType.NONE)
+    )
+    value_head_cfg: HeadConfig = field(
+        default_factory=lambda: HeadConfig(num_layers=1, final_activation=ActivationType.TANH)
+    )
 
 
 extrapolated_11x11 = [
