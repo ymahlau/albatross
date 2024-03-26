@@ -238,6 +238,11 @@ class AlphaZeroTrainer:
             if self.cfg.temperature_input and not self.cfg.single_sbr_temperature:
                 # proxy
                 seed_server = random.randint(0, 2 ** 32 - 1)
+                cur_gpu_idx = gpu_idx
+                if self.cfg.merge_proxy_response_gpu:
+                    cur_gpu_idx -= 1
+                if self.cfg.merge_inference_update_gpu:
+                    cur_gpu_idx = 0
                 kwargs_inference = {
                     'trainer_cfg': self.cfg,
                     'const_net_path': self.cfg.proxy_net_path,
@@ -250,7 +255,7 @@ class AlphaZeroTrainer:
                     'input_arr': input_list[arr_idx],
                     'output_arr': output_list[arr_idx],
                     'cpu_list': cpu_list_inference,
-                    'gpu_idx': gpu_idx if not self.cfg.merge_inference_update_gpu else 0,
+                    'gpu_idx': cur_gpu_idx,
                     'prev_run_dir': Path(self.cfg.prev_run_dir) if self.cfg.prev_run_dir is not None else None,
                     'prev_run_idx': self.cfg.prev_run_idx,
                 }
@@ -258,7 +263,8 @@ class AlphaZeroTrainer:
                 p.start()
                 process_list.append(p)
                 arr_idx += 1
-                gpu_idx += 1
+                if not self.cfg.merge_proxy_response_gpu:
+                    gpu_idx += 1
         if self.cfg.max_cpu_inference_server is not None:
             cpu_counter += self.cfg.max_cpu_inference_server
         # cpu list for distributor, collector, saver and logger

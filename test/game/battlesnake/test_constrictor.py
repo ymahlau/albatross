@@ -4,6 +4,7 @@ import numpy as np
 
 from src.game.battlesnake.battlesnake import BattleSnakeGame, UP, RIGHT, LEFT, DOWN
 from src.game.battlesnake.battlesnake_conf import BattleSnakeConfig
+from src.game.battlesnake.bootcamp.test_envs_9x9 import survive_on_9x9_constrictor_4_player_coop
 
 
 class TestConstrictor(unittest.TestCase):
@@ -70,4 +71,18 @@ class TestConstrictor(unittest.TestCase):
         arr = game.get_bool_board_matrix()
         print(arr)
         self.assertEqual(7, np.sum(arr))
+        
+    def test_coop_9x9(self):
+        game_cfg = survive_on_9x9_constrictor_4_player_coop()
+        game_cfg.all_actions_legal = True
+        game = BattleSnakeGame(game_cfg)
+        game.render()
+        
+        r, _, _ = game.step((UP, UP, UP, UP))
+        game.render()
+        print(f"{r=}")
+        
+        r, _, _ = game.step((UP, UP, UP, UP))
+        game.render()
+        print(f"{r=}")
 

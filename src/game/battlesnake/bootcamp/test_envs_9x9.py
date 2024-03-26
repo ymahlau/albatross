@@ -1,5 +1,6 @@
 from src.game.battlesnake.battlesnake_conf import BattleSnakeConfig
-from src.game.battlesnake.battlesnake_enc import BestBattleSnakeEncodingConfig
+from src.game.battlesnake.battlesnake_enc import BestBattleSnakeEncodingConfig, SimpleConstrictorEncodingConfig
+from src.game.battlesnake.battlesnake_rewards import CooperationBattleSnakeRewardConfig
 
 
 def survive_on_9x9_constrictor_4_player() -> BattleSnakeConfig:
@@ -19,6 +20,22 @@ def survive_on_9x9_constrictor_4_player() -> BattleSnakeConfig:
         h=9,
         num_players=4,
         ec=ec,
+        all_actions_legal=False,
+        constrictor=True,
+    )
+    return gc
+
+
+def survive_on_9x9_constrictor_4_player_coop() -> BattleSnakeConfig:
+    ec = SimpleConstrictorEncodingConfig()
+    rc = CooperationBattleSnakeRewardConfig()
+    
+    gc = BattleSnakeConfig(
+        w=9,
+        h=9,
+        num_players=4,
+        ec=ec,
+        reward_cfg=rc,
         all_actions_legal=False,
         constrictor=True,
     )
