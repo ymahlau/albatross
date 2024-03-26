@@ -46,6 +46,7 @@ class OvercookedGame(Game):
             self.cfg.reward_cfg.soup_pickup,
             self.cfg.reward_cfg.soup_delivery,
             self.cfg.reward_cfg.start_cooking,
+            self.cfg.automatic_cook_start,
         )
 
     def reset_saved_properties(self):
@@ -359,4 +360,50 @@ class OvercookedGame(Game):
             self.state_p,
             state_pt,
         )
+    
+    def get_pot_positions(self) -> list[tuple[int, int]]:
+        board_arr = np.asarray(self.cfg.board).T
+        pot_tile_code = 4
+        rows, cols = np.where(board_arr == pot_tile_code)
+        return list(zip(rows, cols))
+    
+    def get_onion_disp_positions(self) -> list[tuple[int, int]]:
+        board_arr = np.asarray(self.cfg.board).T
+        tile_code = 3
+        rows, cols = np.where(board_arr == tile_code)
+        return list(zip(rows, cols))
+    
+    def get_dish_disp_positions(self) -> list[tuple[int, int]]:
+        board_arr = np.asarray(self.cfg.board).T
+        tile_code = 2
+        rows, cols = np.where(board_arr == tile_code)
+        return list(zip(rows, cols))
+    
+    def get_serving_positions(self) -> list[tuple[int, int]]:
+        board_arr = np.asarray(self.cfg.board).T
+        tile_code = 5
+        rows, cols = np.where(board_arr == tile_code)
+        return list(zip(rows, cols))
+    
+    def get_counter_positions(self) -> list[tuple[int, int]]:
+        board_arr = np.asarray(self.cfg.board).T
+        tile_code = 1
+        rows, cols = np.where(board_arr == tile_code)
+        return list(zip(rows, cols))
+    
+    def get_pot_positions_and_states(self):
+        pot_positions = self.get_pot_positions()
+        state_arr = self.get_state_array().reshape(self.cfg.h, self.cfg.w).T
+        result_dict = {
+            pos: state_arr[*pos] for pos in pot_positions
+        }
+        return result_dict
+    
+    def get_counter_positions_and_states(self):
+        pot_positions = self.get_counter_positions()
+        state_arr = self.get_state_array().reshape(self.cfg.h, self.cfg.w).T
+        result_dict = {
+            pos: state_arr[*pos] for pos in pot_positions
+        }
+        return result_dict
 

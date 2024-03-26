@@ -4,6 +4,7 @@ from src.agent.one_shot import RandomAgent, NetworkAgent, RandomAgentConfig, \
     NetworkAgentConfig, LegalRandomAgent, LegalRandomAgentConfig, BCNetworkAgent, BCNetworkAgentConfig
 from src.agent.overcooked import GreedyHumanOvercookedAgent, GreedyHumanOvercookedAgentConfig
 from src.agent.planning import AStarAgent, AStarAgentConfig
+from src.agent.scripted import PlaceDishEverywhereAgent, PlaceDishEverywhereAgentConfig, PlaceOnionAgent, PlaceOnionAgentConfig, PlaceOnionDeliverAgent, PlaceOnionDeliverAgentConfig, PlaceOnionEverywhereAgent, PlaceOnionEverywhereAgentConfig
 from src.agent.search_agent import SearchAgent, LookaheadAgent, SearchAgentConfig, LookaheadAgentConfig, \
     DoubleSearchAgent, DoubleSearchAgentConfig
 
@@ -29,6 +30,14 @@ def get_agent_from_config(agent_cfg: AgentConfig) -> Agent:
         return AlbatrossAgent(agent_cfg)
     elif isinstance(agent_cfg, BCNetworkAgentConfig):
         return BCNetworkAgent(agent_cfg)
+    elif isinstance(agent_cfg, PlaceOnionAgentConfig):
+        return PlaceOnionAgent(agent_cfg)
+    elif isinstance(agent_cfg, PlaceOnionEverywhereAgentConfig):
+        return PlaceOnionEverywhereAgent(agent_cfg)
+    elif isinstance(agent_cfg, PlaceDishEverywhereAgentConfig):
+        return PlaceDishEverywhereAgent(agent_cfg)
+    elif isinstance(agent_cfg, PlaceOnionDeliverAgentConfig):
+        return PlaceOnionDeliverAgent(agent_cfg)
     else:
         raise ValueError(f"Unknown agent type: {agent_cfg}")
 

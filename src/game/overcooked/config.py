@@ -37,6 +37,7 @@ class OvercookedGameConfig(GameConfig):
     flat_obs: bool = False
     cooking_time: int = 20
     unstuck_behavior: bool = False
+    automatic_cook_start: bool = False
 
 
 # const int EMPTY_TILE = 0;

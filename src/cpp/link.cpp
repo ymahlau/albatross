@@ -384,7 +384,8 @@ extern "C" {
             double dish_pickup_reward,
             double soup_pickup_reward,
             double soup_delivery_reward,
-            double soup_cooking_reward
+            double soup_cooking_reward,
+            bool automatic_cook_start
     ){
         return init_overcooked(
                 w,
@@ -397,7 +398,8 @@ extern "C" {
                 dish_pickup_reward,
                 soup_pickup_reward,
                 soup_delivery_reward,
-                soup_cooking_reward
+                soup_cooking_reward,
+                automatic_cook_start
         );
     }
 

@@ -229,6 +229,7 @@ class CPPLibrary:
             ct.c_double,
             ct.c_double,
             ct.c_double,
+            ct.c_bool,
         ]
         self.lib.init_overcooked_cpp.restype = ct.POINTER(Struct)
         self.lib.clone_overcooked_cpp.argtypes = [ct.POINTER(Struct)]

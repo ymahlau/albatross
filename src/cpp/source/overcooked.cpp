@@ -19,7 +19,8 @@ OvercookedGameState::OvercookedGameState(
         vector<int> tile_states,
         int horizon,
         int cooking_time,
-        const OvercookedRewards reward_specs
+        const OvercookedRewards reward_specs,
+        bool automatic_cook_start
 ):
     board(std::move(board)),
     turn(turn),
@@ -31,7 +32,8 @@ OvercookedGameState::OvercookedGameState(
     cooking_time(cooking_time),
     reward_specs(reward_specs),
     dish_pickup_rewards_available(0),
-    dish_pickup_rewards_increment_next_round(0)
+    dish_pickup_rewards_increment_next_round(0),
+    automatic_cook_start(automatic_cook_start)
 {
     for (int x = 0; x < w; x++){
         for (int y = 0; y < h; y++){
@@ -70,7 +72,8 @@ OvercookedGameState* init_overcooked(
         double dish_pickup_reward,
         double soup_pickup_reward,
         double soup_delivery_reward,
-        double soup_cooking_reward
+        double soup_cooking_reward,
+        bool automatic_cook_start
 ){
     // convert input to proper format
     vector<int> board_vector(board, board + w * h);
@@ -98,7 +101,8 @@ OvercookedGameState* init_overcooked(
         tile_states,
         horizon,
         cooking_time,
-        rewards
+        rewards,
+        automatic_cook_start
     );
     return state_p;
 }
@@ -195,6 +199,11 @@ double step_resolve_helper(OvercookedGameState* state, int player_id, int action
             if (faced_tile_type == POT_TILE and faced_tile_state < THREE_POT){
                 // player places onion in pot
                 state->tile_states[faced_tile_idx] += 1;
+                if(state->automatic_cook_start and state->tile_states[faced_tile_idx] == THREE_POT){
+                    state->tile_states[faced_tile_idx] = 4 + state->cooking_time;
+                    reward += state->reward_specs.start_cooking;
+                    state->dish_pickup_rewards_increment_next_round += 1;
+                }
                 reward += state->reward_specs.placement_in_pot;
                 state->players[player_id].held_item = NO_ITEM;
             } else if (faced_tile_type == COUNTER_TILE and faced_tile_state == NO_ITEM){

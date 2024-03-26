@@ -57,7 +57,7 @@ struct OvercookedRewards{
 
 struct OvercookedGameState{
     OvercookedGameState(vector<int> board, int turn, int w, int h, vector<Player> players, vector<int> tile_states,
-                        int horizon, int cooking_time, OvercookedRewards reward_specs);
+                        int horizon, int cooking_time, OvercookedRewards reward_specs, bool automatic_cook_start);
     OvercookedGameState(const OvercookedGameState& other);
     ~OvercookedGameState();
     OvercookedGameState& operator=(const OvercookedGameState& other);
@@ -73,11 +73,13 @@ struct OvercookedGameState{
     list<Coord> pot_positions;
     int dish_pickup_rewards_available;
     int dish_pickup_rewards_increment_next_round;
+    bool automatic_cook_start;
 };
 
 OvercookedGameState* init_overcooked(int w, int h, int* board, int* start_pos, int horizon, int cooking_time,
                                      double placement_in_pot_reward, double dish_pickup_reward,
-                                     double soup_pickup_reward, double soup_delivery_reward, double soup_cooking);
+                                     double soup_pickup_reward, double soup_delivery_reward, double soup_cooking,
+                                     bool automatic_cook_start);
 OvercookedGameState* clone_overcooked(OvercookedGameState* state);
 double step_overcooked(OvercookedGameState* state, int* actions);
 void close_overcooked(OvercookedGameState* state);
