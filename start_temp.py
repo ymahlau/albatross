@@ -12,6 +12,7 @@ from scripts.eval_oc.overcooked_albfix_bc import eval_albfix_vs_bc
 from scripts.eval_oc.overcooked_bc_eval import evaluate_alb_proxy, evaluate_bc_bc, evaluate_overcooked_response, evaluate_overcooked_response_mle, evaluate_overcooked_response_normal, evaluate_proxy_bc, evaluate_proxy_proxy, evaluate_resp10_bc, evaluate_resp_proxy, evaluate_resp_resp, evaluate_resp_resp_10
 from scripts.eval_oc.overcooked_proxy_temps import eval_proxy_different_temps, eval_resp_fixed_proxy, eval_resp_proxy_different_temps
 from scripts.eval_oc.scripted_overcooked import eval_scripted_oc
+from scripts.eval_oc.temp_convergence import temp_convergence_run
 from scripts.logit_solver.run_logit_experiments import generate_gt_data, step_size_experiment
 from scripts.temp_est.estimate_bc import estimate_bc_strength
 from scripts.temp_est.estimate_proxy_oc import estimate_oc_proxy_strength
@@ -58,7 +59,8 @@ if __name__ == '__main__':
     # albfix_vs_proxy_at_temps(experiment_id)
     # entropy_proxy_eval(experiment_id)
     # eval_resp_fixed_proxy(experiment_id)
-    eval_scripted_oc(experiment_id)
+    # eval_scripted_oc(experiment_id)
+    temp_convergence_run(experiment_id)
     
     
     # num_iterations = int(sys.argv[1])
