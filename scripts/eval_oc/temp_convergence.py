@@ -2,12 +2,16 @@ from datetime import datetime
 import itertools
 from pathlib import Path
 import pickle
+from matplotlib import pyplot as plt
 import numpy as np
+import seaborn
 
 from src.agent.albatross import AlbatrossAgent, AlbatrossAgentConfig
 from src.agent.one_shot import NetworkAgent, NetworkAgentConfig
 from src.game.overcooked.config import AsymmetricAdvantageOvercookedConfig, CoordinationRingOvercookedConfig, CounterCircuitOvercookedConfig, CrampedRoomOvercookedConfig, ForcedCoordinationOvercookedConfig, OvercookedRewardConfig
 from src.game.overcooked.overcooked import OvercookedGame
+from src.misc.const import LINESTYLES
+from src.misc.plotting import plot_filled_std_curves
 from src.misc.utils import set_seed
 from src.network.initialization import get_network_from_file
 from src.trainer.az_evaluator import do_evaluation
@@ -117,7 +121,76 @@ def temp_convergence_run(experiment_id: int):
             pickle.dump(full_result_list, f)
 
 
+def plot_temp_convergence():
+    num_parts = 5
+    temperatures = np.arange(0, 10.1, 1)
+    save_path = Path(__file__).parent.parent.parent / 'a_data' / 'temp_conv'
+    img_path = Path(__file__).parent.parent.parent / 'a_img' / 'temp_conv'
+    base_name = 'temp_conv'
+    
+    game_dicts = {
+        'aa': AsymmetricAdvantageOvercookedConfig(),
+        # 'cc': CounterCircuitOvercookedConfig(),
+        # 'co': CoordinationRingOvercookedConfig(),
+        # 'cr': CrampedRoomOvercookedConfig(),
+        # 'fc': ForcedCoordinationOvercookedConfig(),
+    }
+    for prefix in game_dicts.keys():
+        temp_arr_list, action_list, utility_list = [], [], []
+        for seed in range(5):
+            seed_list = []
+            # for t_idx, _ in enumerate(temperatures):
+            for t_idx in [10]:
+                t_list = []
+                for part in range(num_parts):
+                    cur_log_path = save_path / f'{base_name}_log_{prefix}_{seed}_{part}_{t_idx}.pkl'
+                    with open(cur_log_path, 'rb') as f:
+                        cur_dict = pickle.load(f)
+                    part_list = []
+                    for game_dict in cur_dict['temp_estimates']:
+                        if game_dict[0]:
+                            part_list.append(game_dict[0])
+                        else:
+                            part_list.append(game_dict[1])
+                    t_list.append(part_list)
+                seed_list.append(t_list)
+            temp_arr_list.append(seed_list)
+        full_arr = np.asarray(temp_arr_list)
+        
+        for t_idx, t in enumerate(temperatures):
+            cur_arr = full_arr[:, t_idx]
+            cur_arr = cur_arr.reshape(-1, 399)
+            x = np.arange(1, 400)
+            
+            plt.clf()
+            plt.figure(figsize=(4, 4))
+            seaborn.set_theme(style='whitegrid')
+            
+            plot_filled_std_curves(
+                x=x,
+                mean=cur_arr.mean(axis=0),
+                std=cur_arr.std(axis=0),
+                color='xkcd:almost black',
+                lighter_color='xkcd:dark grey',
+                linestyle=LINESTYLES[0],
+                label=None,
+                min_val=0,
+            )
+            
+            fontsize = 'xx-large'
+            plt.xlim(x[0], x[-1])
+            plt.xticks(fontsize=fontsize)
+            plt.yticks(fontsize=fontsize)
+            # plt.title(full_name, fontsize=fontsize)
+            # if idx == 0:
+                # plt.legend(fontsize='x-large', loc='lower right', bbox_to_anchor=(1.01, -0.01))
+            plt.ylabel('Temp. Estimate', fontsize=fontsize)
+            plt.xlabel('Episode Step', fontsize=fontsize)
+            plt.tight_layout()
+            plt.savefig(img_path / f'temp_conv_{prefix}_{t_idx}.pdf', bbox_inches='tight', pad_inches=0.0)
+        
 
 
 if __name__ == '__main__':
-    temp_convergence_run(0)
+    # temp_convergence_run(0)
+    plot_temp_convergence()

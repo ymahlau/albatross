@@ -531,3 +531,16 @@ def td_lambda_inefficient(
             # write result to array
             result_arr[player, t] = return_ld_t
     return result_arr
+
+
+def discounted_rewards(
+    full_rewards: np.ndarray,  # shape(player, T)
+    discount: float,
+):
+    # result_arr = np.zeros(shape=(full_rewards.shape[0],), dtype=float)
+    discounts = discount ** np.arange(full_rewards.shape[1])  # Vector of discount factors
+    discounted_rewards = full_rewards * discounts[None, :]  # Element-wise multiplication, reversed for discounting
+
+    # Use cumulative sum from the end for efficiency
+    result =  discounted_rewards.sum(axis=1)
+    return result

@@ -98,6 +98,10 @@ class EvalFuncConfig(ABC):
 @dataclass
 class AreaControlEvalConfig(EvalFuncConfig):
     health_threshold: float = 1.0
+    
+@dataclass
+class SymmetricAreaControlEvalConfig(EvalFuncConfig):
+    pass
 
 @dataclass
 class CopyCatEvalConfig(EvalFuncConfig):

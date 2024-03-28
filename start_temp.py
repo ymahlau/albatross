@@ -6,6 +6,7 @@ from scripts.depth.bs_proxy_temps import alb_vs_proxy_at_temps, albfix_vs_proxy_
 from scripts.depth.estimate_area_strength import evaluate_bs_depth_strength
 from scripts.depth.estimate_az_strength import estimate_az
 from scripts.depth.evaluate_bs_depth import evaluate_bs_depth_func
+from scripts.depth.evaluate_bs_depth_coop import evaluate_bs_depth_func_coop
 from scripts.depth.kl_div_vs_base import save_policies_at_depth
 from scripts.eval_oc.entropy_proxy import entropy_proxy_eval
 from scripts.eval_oc.overcooked_albfix_bc import eval_albfix_vs_bc
@@ -60,7 +61,8 @@ if __name__ == '__main__':
     # entropy_proxy_eval(experiment_id)
     # eval_resp_fixed_proxy(experiment_id)
     # eval_scripted_oc(experiment_id)
-    temp_convergence_run(experiment_id)
+    # temp_convergence_run(experiment_id)
+    evaluate_bs_depth_func_coop(experiment_id)
     
     
     # num_iterations = int(sys.argv[1])

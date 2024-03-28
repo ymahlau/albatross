@@ -9,8 +9,11 @@ import numpy as np
 
 import torch
 from src.agent.albatross import AlbatrossAgent, AlbatrossAgentConfig
+from src.agent.initialization import get_agent_from_config
 from src.agent.one_shot import NetworkAgent, NetworkAgentConfig, bc_agent_from_file
+from src.agent.search_agent import AreaControlSearchAgentConfig
 from src.game.actions import sample_individual_actions
+from src.game.battlesnake.bootcamp.test_envs_9x9 import survive_on_9x9_constrictor_4_player_coop
 from src.game.conversion import overcooked_slow_from_fast
 from src.game.imp_marl.imp_marl_wrapper import IMP_MODE, IMPConfig
 from src.game.initialization import get_game_from_config
@@ -20,6 +23,7 @@ from src.game.overcooked.overcooked import OvercookedGame
 from src.game.overcooked_slow.layouts import CrampedRoomOvercookedSlowConfig, CounterCircuitOvercookedSlowConfig
 from src.network.initialization import get_network_from_config, get_network_from_file
 from src.network.resnet import OvercookedResNetConfig5x5
+from src.search.config import DummyEvalConfig, SymmetricAreaControlEvalConfig
 from src.trainer.az_evaluator import do_evaluation
 
 
@@ -59,82 +63,92 @@ def old():
 
 
 def main():
-    bc_path = Path(__file__).parent.parent / 'bc_state_dicts'
-    bc_agent = bc_agent_from_file(bc_path / 'fc_1.pkl')
+    # bc_path = Path(__file__).parent.parent / 'bc_state_dicts'
+    # bc_agent = bc_agent_from_file(bc_path / 'fc_1.pkl')
     
-    net_path = Path(__file__).parent.parent / 'a_saved_runs' / 'overcooked'
-    proxy_net = get_network_from_file(net_path / 'proxy_fc_1' / 'latest.pt')
-    proxy_net = proxy_net.eval()
-    proxy_net_agent_cfg = NetworkAgentConfig(
-        net_cfg=proxy_net.cfg,
-        temperature_input=True,
-        single_temperature=True,
-        init_temperatures=[0, 0],
-    )
-    proxy_net_agent = NetworkAgent(proxy_net_agent_cfg)
-    proxy_net_agent.replace_net(proxy_net)
+    # net_path = Path(__file__).parent.parent / 'a_saved_runs' / 'overcooked'
+    # proxy_net = get_network_from_file(net_path / 'proxy_fc_1' / 'latest.pt')
+    # proxy_net = proxy_net.eval()
+    # proxy_net_agent_cfg = NetworkAgentConfig(
+    #     net_cfg=proxy_net.cfg,
+    #     temperature_input=True,
+    #     single_temperature=True,
+    #     init_temperatures=[0, 0],
+    # )
+    # proxy_net_agent = NetworkAgent(proxy_net_agent_cfg)
+    # proxy_net_agent.replace_net(proxy_net)
     
-    net = get_network_from_file(net_path / 'resp_fc_1' / 'latest.pt')
-    net = net.eval()
-    net_agent_cfg = NetworkAgentConfig(
-        net_cfg=net.cfg,
-        temperature_input=True,
-        single_temperature=True,
-        init_temperatures=[0.1, 0.1],
-    )
-    net_agent = NetworkAgent(net_agent_cfg)
-    net_agent.replace_net(net)
+    # net = get_network_from_file(net_path / 'resp_fc_1' / 'latest.pt')
+    # net = net.eval()
+    # net_agent_cfg = NetworkAgentConfig(
+    #     net_cfg=net.cfg,
+    #     temperature_input=True,
+    #     single_temperature=True,
+    #     init_temperatures=[0.1, 0.1],
+    # )
+    # net_agent = NetworkAgent(net_agent_cfg)
+    # net_agent.replace_net(net)
     
-    alb_network_agent_cfg = NetworkAgentConfig(
-        net_cfg=net.cfg,
-        temperature_input=True,
-        single_temperature=False,
-        init_temperatures=[0, 0],
-    )
-    alb_online_agent_cfg = AlbatrossAgentConfig(
-        num_player=2,
-        agent_cfg=alb_network_agent_cfg,
-        device_str='cpu',
-        response_net_path=str(net_path / 'resp_fc_1' / 'latest.pt'),
-        proxy_net_path=str(net_path / 'proxy_fc_1' / 'latest.pt'),
-        # noise_std=2,
-        # fixed_temperatures=[0.1, 0.1],
-        num_samples=20,
-        init_temp=0,
-        num_likelihood_bins=int(2e3),
-        sample_from_likelihood=True,
-    )
-    alb_online_agent = AlbatrossAgent(alb_online_agent_cfg)
-    
+    # alb_network_agent_cfg = NetworkAgentConfig(
+    #     net_cfg=net.cfg,
+    #     temperature_input=True,
+    #     single_temperature=False,
+    #     init_temperatures=[0, 0],
+    # )
+    # alb_online_agent_cfg = AlbatrossAgentConfig(
+    #     num_player=2,
+    #     agent_cfg=alb_network_agent_cfg,
+    #     device_str='cpu',
+    #     response_net_path=str(net_path / 'resp_fc_1' / 'latest.pt'),
+    #     proxy_net_path=str(net_path / 'proxy_fc_1' / 'latest.pt'),
+    #     # noise_std=2,
+    #     # fixed_temperatures=[0.1, 0.1],
+    #     num_samples=20,
+    #     init_temp=0,
+    #     num_likelihood_bins=int(2e3),
+    #     sample_from_likelihood=True,
+    # )
+    # alb_online_agent = AlbatrossAgent(alb_online_agent_cfg)
     
     # game_cfg = AsymmetricAdvantageOvercookedConfig(
-    game_cfg = ForcedCoordinationOvercookedConfig(
+    # game_cfg = ForcedCoordinationOvercookedConfig(
     # game_cfg = CounterCircuitOvercookedConfig(
     # game_cfg = CoordinationRingOvercookedConfig(
     # game_cfg = CrampedRoomOvercookedConfig(
-        temperature_input=True,
-        single_temperature_input=True,
-        reward_cfg=OvercookedRewardConfig(
-            placement_in_pot=0,
-            dish_pickup=0,
-            soup_pickup=0,
-            soup_delivery=20,
-            start_cooking=0,
-        )
-    )
-    game = OvercookedGame(game_cfg)
+    #     temperature_input=True,
+    #     single_temperature_input=True,
+    #     reward_cfg=OvercookedRewardConfig(
+    #         placement_in_pot=0,
+    #         dish_pickup=0,
+    #         soup_pickup=0,
+    #         soup_delivery=20,
+    #         start_cooking=0,
+    #     )
+    # )
+    # game = OvercookedGame(game_cfg)
+    
+    
+    
+    game_cfg = survive_on_9x9_constrictor_4_player_coop()
+    game = get_game_from_config(game_cfg)
+    
+    agent_cfg = AreaControlSearchAgentConfig()
+    agent_cfg.search_cfg.eval_func_cfg = SymmetricAreaControlEvalConfig()
+    agent = get_agent_from_config(agent_cfg)
     
     results, _ = do_evaluation(
         game=game,
-        evaluee=alb_online_agent,
-        opponent_list=[bc_agent],
-        num_episodes=[4],
-        enemy_iterations=0,
+        evaluee=agent,
+        opponent_list=[agent],
+        num_episodes=[1],
+        enemy_iterations=2000,
+        own_iterations=2000,
         temperature_list=[1],
-        own_temperature=math.inf,
+        own_temperature=1,
         prevent_draw=False,
         switch_positions=True,
         verbose_level=2,
+        return_all_rewards=True,
     )
     print(results)
     
@@ -209,6 +223,7 @@ def main2():
 
 
 if __name__ == '__main__':
+    main()
     # main2()
-    copy_files()
+    # copy_files()
     

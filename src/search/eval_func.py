@@ -15,7 +15,7 @@ from src.game.values import apply_utility_norm, UtilityNorm
 from src.network import Network
 from src.network.initialization import get_network_from_config, get_network_from_file
 from src.search.config import NetworkEvalConfig, CopyCatEvalConfig, AreaControlEvalConfig, EvalFuncConfig, \
-    DummyEvalConfig, EnemyExploitationEvalConfig, RandomRolloutEvalConfig, InferenceServerEvalConfig, ResponseInferenceServerEvalConfig
+    DummyEvalConfig, EnemyExploitationEvalConfig, RandomRolloutEvalConfig, InferenceServerEvalConfig, ResponseInferenceServerEvalConfig, SymmetricAreaControlEvalConfig
 from src.search.node import Node
 
 
@@ -92,6 +92,33 @@ class AreaControlEvalFunc(EvalFunc):
             # result = (ac_board_relative + health_factor) / 2
             values = np.zeros(shape=(node.game.num_players,), dtype=float)
             values[node.game.players_at_turn()] = result
+            update_node(node, values, self.cfg.utility_norm)
+            
+
+class SymmetricAreaControlEvalFunc(EvalFunc):
+    """
+    GameState evaluation function, which does a symmetric area control evaluation, maximizing that agents have the same area control
+    """
+
+    def __init__(self, cfg: SymmetricAreaControlEvalConfig):
+        super().__init__(cfg)
+        self.cfg = cfg
+
+    def _compute(self, node_list: list[Node]) -> None:
+        for node in node_list:
+            if not isinstance(node.game, BattleSnakeGame):
+                raise Exception("Can only use Area control eval with battlesnake game")
+            game: BattleSnakeGame = node.game
+            ac_dict = node.game.area_control()
+            ac = ac_dict["area_control"]
+            ac_at_turn = ac[node.game.players_at_turn()]
+            ac_board_relative = ac_at_turn / (game.cfg.w * game.cfg.h / 2)
+            ac_diff = np.max(ac_board_relative) - np.min(ac_board_relative)
+
+            
+            # result = (ac_board_relative + health_factor) / 2
+            values = np.zeros(shape=(node.game.num_players,), dtype=float)
+            values[node.game.players_at_turn()] = -ac_diff
             update_node(node, values, self.cfg.utility_norm)
 
 
@@ -713,5 +740,7 @@ def get_eval_func_from_cfg(cfg: EvalFuncConfig) -> EvalFunc:
         return InferenceServerEvalFunc(cfg)
     elif isinstance(cfg, ResponseInferenceServerEvalConfig):
         return ResponseInferenceEvalFunc(cfg)
+    elif isinstance(cfg, SymmetricAreaControlEvalConfig):
+        return SymmetricAreaControlEvalFunc(cfg)
     else:
         raise ValueError(f"Unknown eval function config: {cfg}")

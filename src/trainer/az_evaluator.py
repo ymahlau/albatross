@@ -232,8 +232,9 @@ def do_evaluation(
         verbose_level: int = 0,
         own_temperature: float = math.inf,
         own_iterations: int = 1,
+        return_all_rewards: bool = False
 ) -> tuple[list[list[float]], list[list[int]]]:
-    results = []
+    results, all_rewards = [], []
     episode_lengths = []
     # iterate opponents
     for opponent, episodes, temperature in zip(opponent_list, num_episodes, temperature_list):
@@ -241,6 +242,10 @@ def do_evaluation(
         cur_lengths = []
         # iterate episodes
         for ep in range(episodes):
+            if return_all_rewards:
+                all_rewards.append([])
+                for _ in range(game.num_players):
+                    all_rewards[-1].append([])
             agent_pos = 0
             if switch_positions:
                 agent_pos = ep % 2
@@ -267,9 +272,12 @@ def do_evaluation(
                         action = sample_individual_actions(probs[np.newaxis, ...], temperature)[0]
                     joint_action_list.append(action)
                 if prevent_draw:
-                    step_with_draw_prevention(game, tuple(joint_action_list))
+                    rewards = step_with_draw_prevention(game, tuple(joint_action_list))
                 else:
-                    game.step(tuple(joint_action_list))
+                    rewards, _, _ = game.step(tuple(joint_action_list))
+                if return_all_rewards:
+                    for p in range(game.num_players):
+                        all_rewards[-1][p].append(rewards[p])
                 if verbose_level >= 2:
                     print(joint_action_list, flush=True)
                     game.render()
@@ -286,4 +294,6 @@ def do_evaluation(
             enemy.reset_episode()
         results.append(cur_results)
         episode_lengths.append(cur_lengths)
+    if return_all_rewards:
+        return all_rewards, episode_lengths
     return results, episode_lengths
