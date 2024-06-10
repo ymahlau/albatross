@@ -12,6 +12,7 @@ from src.agent.albatross import AlbatrossAgent, AlbatrossAgentConfig
 from src.agent.initialization import get_agent_from_config
 from src.agent.one_shot import NetworkAgent, NetworkAgentConfig
 from src.agent.search_agent import AreaControlSearchAgentConfig
+from src.game.battlesnake.bootcamp.test_envs_11x11 import survive_on_11x11_constrictor_4_player_coop
 from src.game.battlesnake.bootcamp.test_envs_9x9 import survive_on_9x9_constrictor_4_player_coop
 from src.game.initialization import get_game_from_config
 from src.misc.const import COLORS, LIGHT_COLORS, LINESTYLES
@@ -33,13 +34,14 @@ def evaluate_bs_depth_func_coop(experiment_id: int):
     # search_iterations = [int(5e4), int(1e5), int(5e5), int(1e6)]
     # search_iterations = [int(5e5), int(1e6)]
     # search_iterations = [int(5e6)]
-    save_path = Path(__file__).parent.parent.parent / 'a_data' / 'bs_depth_coop_tmp'
+    save_path = Path(__file__).parent.parent.parent / 'a_data' / 'bs_depth_coop'
     # save_path = Path(__file__).parent.parent.parent / 'a_data' / 'temp'
     base_name = 'coop_ac_2k'
     eval_az = True
     
     game_dict = {
-        '4dc9': survive_on_9x9_constrictor_4_player_coop(),
+        # '4dc9': survive_on_9x9_constrictor_4_player_coop(),
+        '4dc11': survive_on_11x11_constrictor_4_player_coop(),
     }
     
     pref_lists = [
@@ -190,7 +192,7 @@ def plot_bs_depth_coop():
     full_list_az, full_list_alb = [], []
     for seed in range(num_seeds):
         for part in range(num_parts):
-            file_name_alb = f'{base_name}_4dc9_{seed}_{part}.pkl'
+            file_name_alb = f'{base_name}_4dc11_{seed}_{part}.pkl'
             with open(data_path / file_name_alb, 'rb') as f:
                 cur_dict = pickle.load(f)
             alb_results = cur_dict['results_alb']
@@ -236,8 +238,8 @@ def plot_bs_depth_coop():
         label='AlphaZero',
     )
     
-    fontsize = 'xx-large'
-    plt.xlabel('Enemy Search Iterations', fontsize=fontsize)
+    fontsize = 'x-large'
+    plt.xlabel('Partner Search Iterations', fontsize=fontsize)
     plt.ylabel('Discounted Reward', fontsize=fontsize)
     plt.xlim(search_iterations[0], search_iterations[-1])
     plt.xticks([500, 1000, 1500, 2000], fontsize=fontsize)
@@ -247,9 +249,84 @@ def plot_bs_depth_coop():
     plt.legend(fontsize=fontsize)
     plt.tight_layout()
     # plt.savefig(img_path / f'inf_100g_{abbrev}_depths.png')
-    plt.savefig(img_path / f'4dc9.png', bbox_inches='tight', pad_inches=0.03, dpi=1000)
+    plt.savefig(img_path / f'4dc11.pdf', bbox_inches='tight', pad_inches=0.03, dpi=1000)
     
 
+
+def plot_bs_depth_coop_game_length():
+    data_path = Path(__file__).parent.parent.parent / 'a_data' / 'bs_depth_coop'
+    img_path = Path(__file__).parent.parent.parent / 'a_img' / 'bs_depth_coop'
+    num_parts = 5
+    num_seeds = 5
+    num_games_per_part = 50
+    
+    # tmp_max_idx = 14
+    search_iterations = np.asarray([50] + list(range(100, 2001, 100)))
+    num_iterations = len(search_iterations)
+    base_name = 'coop_ac_2k'
+    
+    
+    full_list_az, full_list_alb = [], []
+    for seed in range(num_seeds):
+        for part in range(num_parts):
+            file_name_alb = f'{base_name}_4dc11_{seed}_{part}.pkl'
+            with open(data_path / file_name_alb, 'rb') as f:
+                cur_dict = pickle.load(f)
+                
+            full_list_alb.append(
+                np.asarray(cur_dict['lengths_alb']).squeeze()
+            )
+            full_list_az.append(
+                np.asarray(cur_dict['lengths_az']).squeeze()
+            )
+            
+    full_arr_az = np.asarray(full_list_az).reshape(num_seeds, num_parts, num_iterations, num_games_per_part)
+    full_arr_alb = np.asarray(full_list_alb).reshape(num_seeds, num_parts, num_iterations, num_games_per_part)
+    
+    az_plot_vals = full_arr_az.mean(axis=-1).mean(axis=1)
+    alb_plot_vals = full_arr_alb.mean(axis=-1).mean(axis=1)
+    
+    plt.clf()
+    plt.figure(dpi=600, figsize=(6, 4))
+    seaborn.set_theme(style='whitegrid')
+    
+    # albatross
+    plot_filled_std_curves(
+        x=search_iterations,
+        mean=alb_plot_vals.mean(axis=0),
+        std=alb_plot_vals.std(axis=0),
+        color=COLORS[1],
+        lighter_color=LIGHT_COLORS[1],
+        linestyle=LINESTYLES[0],
+        label='Albatross',
+    )
+    
+    # AlphaZero
+    plot_filled_std_curves(
+        x=search_iterations,
+        mean=az_plot_vals.mean(axis=0),
+        std=az_plot_vals.std(axis=0),
+        color=COLORS[2],
+        lighter_color=LIGHT_COLORS[2],
+        linestyle=LINESTYLES[1],
+        label='AlphaZero',
+    )
+    
+    fontsize = 'xx-large'
+    plt.xlabel('Partner Search Iterations', fontsize=fontsize)
+    plt.ylabel('Game Length', fontsize=fontsize)
+    plt.xlim(search_iterations[0], search_iterations[-1])
+    plt.xticks([500, 1000, 1500, 2000], fontsize=fontsize)
+    plt.yticks(fontsize=fontsize)
+    # plt.xscale('log')
+    # plt.legend(fontsize=fontsize, loc='upper right', bbox_to_anchor=(1.03, 1.05))
+    plt.legend(fontsize=fontsize)
+    plt.tight_layout()
+    # plt.savefig(img_path / f'inf_100g_{abbrev}_depths.png')
+    plt.savefig(img_path / f'4dc11_length.png', bbox_inches='tight', pad_inches=0.03, dpi=1000)
+
+
 if __name__ == '__main__':
-    plot_bs_depth_coop()
     # evaluate_bs_depth_func_coop(0)
+    plot_bs_depth_coop()
+    # plot_bs_depth_coop_game_length()

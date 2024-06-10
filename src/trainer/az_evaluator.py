@@ -226,7 +226,7 @@ def do_evaluation(
         opponent_list: list[Agent],
         num_episodes: list[int],
         enemy_iterations: int,
-        temperature_list: list[float],
+        temperature_list: list[float] | list[list[list[float]]],
         prevent_draw: bool,
         switch_positions: bool,
         verbose_level: int = 0,
@@ -268,8 +268,10 @@ def do_evaluation(
                         probs, _ = opponent(game, player=player, iterations=enemy_iterations)
                         probs[game.illegal_actions(player)] = 0
                         probs /= probs.sum()
-                        # print(probs)
-                        action = sample_individual_actions(probs[np.newaxis, ...], temperature)[0]
+                        if verbose_level >= 2:
+                            print(probs, flush=True)
+                        t = temperature[ep][step_counter] if isinstance(temperature, list) else temperature
+                        action = sample_individual_actions(probs[np.newaxis, ...], t)[0]
                     joint_action_list.append(action)
                 if prevent_draw:
                     rewards = step_with_draw_prevention(game, tuple(joint_action_list))

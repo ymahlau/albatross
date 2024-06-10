@@ -60,9 +60,9 @@ if __name__ == '__main__':
     # albfix_vs_proxy_at_temps(experiment_id)
     # entropy_proxy_eval(experiment_id)
     # eval_resp_fixed_proxy(experiment_id)
-    # eval_scripted_oc(experiment_id)
+    eval_scripted_oc(experiment_id)
     # temp_convergence_run(experiment_id)
-    evaluate_bs_depth_func_coop(experiment_id)
+    # evaluate_bs_depth_func_coop(experiment_id)
     
     
     # num_iterations = int(sys.argv[1])
