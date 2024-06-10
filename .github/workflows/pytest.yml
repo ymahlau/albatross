@@ -8,24 +8,38 @@ jobs:
     name: PyTest
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Add conda to system path
-        run: |
-          echo $CONDA/bin >> $GITHUB_PATH
-      - name: Setup Python 3.11
-        uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: conda-incubator/setup-miniconda@v3
         with:
-          python-version: '3.11'
+          python-version: 3.11
+          mamba-version: "*"
+          channels: conda-forge,defaults,pytorch
+          channel-priority: true
+          activate-environment: albatross-env
+          environment-file: environment.yml
+      - name: list conda info
+        run: |
+          conda info
+          conda list
+          conda config --show-sources
+          conda config --show
+      # - name: Add conda to system path
+      #   run: |
+      #     echo $CONDA/bin >> $GITHUB_PATH
+      # - name: Setup Python 3.11
+      #   uses: actions/setup-python@v4
+      #   with:
+      #     python-version: '3.11'
       - name: setup git mail
         run: git config --global user.email "email"
       - name: Setup git user name
         run: git config --global user.name "username"
       - name: See python path
         run: echo $CONDA/bin/python
-      - name: Install dependencies
-        run: $CONDA/bin/conda env update --file environment.yml --name base
-      - name: List pip installations
-        run: $CONDA/bin/pip list
+      # - name: Install dependencies
+      #   run: $CONDA/bin/conda env update --file environment.yml --name base
+      # - name: List pip installations
+      #   run: $CONDA/bin/pip list
       - name: Compile C++ Library
         run: cd "src/cpp/alglib"; sh linux_compile.sh; cd ".."; sh linux_compile.sh; cd "../.."
       - name: Run pytest
