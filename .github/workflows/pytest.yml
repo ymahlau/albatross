@@ -45,5 +45,5 @@ jobs:
       - name: see wd
         run: pwd
       - name: Run pytest
-        run: $CONDA/bin/pytest test
+        run: export PYTHONPATH="/home/runner/work/albatross/albatross"; conda activate albatross-env; pytest test
         # run: export PYTHONPATH="/home/runner/work/albatross/albatross"; $CONDA/bin/pytest test
