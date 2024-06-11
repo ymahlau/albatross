@@ -1,6 +1,6 @@
 # Albatross
 
-This Repo contains Code and trained Models for the Paper "Mastering Zero-Shot Interactions in Cooperative and Competitive Simultaneous Games"
+This Repo contains Code and trained Models for the Paper [Mastering Zero-Shot Interactions in Cooperative and Competitive Simultaneous Games](https://arxiv.org/abs/2402.03136)
 
 <p align="center">
   <img src="illustrations/albatross.png" alt="Albatross illustrration" style="width:200px;height:200px;">
