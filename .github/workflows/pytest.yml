@@ -23,27 +23,13 @@ jobs:
           conda list
           conda config --show-sources
           conda config --show
-      # - name: Add conda to system path
-      #   run: |
-      #     echo $CONDA/bin >> $GITHUB_PATH
-      # - name: Setup Python 3.11
-      #   uses: actions/setup-python@v4
-      #   with:
-      #     python-version: '3.11'
       - name: setup git mail
         run: git config --global user.email "email"
       - name: Setup git user name
         run: git config --global user.name "username"
       - name: See python path
         run: echo $CONDA/bin/python
-      # - name: Install dependencies
-      #   run: $CONDA/bin/conda env update --file environment.yml --name base
-      # - name: List pip installations
-      #   run: $CONDA/bin/pip list
       - name: Compile C++ Library
         run: cd "src/cpp/alglib"; sh linux_compile.sh; cd ".."; sh linux_compile.sh; cd "../.."
-      - name: see wd
-        run: pwd
       - name: Run pytest
         run: export PYTHONPATH="/home/runner/work/albatross/albatross"; conda activate albatross-env; pytest test
-        # run: export PYTHONPATH="/home/runner/work/albatross/albatross"; $CONDA/bin/pytest test
