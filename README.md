@@ -28,6 +28,16 @@ The training framework of Albatross is a multiprocessing framework. An update pr
 
 ## Installation
 
+#### Clone Repo and Submodule
+
+This repository contains Git-submodules, which need to be initialized after cloning.
+```
+git clone https://github.com/ymahlau/albatross.git
+cd albatross
+git submodule init
+git submodule update --init --recursive
+```
+
 #### Compile C++ Module
 Firstly, it is necessary to compile the c++ modules as most algorithms and game dynamics are implemented in that language.
 For this purpose, you need a g++ compiler on your system (for C++ version 11).
